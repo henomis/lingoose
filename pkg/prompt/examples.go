@@ -13,8 +13,8 @@ type PromptExamples struct {
 type Example map[string]interface{}
 
 func NewWithExamples(
-	inputs []string,
-	outputs []string,
+	inputsList []string,
+	outputsList []string,
 	examples PromptExamples,
 ) (*PromptTemplate, error) {
 
@@ -25,7 +25,7 @@ func NewWithExamples(
 
 	for _, example := range examples.Examples {
 
-		examplePrompt, err := examples.PromptTemplate.Format(PromptTemplateInputs(example))
+		examplePrompt, err := examples.PromptTemplate.Format(Inputs(example))
 		if err != nil {
 			return nil, err
 		}
@@ -37,8 +37,8 @@ func NewWithExamples(
 	buffer.WriteString(examples.Suffix)
 
 	return New(
-		inputs,
-		outputs,
+		inputsList,
+		outputsList,
 		buffer.String(),
 	), nil
 }

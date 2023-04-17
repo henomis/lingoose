@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-type PromptTemplateInputs map[string]interface{}
+type Inputs map[string]interface{}
 type PromptTemplateOutputs map[string]interface{}
 
 type PromptTemplate struct {
@@ -19,21 +19,21 @@ type PromptTemplate struct {
 }
 
 func New(
-	inputs []string,
-	outputs []string,
+	inputsList []string,
+	outputsList []string,
 	template string,
 ) *PromptTemplate {
 
 	return &PromptTemplate{
-		Inputs:   inputs,
-		Outputs:  outputs,
+		Inputs:   inputsList,
+		Outputs:  outputsList,
 		Template: template,
 
-		inputsSet: buildInputsSet(inputs),
+		inputsSet: buildInputsSet(inputsList),
 	}
 }
 
-func (p *PromptTemplate) NewFromLangchain(url string) (*PromptTemplate, error) {
+func NewFromLangchain(url string) (*PromptTemplate, error) {
 
 	var langchainPromptTemplate langchainPromptTemplate
 	if err := langchainPromptTemplate.ImportFromLangchain(url); err != nil {
@@ -43,7 +43,7 @@ func (p *PromptTemplate) NewFromLangchain(url string) (*PromptTemplate, error) {
 	return langchainPromptTemplate.toPromptTemplate(), nil
 }
 
-func (p *PromptTemplate) Format(promptTemplateInputs PromptTemplateInputs) (string, error) {
+func (p *PromptTemplate) Format(promptTemplateInputs Inputs) (string, error) {
 
 	if err := p.validateInputs(promptTemplateInputs); err != nil {
 		return "", err
@@ -61,7 +61,7 @@ func (p *PromptTemplate) Format(promptTemplateInputs PromptTemplateInputs) (stri
 }
 
 // ValidateInputs checks if some inputs do not match the inputsSet
-func (p *PromptTemplate) validateInputs(promptTemplateInputs PromptTemplateInputs) error {
+func (p *PromptTemplate) validateInputs(promptTemplateInputs Inputs) error {
 
 	for input := range promptTemplateInputs {
 		if _, ok := p.inputsSet[input]; !ok {

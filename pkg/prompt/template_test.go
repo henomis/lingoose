@@ -15,7 +15,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 		template  *template.Template
 	}
 	type args struct {
-		promptTemplateInputs PromptTemplateInputs
+		promptTemplateInputs Inputs
 	}
 	tests := []struct {
 		name    string
@@ -34,7 +34,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 				template:  nil,
 			},
 			args: args{
-				promptTemplateInputs: PromptTemplateInputs{},
+				promptTemplateInputs: Inputs{},
 			},
 			want:    "Tell me a joke.",
 			wantErr: false,
@@ -49,7 +49,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 				template:  nil,
 			},
 			args: args{
-				promptTemplateInputs: PromptTemplateInputs{
+				promptTemplateInputs: Inputs{
 					"name": "llamas",
 				},
 			},
@@ -78,62 +78,26 @@ func TestPromptTemplate_Format(t *testing.T) {
 	}
 }
 
-func TestPromptTemplate_NewFromLangchain(t *testing.T) {
-	type fields struct {
-		Inputs    []string
-		Outputs   []string
-		Template  string
-		inputsSet map[string]struct{}
-		template  *template.Template
-	}
+func TestNewFromLangchain(t *testing.T) {
 	type args struct {
 		url string
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    *PromptTemplate
 		wantErr bool
 	}{
 		{
-			name: "TestPromptTemplate_NewFromLangchain",
-			fields: fields{
-				Inputs:    []string{},
-				Outputs:   []string{},
-				Template:  "",
-				inputsSet: map[string]struct{}{},
-				template:  nil,
-			},
+			name: "TestNewFromLangchain",
 			args: args{
-				url: "lc://prompts/conversation/prompt.json",
+				url: "lc://prompts/summarize/stuff/prompt.yaml",
 			},
 			want: &PromptTemplate{
-				Inputs:    []string{"history", "input"},
+				Inputs:    []string{"text"},
 				Outputs:   []string{},
-				Template:  "The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.\n\nCurrent conversation:\n{{.history}}\nHuman: {{.input}}\nAI:",
-				inputsSet: map[string]struct{}{"history": {}, "input": {}},
-				template:  nil,
-			},
-			wantErr: false,
-		},
-		{
-			name: "TestPromptTemplate_NewFromLangchain",
-			fields: fields{
-				Inputs:    []string{},
-				Outputs:   []string{},
-				Template:  "",
-				inputsSet: map[string]struct{}{},
-				template:  nil,
-			},
-			args: args{
-				url: "lc://prompts/hello-world/prompt.yaml",
-			},
-			want: &PromptTemplate{
-				Inputs:    []string{},
-				Outputs:   []string{},
-				Template:  "Say hello world.",
-				inputsSet: map[string]struct{}{},
+				Template:  "Write a concise summary of the following:\n\n{{.text}}\n\nCONCISE SUMMARY:",
+				inputsSet: map[string]struct{}{"text": {}},
 				template:  nil,
 			},
 			wantErr: false,
@@ -141,20 +105,13 @@ func TestPromptTemplate_NewFromLangchain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &PromptTemplate{
-				Inputs:    tt.fields.Inputs,
-				Outputs:   tt.fields.Outputs,
-				Template:  tt.fields.Template,
-				inputsSet: tt.fields.inputsSet,
-				template:  tt.fields.template,
-			}
-			got, err := p.NewFromLangchain(tt.args.url)
+			got, err := NewFromLangchain(tt.args.url)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("PromptTemplate.NewFromLangchain() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewFromLangchain() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PromptTemplate.NewFromLangchain() = %v, want %v", got, tt.want)
+				t.Errorf("NewFromLangchain() = %v, want %v", got, tt.want)
 			}
 		})
 	}
