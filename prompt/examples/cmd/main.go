@@ -9,7 +9,7 @@ import (
 func main() {
 
 	// Create a new prompt from a langchain prompt
-	myprompt, err := prompt.NewFromLangchain("lc://prompts/summarize/stuff/prompt.yaml")
+	myprompt, err := prompt.NewPromptTemplateFromLangchain("lc://prompts/summarize/stuff/prompt.yaml")
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +27,7 @@ func main() {
 	fmt.Println("-------")
 	fmt.Println()
 
-	myprompt = prompt.New(
+	myprompt = prompt.NewPromptTemplate(
 		[]string{"name"},
 		[]string{},
 		"Hello {{.name}}",
@@ -61,7 +61,7 @@ func main() {
 		Separator: "\n\n",
 		Prefix:    "Answer to questions.",
 		Suffix:    "Question: {{.input}}\nAnswer: ",
-		PromptTemplate: prompt.New(
+		PromptTemplate: prompt.NewPromptTemplate(
 			[]string{"question", "answer"},
 			[]string{},
 			"Question: {{.question}}\nAnswer: {{.answer}}",
@@ -69,7 +69,7 @@ func main() {
 		),
 	}
 
-	myprompt, err = prompt.NewWithExamples(
+	myprompt, err = prompt.NewPromptTemplateWithExamples(
 		[]string{"input"},
 		[]string{},
 		promptExamples,
@@ -92,7 +92,7 @@ func main() {
 	fmt.Println()
 
 	// partials
-	myprompt = prompt.New(
+	myprompt = prompt.NewPromptTemplate(
 		[]string{"foo", "bar"},
 		[]string{},
 		"{{.foo}}{{.bar}}",
@@ -116,7 +116,7 @@ func main() {
 	fmt.Println()
 
 	// partials 2
-	myprompt = prompt.New(
+	myprompt = prompt.NewPromptTemplate(
 		[]string{"foo", "bar"},
 		[]string{},
 		"{{.foo}}{{.bar}}",

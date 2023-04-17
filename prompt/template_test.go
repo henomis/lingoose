@@ -105,7 +105,7 @@ func TestNewFromLangchain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewFromLangchain(tt.args.url)
+			got, err := NewPromptTemplateFromLangchain(tt.args.url)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewFromLangchain() error = %v, wantErr %v", err, tt.wantErr)
 				return

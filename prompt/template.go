@@ -19,7 +19,7 @@ type PromptTemplate struct {
 	templateEngine *template.Template
 }
 
-func New(inputsList []string, outputsList []string, template string, partials *Inputs) *PromptTemplate {
+func NewPromptTemplate(inputsList []string, outputsList []string, template string, partials *Inputs) *PromptTemplate {
 
 	return &PromptTemplate{
 		inputs:   inputsList,
@@ -31,9 +31,9 @@ func New(inputsList []string, outputsList []string, template string, partials *I
 	}
 }
 
-func NewWithExamples(inputsList []string, outputsList []string, examples PromptExamples) (*PromptTemplate, error) {
+func NewPromptTemplateWithExamples(inputsList []string, outputsList []string, examples PromptExamples) (*PromptTemplate, error) {
 
-	promptTemplate := New(inputsList, outputsList, "", nil)
+	promptTemplate := NewPromptTemplate(inputsList, outputsList, "", nil)
 
 	err := promptTemplate.AddExamples(examples)
 	if err != nil {
@@ -43,7 +43,7 @@ func NewWithExamples(inputsList []string, outputsList []string, examples PromptE
 	return promptTemplate, nil
 }
 
-func NewFromLangchain(url string) (*PromptTemplate, error) {
+func NewPromptTemplateFromLangchain(url string) (*PromptTemplate, error) {
 
 	var langchainPromptTemplate langchainPromptTemplate
 	if err := langchainPromptTemplate.ImportFromLangchain(url); err != nil {

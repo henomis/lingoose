@@ -22,6 +22,15 @@ type Message struct {
 	Content string
 }
 
+func NewChatPromptTemplate(messages []MessagePromptTemplate) *ChatPromptTemplate {
+	chatPromptTemplate := &ChatPromptTemplate{}
+	for _, message := range messages {
+		chatPromptTemplate.AddMessagePromptTemplate(message)
+	}
+
+	return chatPromptTemplate
+}
+
 func (p *ChatPromptTemplate) AddMessagePromptTemplate(message MessagePromptTemplate) {
 	p.messagesPromptTemplate = append(p.messagesPromptTemplate, message)
 }
