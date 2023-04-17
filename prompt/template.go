@@ -19,12 +19,7 @@ type PromptTemplate struct {
 	templateEngine *template.Template
 }
 
-func New(
-	inputsList []string,
-	outputsList []string,
-	template string,
-	partials *Inputs,
-) *PromptTemplate {
+func New(inputsList []string, outputsList []string, template string, partials *Inputs) *PromptTemplate {
 
 	return &PromptTemplate{
 		inputs:   inputsList,
@@ -34,6 +29,18 @@ func New(
 
 		inputsSet: buildInputsSet(inputsList),
 	}
+}
+
+func NewWithExamples(inputsList []string, outputsList []string, examples PromptExamples) (*PromptTemplate, error) {
+
+	promptTemplate := New(inputsList, outputsList, "", nil)
+
+	err := promptTemplate.AddExamples(examples)
+	if err != nil {
+		return nil, err
+	}
+
+	return promptTemplate, nil
 }
 
 func NewFromLangchain(url string) (*PromptTemplate, error) {

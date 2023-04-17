@@ -12,12 +12,7 @@ type PromptExamples struct {
 
 type Example map[string]interface{}
 
-func NewWithExamples(
-	inputsList []string,
-	outputsList []string,
-	examples PromptExamples,
-) (*PromptTemplate, error) {
-
+func (p *PromptTemplate) AddExamples(examples PromptExamples) error {
 	var buffer bytes.Buffer
 
 	buffer.WriteString(examples.Prefix)
@@ -27,7 +22,7 @@ func NewWithExamples(
 
 		examplePrompt, err := examples.PromptTemplate.Format(Inputs(example))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		buffer.WriteString(examplePrompt)
@@ -36,10 +31,7 @@ func NewWithExamples(
 
 	buffer.WriteString(examples.Suffix)
 
-	return New(
-		inputsList,
-		outputsList,
-		buffer.String(),
-		nil,
-	), nil
+	p.template = buffer.String()
+
+	return nil
 }

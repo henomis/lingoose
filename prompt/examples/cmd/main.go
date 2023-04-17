@@ -140,4 +140,7 @@ func main() {
 	fmt.Println(output)
 	fmt.Println("-------")
 	fmt.Println()
+
+	myprompt.Save("prompt.yaml")
+	myprompt.Save("prompt.json")
 }
