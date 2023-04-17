@@ -40,5 +40,6 @@ func NewWithExamples(
 		inputsList,
 		outputsList,
 		buffer.String(),
+		nil,
 	), nil
 }

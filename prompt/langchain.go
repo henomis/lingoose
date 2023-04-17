@@ -29,7 +29,7 @@ type langchainPromptTemplate struct {
 
 func (p *langchainPromptTemplate) toPromptTemplate() *PromptTemplate {
 	//TODO: add outputs variables
-	return New(p.InputVariables, []string{}, replaceVariables(p.Template))
+	return New(p.InputVariables, []string{}, replaceVariables(p.Template), nil)
 }
 
 func (p *langchainPromptTemplate) ImportFromLangchain(url string) error {

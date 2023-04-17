@@ -10,24 +10,27 @@ type Inputs map[string]interface{}
 type PromptTemplateOutputs map[string]interface{}
 
 type PromptTemplate struct {
-	Inputs   []string `json:"inputs" yaml:"inputs"`
-	Outputs  []string `json:"outputs" yaml:"outputs"`
-	Template string   `json:"template" yaml:"template"`
+	inputs   []string
+	outputs  []string
+	template string
+	partials *Inputs
 
-	inputsSet map[string]struct{}
-	template  *template.Template
+	inputsSet      map[string]struct{}
+	templateEngine *template.Template
 }
 
 func New(
 	inputsList []string,
 	outputsList []string,
 	template string,
+	partials *Inputs,
 ) *PromptTemplate {
 
 	return &PromptTemplate{
-		Inputs:   inputsList,
-		Outputs:  outputsList,
-		Template: template,
+		inputs:   inputsList,
+		outputs:  outputsList,
+		template: template,
+		partials: partials,
 
 		inputsSet: buildInputsSet(inputsList),
 	}
@@ -43,16 +46,27 @@ func NewFromLangchain(url string) (*PromptTemplate, error) {
 	return langchainPromptTemplate.toPromptTemplate(), nil
 }
 
+func (p *PromptTemplate) SetPartials(partials *Inputs) {
+	p.partials = partials
+}
+
 func (p *PromptTemplate) Format(promptTemplateInputs Inputs) (string, error) {
 
 	if err := p.validateInputs(promptTemplateInputs); err != nil {
 		return "", err
 	}
 
-	p.template = template.Must(template.New("prompt").Parse(p.Template))
+	// add partials to inputs
+	if p.partials != nil {
+		for key, value := range *p.partials {
+			promptTemplateInputs[key] = value
+		}
+	}
+
+	p.templateEngine = template.Must(template.New("prompt").Parse(p.template))
 
 	var output bytes.Buffer
-	err := p.template.Execute(&output, promptTemplateInputs)
+	err := p.templateEngine.Execute(&output, promptTemplateInputs)
 	if err != nil {
 		return "", err
 	}

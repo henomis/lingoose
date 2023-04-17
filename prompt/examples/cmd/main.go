@@ -31,6 +31,7 @@ func main() {
 		[]string{"name"},
 		[]string{},
 		"Hello {{.name}}",
+		nil,
 	)
 
 	// Format the prompt with some inputs
@@ -64,6 +65,7 @@ func main() {
 			[]string{"question", "answer"},
 			[]string{},
 			"Question: {{.question}}\nAnswer: {{.answer}}",
+			nil,
 		),
 	}
 
@@ -89,4 +91,53 @@ func main() {
 	fmt.Println("-------")
 	fmt.Println()
 
+	// partials
+	myprompt = prompt.New(
+		[]string{"foo", "bar"},
+		[]string{},
+		"{{.foo}}{{.bar}}",
+		&prompt.Inputs{
+			"bar": "baz",
+		},
+	)
+
+	// Format the prompt with some inputs
+	output, err = myprompt.Format(prompt.Inputs{
+		"foo": "foo",
+		"bar": "bar",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Output:")
+	fmt.Println(output)
+	fmt.Println("-------")
+	fmt.Println()
+
+	// partials 2
+	myprompt = prompt.New(
+		[]string{"foo", "bar"},
+		[]string{},
+		"{{.foo}}{{.bar}}",
+		nil,
+	)
+
+	myprompt.SetPartials(&prompt.Inputs{
+		"bar": "baz",
+	})
+
+	// Format the prompt with some inputs
+	output, err = myprompt.Format(prompt.Inputs{
+		"foo": "foo",
+		"bar": "bar",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Output:")
+	fmt.Println(output)
+	fmt.Println("-------")
+	fmt.Println()
 }
