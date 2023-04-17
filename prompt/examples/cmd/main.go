@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingopipe/pkg/prompt"
+	"github.com/henomis/lingopipe/prompt"
 )
 
 func main() {
