@@ -3,21 +3,28 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/prompt/template"
+	"github.com/henomis/lingoose/prompt"
 )
+
+type Inputs struct {
+	Name string `json:"name" validate:"required"`
+}
 
 func main() {
 
-	promptTemplate := template.New(
-		[]string{"name"},
-		[]string{},
-		"Hello {{.name}}",
-		nil,
-	)
+	var input Inputs
+	input.Name = "world"
 
-	output, err := promptTemplate.Format(template.Inputs{
-		"name": "World",
-	})
+	promptTemplate, err := prompt.New(
+		input,
+		nil,
+		"Hello {{.Name}}",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	output, err := promptTemplate.Format()
 	if err != nil {
 		panic(err)
 	}

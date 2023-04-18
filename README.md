@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/prompt/template"
+	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {
@@ -57,7 +57,7 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/prompt/example"
-	"github.com/henomis/lingoose/prompt/template"
+	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {
@@ -118,7 +118,7 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/prompt/chat"
-	"github.com/henomis/lingoose/prompt/template"
+	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {

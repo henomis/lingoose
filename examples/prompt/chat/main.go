@@ -3,42 +3,39 @@ package main
 import (
 	"fmt"
 
+	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/prompt/chat"
-	"github.com/henomis/lingoose/prompt/template"
 )
 
 func main() {
 
 	chatTemplate := chat.New(
-		[]chat.MessageTemplate{
+		[]chat.PromptMessage{
 			{
 				Type: chat.MessageTypeSystem,
-				Template: template.New(
-					[]string{"input_language", "output_language"},
-					[]string{},
-					"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
-					nil,
-				),
+				Prompt: &prompt.Prompt{
+					Input: map[string]string{
+						"input_language":  "English",
+						"output_language": "French",
+					},
+					OutputDecoder: nil,
+					Template:      "Translating from {{.input_language}} to {{.output_language}}",
+				},
 			},
 			{
 				Type: chat.MessageTypeUser,
-				Template: template.New(
-					[]string{"text"},
-					[]string{},
-					"{{.text}}",
-					nil,
-				),
+				Prompt: &prompt.Prompt{
+					Input: map[string]string{
+						"text": "I love programming.",
+					},
+					OutputDecoder: nil,
+					Template:      "{{.text}}",
+				},
 			},
 		},
 	)
 
-	messages, err := chatTemplate.ToMessages(
-		template.Inputs{
-			"input_language":  "English",
-			"output_language": "French",
-			"text":            "I love programming.",
-		},
-	)
+	messages, err := chatTemplate.ToMessages()
 	if err != nil {
 		panic(err)
 	}

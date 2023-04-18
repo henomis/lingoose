@@ -2,10 +2,10 @@
 // Sometimes you need to define a chat prompt, this package provides a way to do that.
 package chat
 
-import "github.com/henomis/lingoose/prompt/template"
+import "github.com/henomis/lingoose/prompt"
 
 type Chat struct {
-	messagesPromptTemplate []MessageTemplate
+	messagesPrompt []PromptMessage
 }
 
 type MessageType string
@@ -16,17 +16,21 @@ const (
 	MessageTypeAI     MessageType = "ai"
 )
 
-type MessageTemplate struct {
-	Type     MessageType
-	Template *template.Prompt
+type PromptMessage struct {
+	Type   MessageType
+	Prompt *prompt.Prompt
 }
+
+type PromptMessages []PromptMessage
 
 type Message struct {
 	Type    MessageType
 	Content string
 }
 
-func New(messages []MessageTemplate) *Chat {
+type Messages []Message
+
+func New(messages PromptMessages) *Chat {
 	chatPromptTemplate := &Chat{}
 	for _, message := range messages {
 		chatPromptTemplate.AddMessagePromptTemplate(message)
@@ -35,22 +39,21 @@ func New(messages []MessageTemplate) *Chat {
 	return chatPromptTemplate
 }
 
-func (p *Chat) AddMessagePromptTemplate(message MessageTemplate) {
-	p.messagesPromptTemplate = append(p.messagesPromptTemplate, message)
+func (p *Chat) AddMessagePromptTemplate(message PromptMessage) {
+	p.messagesPrompt = append(p.messagesPrompt, message)
 }
 
 // ToMessages converts the chat prompt template to a list of messages.
-func (p *Chat) ToMessages(inputs template.Inputs) ([]Message, error) {
-	var messages []Message
+func (p *Chat) ToMessages() (Messages, error) {
+	var messages Messages
+	var err error
 
-	for _, messagePromptTemplate := range p.messagesPromptTemplate {
+	for _, messagePromptTemplate := range p.messagesPrompt {
 		var message Message
 		message.Type = messagePromptTemplate.Type
 
-		if messagePromptTemplate.Template != nil {
-			var err error
-			selectedInputs := filterInputs(inputs, messagePromptTemplate.Template.InputsSet())
-			message.Content, err = messagePromptTemplate.Template.Format(selectedInputs)
+		if messagePromptTemplate.Prompt != nil {
+			message.Content, err = messagePromptTemplate.Prompt.Format()
 			if err != nil {
 				return nil, err
 			}
@@ -60,16 +63,4 @@ func (p *Chat) ToMessages(inputs template.Inputs) ([]Message, error) {
 	}
 
 	return messages, nil
-}
-
-func filterInputs(inputs template.Inputs, inputsSet map[string]struct{}) template.Inputs {
-	selectedInputs := make(template.Inputs)
-
-	for input, value := range inputs {
-		if _, ok := inputsSet[input]; ok {
-			selectedInputs[input] = value
-		}
-	}
-
-	return selectedInputs
 }
