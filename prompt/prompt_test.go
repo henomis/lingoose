@@ -5,6 +5,8 @@ package prompt
 import (
 	"testing"
 	texttemplate "text/template"
+
+	"github.com/henomis/lingoose/prompt/decoder"
 )
 
 type simpleStructInput struct {
@@ -44,8 +46,8 @@ func TestPrompt_Format(t *testing.T) {
 	type fields struct {
 		Input          interface{}
 		Output         interface{}
-		OutputDecoder  OutputDecoderFn
-		Template       string
+		OutputDecoder  decoder.DecoderFn
+		Template       *string
 		templateEngine *texttemplate.Template
 	}
 	tests := []struct {
@@ -60,7 +62,7 @@ func TestPrompt_Format(t *testing.T) {
 				Input:          nil,
 				Output:         nil,
 				OutputDecoder:  nil,
-				Template:       "Tell me a joke.",
+				Template:       newString("Tell me a joke."),
 				templateEngine: nil,
 			},
 			want:    "Tell me a joke.",
@@ -72,7 +74,7 @@ func TestPrompt_Format(t *testing.T) {
 				Input:          helloInput,
 				Output:         nil,
 				OutputDecoder:  nil,
-				Template:       "Hello {{.Name}}",
+				Template:       newString("Hello {{.Name}}"),
 				templateEngine: nil,
 			},
 			want:    "Hello world",
@@ -84,7 +86,7 @@ func TestPrompt_Format(t *testing.T) {
 				Input:          complexInput,
 				Output:         nil,
 				OutputDecoder:  nil,
-				Template:       "Hello {{.Name.First}} {{.Name.Middle}} {{.Lastname}}",
+				Template:       newString("Hello {{.Name.First}} {{.Name.Middle}} {{.Lastname}}"),
 				templateEngine: nil,
 			},
 			want:    "Hello Alan Mathison Turing",
@@ -96,7 +98,7 @@ func TestPrompt_Format(t *testing.T) {
 				Input:          helloInput,
 				Output:         nil,
 				OutputDecoder:  nil,
-				Template:       "Hello {{.Lastname}}",
+				Template:       newString("Hello {{.Lastname}}"),
 				templateEngine: nil,
 			},
 			want:    "",
@@ -108,7 +110,7 @@ func TestPrompt_Format(t *testing.T) {
 				Input:          helloInput,
 				Output:         nil,
 				OutputDecoder:  nil,
-				Template:       "Hello {{}}",
+				Template:       newString("Hello {{}}"),
 				templateEngine: nil,
 			},
 			want:    "",
@@ -134,4 +136,8 @@ func TestPrompt_Format(t *testing.T) {
 			}
 		})
 	}
+}
+
+func newString(s string) *string {
+	return &s
 }

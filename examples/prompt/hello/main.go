@@ -18,7 +18,8 @@ func main() {
 	promptTemplate, err := prompt.New(
 		input,
 		nil,
-		"Hello {{.Name}}",
+		nil,
+		newString("Hello {{.Name}}"),
 	)
 	if err != nil {
 		panic(err)
@@ -31,4 +32,8 @@ func main() {
 
 	fmt.Println(output)
 
+}
+
+func newString(s string) *string {
+	return &s
 }

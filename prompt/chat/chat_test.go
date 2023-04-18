@@ -28,7 +28,7 @@ func TestChat_ToMessages(t *testing.T) {
 								"input_language":  "English",
 								"output_language": "Spanish",
 							},
-							Template: "You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
+							Template: newString("You are a helpful assistant that translates {{.input_language}} to {{.output_language}}."),
 						},
 					},
 					{
@@ -37,7 +37,7 @@ func TestChat_ToMessages(t *testing.T) {
 							Input: map[string]interface{}{
 								"text": "I love programming.",
 							},
-							Template: "{{.text}}",
+							Template: newString("{{.text}}"),
 						},
 					},
 				},
@@ -70,4 +70,8 @@ func TestChat_ToMessages(t *testing.T) {
 			}
 		})
 	}
+}
+
+func newString(s string) *string {
+	return &s
 }

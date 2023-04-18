@@ -19,7 +19,7 @@ func main() {
 						"output_language": "French",
 					},
 					OutputDecoder: nil,
-					Template:      "Translating from {{.input_language}} to {{.output_language}}",
+					Template:      newString("Translating from {{.input_language}} to {{.output_language}}"),
 				},
 			},
 			{
@@ -29,7 +29,7 @@ func main() {
 						"text": "I love programming.",
 					},
 					OutputDecoder: nil,
-					Template:      "{{.text}}",
+					Template:      newString("{{.text}}"),
 				},
 			},
 		},
@@ -42,4 +42,8 @@ func main() {
 
 	fmt.Printf("%+v", messages)
 
+}
+
+func newString(s string) *string {
+	return &s
 }

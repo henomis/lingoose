@@ -5,26 +5,23 @@ package prompt
 import (
 	"bytes"
 	texttemplate "text/template"
+
+	"github.com/henomis/lingoose/prompt/decoder"
 )
-
-type OudputDecoder interface {
-	Decode(interface{}) error
-}
-
-type OutputDecoderFn func(string) OudputDecoder
 
 type Prompt struct {
 	Input         interface{}
 	Output        interface{}
-	OutputDecoder OutputDecoderFn
-	Template      string
+	OutputDecoder decoder.DecoderFn
+	Template      *string
 
 	templateEngine *texttemplate.Template
 }
 
-func New(input interface{}, outputHandler OutputDecoderFn, template string) (*Prompt, error) {
+func New(input interface{}, output interface{}, outputHandler decoder.DecoderFn, template *string) (*Prompt, error) {
 	return &Prompt{
 		Input:         input,
+		Output:        output,
 		OutputDecoder: outputHandler,
 		Template:      template,
 	}, nil
@@ -33,31 +30,40 @@ func New(input interface{}, outputHandler OutputDecoderFn, template string) (*Pr
 // Format formats the prompt using the template engine and the provided inputs.
 func (p *Prompt) Format() (string, error) {
 
+	// If the input is a string and there is no template, return the input as is.
+	if _, ok := p.Input.(*string); ok && (p.Template == nil) {
+		return *p.Input.(*string), nil
+	}
+
+	if _, ok := p.Input.(string); ok && (p.Template == nil) {
+		return p.Input.(string), nil
+	}
+
 	if p.Input == nil {
-		return p.Template, nil
+		return *p.Template, nil
 	}
 
-	err := p.init()
+	err := p.initTemplateEngine()
 	if err != nil {
 		return "", err
 	}
 
-	var output bytes.Buffer
-	err = p.templateEngine.Execute(&output, p.Input)
+	var buffer bytes.Buffer
+	err = p.templateEngine.Execute(&buffer, p.Input)
 	if err != nil {
 		return "", err
 	}
 
-	return output.String(), nil
+	return buffer.String(), nil
 }
 
-func (p *Prompt) init() error {
+func (p *Prompt) initTemplateEngine() error {
 
 	if p.templateEngine != nil {
 		return nil
 	}
 
-	templateEngine, err := texttemplate.New("prompt").Parse(p.Template)
+	templateEngine, err := texttemplate.New("prompt").Parse(*p.Template)
 	if err != nil {
 		return err
 	}
