@@ -3,7 +3,6 @@ module github.com/henomis/lingoose
 go 1.19
 
 require (
-	github.com/go-playground/validator/v10 v10.12.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

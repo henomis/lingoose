@@ -7,7 +7,7 @@ import (
 )
 
 type Inputs struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name"`
 }
 
 func main() {

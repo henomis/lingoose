@@ -8,7 +8,7 @@ import (
 )
 
 type simpleStructInput struct {
-	Name string `json:"name" validate:"required,max=5"`
+	Name string `json:"name"`
 }
 
 type simpleStructOutput struct {
@@ -17,10 +17,6 @@ type simpleStructOutput struct {
 
 var helloInput = simpleStructInput{
 	Name: "world",
-}
-
-var helloInputMax = simpleStructInput{
-	Name: "worldworld",
 }
 
 var helloOutput simpleStructOutput
@@ -93,18 +89,6 @@ func TestPrompt_Format(t *testing.T) {
 			},
 			want:    "Hello Alan Mathison Turing",
 			wantErr: false,
-		},
-		{
-			name: "TestPrompt_Format hello simple",
-			fields: fields{
-				Input:          helloInputMax,
-				Output:         nil,
-				OutputDecoder:  nil,
-				Template:       "Hello {{.Name}}",
-				templateEngine: nil,
-			},
-			want:    "",
-			wantErr: true,
 		},
 		{
 			name: "TestPrompt_Format hello simple",

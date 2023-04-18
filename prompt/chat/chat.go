@@ -5,7 +5,7 @@ package chat
 import "github.com/henomis/lingoose/prompt"
 
 type Chat struct {
-	messagesPrompt []PromptMessage
+	PromptMessages PromptMessages
 }
 
 type MessageType string
@@ -30,9 +30,9 @@ type Message struct {
 
 type Messages []Message
 
-func New(messages PromptMessages) *Chat {
+func New(promptMessages PromptMessages) *Chat {
 	chatPromptTemplate := &Chat{}
-	for _, message := range messages {
+	for _, message := range promptMessages {
 		chatPromptTemplate.AddMessagePromptTemplate(message)
 	}
 
@@ -40,7 +40,7 @@ func New(messages PromptMessages) *Chat {
 }
 
 func (p *Chat) AddMessagePromptTemplate(message PromptMessage) {
-	p.messagesPrompt = append(p.messagesPrompt, message)
+	p.PromptMessages = append(p.PromptMessages, message)
 }
 
 // ToMessages converts the chat prompt template to a list of messages.
@@ -48,7 +48,7 @@ func (p *Chat) ToMessages() (Messages, error) {
 	var messages Messages
 	var err error
 
-	for _, messagePromptTemplate := range p.messagesPrompt {
+	for _, messagePromptTemplate := range p.PromptMessages {
 		var message Message
 		message.Type = messagePromptTemplate.Type
 

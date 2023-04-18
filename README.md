@@ -13,8 +13,9 @@
 ## Prompt
 
 Please refer to the [examples directory](examples/prompt/) to see other examples.
+
 <details>
-<summary>Simple prompt template</summary>
+<summary>Hello world</summary>
 
 ```go
 package main
@@ -25,79 +26,25 @@ import (
 	"github.com/henomis/lingoose/prompt"
 )
 
-func main() {
-
-	promptTemplate := template.New(
-		[]string{"name"},
-		[]string{},
-		"Hello {{.name}}",
-		nil,
-	)
-
-	output, err := promptTemplate.Format(template.Inputs{
-		"name": "World",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(output)
-
+type Inputs struct {
+	Name string `json:"name"`
 }
-```
-</details>
-
-<details>
-<summary>Prompt template with examples</summary>
-
-```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/henomis/lingoose/prompt/example"
-	"github.com/henomis/lingoose/prompt"
-)
 
 func main() {
 
-	promptExamples := example.Examples{
-		Examples: []example.Example{
-			{
-				"question": "Red is a color?",
-				"answer":   "Yes",
-			},
-			{
-				"question": "Car is a color?",
-				"answer":   "No",
-			},
-		},
-		Separator: "\n\n",
-		Prefix:    "Answer to questions.",
-		Suffix:    "Question: {{.input}}\nAnswer: ",
-	}
+	var input Inputs
+	input.Name = "world"
 
-	examplesTemplate := template.New(
-		[]string{"question", "answer"},
-		[]string{},
-		"Question: {{.question}}\nAnswer: {{.answer}}",
+	promptTemplate, err := prompt.New(
+		input,
 		nil,
-	)
-
-	promptTemplate, err := template.NewWithExamples(
-		[]string{"input"},
-		[]string{},
-		promptExamples,
-		examplesTemplate,
+		"Hello {{.Name}}",
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	output, err := promptTemplate.Format(template.Inputs{
-		"input": "World is a color?",
-	})
+	output, err := promptTemplate.Format()
 	if err != nil {
 		panic(err)
 	}
@@ -117,42 +64,39 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/prompt/chat"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/prompt/chat"
 )
 
 func main() {
 
 	chatTemplate := chat.New(
-		[]chat.MessageTemplate{
+		[]chat.PromptMessage{
 			{
 				Type: chat.MessageTypeSystem,
-				Template: template.New(
-					[]string{"input_language", "output_language"},
-					[]string{},
-					"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
-					nil,
-				),
+				Prompt: &prompt.Prompt{
+					Input: map[string]string{
+						"input_language":  "English",
+						"output_language": "French",
+					},
+					OutputDecoder: nil,
+					Template:      "Translating from {{.input_language}} to {{.output_language}}",
+				},
 			},
 			{
 				Type: chat.MessageTypeUser,
-				Template: template.New(
-					[]string{"text"},
-					[]string{},
-					"{{.text}}",
-					nil,
-				),
+				Prompt: &prompt.Prompt{
+					Input: map[string]string{
+						"text": "I love programming.",
+					},
+					OutputDecoder: nil,
+					Template:      "{{.text}}",
+				},
 			},
 		},
 	)
 
-	messages, err := chatTemplate.ToMessages(
-		template.Inputs{
-			"input_language":  "English",
-			"output_language": "French",
-			"text":            "I love programming.",
-		},
-	)
+	messages, err := chatTemplate.ToMessages()
 	if err != nil {
 		panic(err)
 	}
@@ -163,16 +107,14 @@ func main() {
 ```
 </details>
 
-### Current development status
+
+# Current development status
 🟢 ready | 🟡 developing | 🔴 not started
 
 - 🟢 Prompts
-    - 🟢 Prompt Templates
-    - 🟢 Prompt Examples
-    - 🟢 Prompt Serialization
-    - 🟢 Chat Prompt Templates
-    - 🔴 Output parser
-    - 🔴 Output variables
+    - 🟢 Templates
+    - 🟢 Chat
+    - 🟢 Output decoders
 - 🟡 LLM
 - 🔴 Pipelines
 - 🔴 Agents
