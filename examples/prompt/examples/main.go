@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingopipes/prompt/example"
-	"github.com/henomis/lingopipes/prompt/template"
+	"github.com/henomis/lingoose/prompt/example"
+	"github.com/henomis/lingoose/prompt/template"
 )
 
 func main() {

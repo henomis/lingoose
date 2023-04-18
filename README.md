@@ -1,15 +1,15 @@
-# 🪢 LinGoPipes
+# 🪿 LinGoose
 
-[![Build Status](https://github.com/henomis/lingopipes/actions/workflows/test.yml/badge.svg)](https://github.com/henomis/lingopipes/actions/workflows/test.yml) [![GoDoc](https://godoc.org/github.com/henomis/lingopipes?status.svg)](https://godoc.org/github.com/henomis/lingopipes) [![Go Report Card](https://goreportcard.com/badge/github.com/henomis/lingopipes)](https://goreportcard.com/report/github.com/henomis/lingopipes) [![GitHub release](https://img.shields.io/github/release/henomis/lingopipes.svg)](https://github.com/henomis/lingopipes/releases)
+[![Build Status](https://github.com/henomis/lingoose/actions/workflows/test.yml/badge.svg)](https://github.com/henomis/lingoose/actions/workflows/test.yml) [![GoDoc](https://godoc.org/github.com/henomis/lingoose?status.svg)](https://godoc.org/github.com/henomis/lingoose) [![Go Report Card](https://goreportcard.com/badge/github.com/henomis/lingoose)](https://goreportcard.com/report/github.com/henomis/lingoose) [![GitHub release](https://img.shields.io/github/release/henomis/lingoose.svg)](https://github.com/henomis/lingoose/releases)
 
-LinGoPipes is a Go framework for creating LLM (Language Learning Machine) pipelines.
+**LinGoose** is a Go framework for creating LLM (Language Learning Machine) pipelines.
 > :warning: It is a work in progress, and is not yet ready for production use. **API are unstable. Do not use in production.**
 
 # Overview
-**LinGoPipes** aims to be a complete framework for creating LLM apps. :robot: :gear:
+**LinGoose** aims to be a complete framework for creating LLM apps. :robot: :gear:
 
 # Modules
-**LinGoPipes** is composed of multiple modules, each one with its own purpose.
+**LinGoose** is composed of multiple modules, each one with its own purpose.
 ## Prompt
 
 Please refer to the [examples directory](examples/prompt/) to see other examples.
@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingopipes/prompt/template"
+	"github.com/henomis/lingoose/prompt/template"
 )
 
 func main() {
@@ -56,8 +56,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingopipes/prompt/example"
-	"github.com/henomis/lingopipes/prompt/template"
+	"github.com/henomis/lingoose/prompt/example"
+	"github.com/henomis/lingoose/prompt/template"
 )
 
 func main() {
@@ -117,8 +117,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingopipes/prompt/chat"
-	"github.com/henomis/lingopipes/prompt/template"
+	"github.com/henomis/lingoose/prompt/chat"
+	"github.com/henomis/lingoose/prompt/template"
 )
 
 func main() {
@@ -181,7 +181,7 @@ func main() {
 Be sure to have a working Go environment, then run the following command:
 
 ```shell
-go get github.com/henomis/lingopipes
+go get github.com/henomis/lingoose
 ```
 
 # License

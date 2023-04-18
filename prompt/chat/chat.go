@@ -2,7 +2,7 @@
 // Sometimes you need to define a chat prompt, this package provides a way to do that.
 package chat
 
-import "github.com/henomis/lingopipes/prompt/template"
+import "github.com/henomis/lingoose/prompt/template"
 
 type Chat struct {
 	messagesPromptTemplate []MessageTemplate

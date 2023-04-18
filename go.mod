@@ -1,4 +1,4 @@
-module github.com/henomis/lingopipes
+module github.com/henomis/lingoose
 
 go 1.19
 

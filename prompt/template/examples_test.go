@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/henomis/lingopipes/prompt/example"
+	"github.com/henomis/lingoose/prompt/example"
 )
 
 func TestNewWithExamples(t *testing.T) {

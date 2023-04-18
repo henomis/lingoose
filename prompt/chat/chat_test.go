@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/henomis/lingopipes/prompt/template"
+	"github.com/henomis/lingoose/prompt/template"
 )
 
 func TestChatPromptTemplate_ToMessages(t *testing.T) {

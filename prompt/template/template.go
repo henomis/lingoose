@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/henomis/lingopipes/prompt/example"
-	"github.com/henomis/lingopipes/prompt/langchain"
+	"github.com/henomis/lingoose/prompt/example"
+	"github.com/henomis/lingoose/prompt/langchain"
 )
 
 type Inputs map[string]interface{}
