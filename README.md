@@ -8,8 +8,8 @@
 # Overview
 **LinGoose** aims to be a complete framework for creating LLM apps. :robot: :gear:
 
-# Modules
-**LinGoose** is composed of multiple modules, each one with its own purpose.
+# Components
+**LinGoose** is composed of multiple components, each one with its own purpose.
 ## Prompt
 
 Please refer to the [examples directory](examples/prompt/) to see other examples.
