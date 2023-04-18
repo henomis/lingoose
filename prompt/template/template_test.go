@@ -59,7 +59,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Template{
+			p := &Prompt{
 				inputs:         tt.fields.Inputs,
 				outputs:        tt.fields.Outputs,
 				template:       tt.fields.Template,
@@ -85,7 +85,7 @@ func TestNewFromLangchain(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *Template
+		want    *Prompt
 		wantErr bool
 	}{
 		{
@@ -93,7 +93,7 @@ func TestNewFromLangchain(t *testing.T) {
 			args: args{
 				url: "lc://prompts/summarize/stuff/prompt.yaml",
 			},
-			want: &Template{
+			want: &Prompt{
 				inputs:         []string{"text"},
 				outputs:        []string{},
 				template:       "Write a concise summary of the following:\n\n{{.text}}\n\nCONCISE SUMMARY:",

@@ -18,7 +18,7 @@ const (
 
 type MessageTemplate struct {
 	Type     MessageType
-	Template *template.Template
+	Template *template.Prompt
 }
 
 type Message struct {

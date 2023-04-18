@@ -4,143 +4,51 @@ package template
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
+	texttemplate "text/template"
 
-	"github.com/henomis/lingoose/prompt/example"
-	"github.com/henomis/lingoose/prompt/langchain"
+	"github.com/go-playground/validator/v10"
 )
 
-type Inputs map[string]interface{}
-type Outputs map[string]interface{}
+type Decoder interface {
+	Decode(interface{}) error
+}
 
-type Template struct {
-	inputs   []string
-	outputs  []string
-	template string
-	partials Inputs
+type OutputDecoder func(string) Decoder
 
-	inputsSet      map[string]struct{}
+type Prompt struct {
+	Input         interface{}
+	Output        interface{}
+	OutputDecoder OutputDecoder
+	Template      string
+
 	templateEngine *template.Template
+	validate       *validator.Validate
 }
 
-func New(inputsList []string, outputsList []string, template string, partials Inputs) *Template {
+func New(input interface{}, outputHandler OutputDecoder, template string) (*Prompt, error) {
 
-	return &Template{
-		inputs:   inputsList,
-		outputs:  outputsList,
-		template: template,
-		partials: partials,
-
-		inputsSet: buildInputsSet(inputsList),
-	}
-}
-
-// NewWithExamples creates a new prompt template with examples.
-// Sometime your prompt need to be enriched with examples, this function allows you to do that.
-func NewWithExamples(
-	inputsList []string,
-	outputsList []string,
-	examples example.Examples,
-	exampleTemplate *Template,
-) (*Template, error) {
-
-	promptTemplate := New(inputsList, outputsList, "", nil)
-
-	err := promptTemplate.addExamples(examples, exampleTemplate)
+	templateEngine, err := texttemplate.New("prompt").Parse(template)
 	if err != nil {
 		return nil, err
 	}
 
-	return promptTemplate, nil
-}
-
-// NewFromLangchain creates a new prompt template from one at langchain hub 	(https://github.com/hwchase17/langchain-hub/tree/master/prompts).
-// The url should follow the same schema as the langchain hub (eg. lc://prompts/hello-world/prompt.yaml)
-func NewFromLangchain(url string) (*Template, error) {
-
-	promptTemplate, err := langchain.New(url)
-	if err != nil {
-		return nil, err
-	}
-
-	return New(promptTemplate.InputVariables, []string{}, promptTemplate.ConvertedTemplate(), nil), nil
-}
-
-func (p *Template) SetPartials(partials Inputs) {
-	p.partials = partials
+	return &Prompt{
+		Input:          input,
+		OutputDecoder:  outputHandler,
+		Template:       template,
+		templateEngine: templateEngine,
+	}, nil
 }
 
 // Format formats the prompt using the template engine and the provided inputs.
-func (p *Template) Format(promptTemplateInputs Inputs) (string, error) {
-
-	if err := p.validateInputs(promptTemplateInputs); err != nil {
-		return "", err
-	}
-
-	// add partials to inputs
-	if p.partials != nil {
-		for key, value := range p.partials {
-			promptTemplateInputs[key] = value
-		}
-	}
-
-	p.templateEngine = template.Must(template.New("prompt").Parse(p.template))
+func (p *Prompt) Format() (string, error) {
 
 	var output bytes.Buffer
-	err := p.templateEngine.Execute(&output, promptTemplateInputs)
+	err := p.templateEngine.Execute(&output, p.Input)
 	if err != nil {
 		return "", err
 	}
 
 	return output.String(), nil
-}
-
-// InputsSet returns the list of inputs used by the template
-func (p *Template) InputsSet() map[string]struct{} {
-	return p.inputsSet
-}
-
-// ValidateInputs checks if some inputs do not match the inputsSet
-func (p *Template) validateInputs(promptTemplateInputs Inputs) error {
-
-	for input := range promptTemplateInputs {
-		if _, ok := p.inputsSet[input]; !ok {
-			return fmt.Errorf("invalid input %s", input)
-		}
-	}
-
-	return nil
-}
-
-func (p *Template) addExamples(examples example.Examples, examplesTemplate *Template) error {
-	var buffer bytes.Buffer
-
-	buffer.WriteString(examples.Prefix)
-	buffer.WriteString(examples.Separator)
-
-	for _, example := range examples.Examples {
-
-		examplePrompt, err := examplesTemplate.Format(Inputs(example))
-		if err != nil {
-			return err
-		}
-
-		buffer.WriteString(examplePrompt)
-		buffer.WriteString(examples.Separator)
-	}
-
-	buffer.WriteString(examples.Suffix)
-
-	p.template = buffer.String()
-
-	return nil
-}
-
-func buildInputsSet(inputs []string) map[string]struct{} {
-	inputsSet := make(map[string]struct{})
-	for _, input := range inputs {
-		inputsSet[input] = struct{}{}
-	}
-	return inputsSet
 }
