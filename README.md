@@ -13,14 +13,19 @@ go get github.com/henomis/lingopipes
 ```
 
 ## Usage
-Please refer to the [prompt example](prompt/examples/cmd/main.go) to see how to use the prompt.
+Please refer to the [examples directory](examples/) to see how to use the prompt.
 
 ## Features
 
-- ✅ Prompts
-    - ✅ Prompt Templates
-    - ✅ Examples
-    - ✅ Serialization
-    - ✅ Chat Prompt Templates
-- ❌ Pipelines
-- ❌ Agents
+🟢 ready | 🟡 developing | 🔴 not started
+
+- 🟢 Prompts
+    - 🟢 Prompt Templates
+    - 🟢 Prompt Examples
+    - 🟢 Prompt Serialization
+    - 🟢 Chat Prompt Templates
+    - 🔴 Output parser
+    - 🔴 Output variables
+- 🟡 LLM
+- 🔴 Pipelines
+- 🔴 Agents

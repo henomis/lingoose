@@ -1,9 +1,9 @@
-package prompt
+package template
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -16,7 +16,7 @@ type promtSerialize struct {
 	Partials *Inputs  `json:"partials" yaml:"partials"`
 }
 
-func (p *PromptTemplate) serialize() *promtSerialize {
+func (p *Template) serialize() *promtSerialize {
 	return &promtSerialize{
 		Inputs:   p.inputs,
 		Outputs:  p.outputs,
@@ -25,14 +25,14 @@ func (p *PromptTemplate) serialize() *promtSerialize {
 	}
 }
 
-func (p *PromptTemplate) deserialize(promptSerialize *promtSerialize) {
+func (p *Template) deserialize(promptSerialize *promtSerialize) {
 	p.inputs = promptSerialize.Inputs
 	p.outputs = promptSerialize.Outputs
 	p.template = promptSerialize.Template
 	p.partials = promptSerialize.Partials
 }
 
-func (p *PromptTemplate) Save(path string) error {
+func (p *Template) Save(path string) error {
 
 	var data []byte
 	var err error
@@ -48,12 +48,12 @@ func (p *PromptTemplate) Save(path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0644)
 }
 
-func (p *PromptTemplate) Load(path string) error {
+func (p *Template) Load(path string) error {
 
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 
 	if err != nil {
 		return err

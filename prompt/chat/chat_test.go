@@ -1,16 +1,18 @@
-package prompt
+package chat
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/henomis/lingopipes/prompt/template"
 )
 
 func TestChatPromptTemplate_ToMessages(t *testing.T) {
 	type fields struct {
-		messagesPromptTemplate []MessagePromptTemplate
+		messagesPromptTemplate []MessageTemplate
 	}
 	type args struct {
-		inputs Inputs
+		inputs template.Inputs
 	}
 	tests := []struct {
 		name    string
@@ -23,32 +25,29 @@ func TestChatPromptTemplate_ToMessages(t *testing.T) {
 		{
 			name: "TestChatPromptTemplate_ToMessages",
 			fields: fields{
-				messagesPromptTemplate: []MessagePromptTemplate{
+				messagesPromptTemplate: []MessageTemplate{
 					{
 						Type: MessageTypeSystem,
-						Prompt: &PromptTemplate{
-							template: "You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
-							inputs:   []string{"input_language", "output_language"},
-							inputsSet: map[string]struct{}{
-								"input_language":  {},
-								"output_language": {},
-							},
-						},
+						Template: template.New(
+							[]string{"input_language", "output_language"},
+							[]string{},
+							"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
+							nil,
+						),
 					},
 					{
 						Type: MessageTypeUser,
-						Prompt: &PromptTemplate{
-							template: "{{.text}}",
-							inputs:   []string{"text"},
-							inputsSet: map[string]struct{}{
-								"text": {},
-							},
-						},
+						Template: template.New(
+							[]string{"text"},
+							[]string{},
+							"{{.text}}",
+							nil,
+						),
 					},
 				},
 			},
 			args: args{
-				inputs: Inputs{
+				inputs: template.Inputs{
 					"input_language":  "English",
 					"output_language": "French",
 					"text":            "I love programming.",
@@ -69,7 +68,7 @@ func TestChatPromptTemplate_ToMessages(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &ChatPromptTemplate{
+			p := &Chat{
 				messagesPromptTemplate: tt.fields.messagesPromptTemplate,
 			}
 			got, err := p.ToMessages(tt.args.inputs)

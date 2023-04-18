@@ -1,4 +1,4 @@
-package prompt
+package langchain
 
 import (
 	"encoding/json"
@@ -20,42 +20,49 @@ var (
 	ErrUnableToLoadLangchainPrompt = fmt.Errorf("unable to load langchain prompt")
 )
 
-type langchainPromptTemplate struct {
+type Template struct {
 	InputVariables []string    `json:"input_variables" yaml:"input_variables"`
 	OutputParser   interface{} `json:"output_parser" yaml:"output_parser"`
 	Template       string      `json:"template" yaml:"template"`
-	TemplateFormat string      `json:"template_format" yaml:"template_format"`
+	Format         string      `json:"template_format" yaml:"template_format"`
 }
 
-func (p *langchainPromptTemplate) toPromptTemplate() *PromptTemplate {
-	//TODO: add outputs variables
-	return NewPromptTemplate(p.InputVariables, []string{}, replaceVariables(p.Template), nil)
-}
-
-func (p *langchainPromptTemplate) ImportFromLangchain(url string) error {
+func New(url string) (*Template, error) {
 
 	if err := validateURL(url); err != nil {
-		return err
+		return nil, err
 	}
 
 	//TODO: move to a shared package
 	resp, err := http.Get(buildURL(url))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return ErrUnableToLoadLangchainPrompt
+		return nil, ErrUnableToLoadLangchainPrompt
 	}
+
+	var langchainPromptTemplate Template
 
 	if strings.HasSuffix(url, ".json") {
-		return json.NewDecoder(resp.Body).Decode(p)
+		json.NewDecoder(resp.Body).Decode(&langchainPromptTemplate)
 	} else if strings.HasSuffix(url, ".yaml") {
-		return yaml.NewDecoder(resp.Body).Decode(p)
+		yaml.NewDecoder(resp.Body).Decode(&langchainPromptTemplate)
+	} else {
+		return nil, ErrUnableToLoadLangchainPrompt
 	}
 
-	return ErrUnableToLoadLangchainPrompt
+	return &langchainPromptTemplate, nil
+}
+
+func (p *Template) ConvertedTemplate() string {
+	re := regexp.MustCompile(`\{(\w+)\}`)
+	return re.ReplaceAllStringFunc(p.Template, func(match string) string {
+		variable := strings.Trim(match, "{}")
+		return "{{." + variable + "}}"
+	})
 }
 
 func validateURL(url string) error {
@@ -68,12 +75,4 @@ func validateURL(url string) error {
 
 func buildURL(url string) string {
 	return fmt.Sprintf("%s%s", baseURL, strings.Replace(url, langchainURLSchema, "", 1))
-}
-
-func replaceVariables(input string) string {
-	re := regexp.MustCompile(`\{(\w+)\}`)
-	return re.ReplaceAllStringFunc(input, func(match string) string {
-		variable := strings.Trim(match, "{}")
-		return "{{." + variable + "}}"
-	})
 }

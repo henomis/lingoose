@@ -1,4 +1,4 @@
-package prompt
+package template
 
 import (
 	"reflect"
@@ -59,7 +59,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &PromptTemplate{
+			p := &Template{
 				inputs:         tt.fields.Inputs,
 				outputs:        tt.fields.Outputs,
 				template:       tt.fields.Template,
@@ -85,7 +85,7 @@ func TestNewFromLangchain(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *PromptTemplate
+		want    *Template
 		wantErr bool
 	}{
 		{
@@ -93,7 +93,7 @@ func TestNewFromLangchain(t *testing.T) {
 			args: args{
 				url: "lc://prompts/summarize/stuff/prompt.yaml",
 			},
-			want: &PromptTemplate{
+			want: &Template{
 				inputs:         []string{"text"},
 				outputs:        []string{},
 				template:       "Write a concise summary of the following:\n\n{{.text}}\n\nCONCISE SUMMARY:",
@@ -105,7 +105,7 @@ func TestNewFromLangchain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewPromptTemplateFromLangchain(tt.args.url)
+			got, err := NewFromLangchain(tt.args.url)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewFromLangchain() error = %v, wantErr %v", err, tt.wantErr)
 				return
