@@ -1,3 +1,5 @@
+// Package chat provides a chat prompt template.
+// Sometimes you need to define a chat prompt, this package provides a way to do that.
 package chat
 
 import "github.com/henomis/lingopipes/prompt/template"
@@ -37,6 +39,7 @@ func (p *Chat) AddMessagePromptTemplate(message MessageTemplate) {
 	p.messagesPromptTemplate = append(p.messagesPromptTemplate, message)
 }
 
+// ToMessages converts the chat prompt template to a list of messages.
 func (p *Chat) ToMessages(inputs template.Inputs) ([]Message, error) {
 	var messages []Message
 

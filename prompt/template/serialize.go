@@ -13,7 +13,7 @@ type promtSerialize struct {
 	Inputs   []string `json:"inputs" yaml:"inputs"`
 	Outputs  []string `json:"outputs" yaml:"outputs"`
 	Template string   `json:"template" yaml:"template"`
-	Partials *Inputs  `json:"partials" yaml:"partials"`
+	Partials Inputs   `json:"partials" yaml:"partials"`
 }
 
 func (p *Template) serialize() *promtSerialize {
@@ -32,6 +32,7 @@ func (p *Template) deserialize(promptSerialize *promtSerialize) {
 	p.partials = promptSerialize.Partials
 }
 
+// Save saves the prompt template to a file.
 func (p *Template) Save(path string) error {
 
 	var data []byte
@@ -51,6 +52,7 @@ func (p *Template) Save(path string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// Load loads the prompt template from a file.
 func (p *Template) Load(path string) error {
 
 	file, err := os.ReadFile(path)

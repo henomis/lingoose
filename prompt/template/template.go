@@ -1,3 +1,5 @@
+// Package template provides a easy way to format a prompt using the Go template engine.
+// Prompts are defined using a template string and a list of inputs.
 package template
 
 import (
@@ -16,13 +18,13 @@ type Template struct {
 	inputs   []string
 	outputs  []string
 	template string
-	partials *Inputs
+	partials Inputs
 
 	inputsSet      map[string]struct{}
 	templateEngine *template.Template
 }
 
-func New(inputsList []string, outputsList []string, template string, partials *Inputs) *Template {
+func New(inputsList []string, outputsList []string, template string, partials Inputs) *Template {
 
 	return &Template{
 		inputs:   inputsList,
@@ -34,6 +36,8 @@ func New(inputsList []string, outputsList []string, template string, partials *I
 	}
 }
 
+// NewWithExamples creates a new prompt template with examples.
+// Sometime your prompt need to be enriched with examples, this function allows you to do that.
 func NewWithExamples(
 	inputsList []string,
 	outputsList []string,
@@ -51,6 +55,8 @@ func NewWithExamples(
 	return promptTemplate, nil
 }
 
+// NewFromLangchain creates a new prompt template from one at langchain hub 	(https://github.com/hwchase17/langchain-hub/tree/master/prompts).
+// The url should follow the same schema as the langchain hub (eg. lc://prompts/hello-world/prompt.yaml)
 func NewFromLangchain(url string) (*Template, error) {
 
 	promptTemplate, err := langchain.New(url)
@@ -61,10 +67,11 @@ func NewFromLangchain(url string) (*Template, error) {
 	return New(promptTemplate.InputVariables, []string{}, promptTemplate.ConvertedTemplate(), nil), nil
 }
 
-func (p *Template) SetPartials(partials *Inputs) {
+func (p *Template) SetPartials(partials Inputs) {
 	p.partials = partials
 }
 
+// Format formats the prompt using the template engine and the provided inputs.
 func (p *Template) Format(promptTemplateInputs Inputs) (string, error) {
 
 	if err := p.validateInputs(promptTemplateInputs); err != nil {
@@ -73,7 +80,7 @@ func (p *Template) Format(promptTemplateInputs Inputs) (string, error) {
 
 	// add partials to inputs
 	if p.partials != nil {
-		for key, value := range *p.partials {
+		for key, value := range p.partials {
 			promptTemplateInputs[key] = value
 		}
 	}
@@ -89,6 +96,7 @@ func (p *Template) Format(promptTemplateInputs Inputs) (string, error) {
 	return output.String(), nil
 }
 
+// InputsSet returns the list of inputs used by the template
 func (p *Template) InputsSet() map[string]struct{} {
 	return p.inputsSet
 }

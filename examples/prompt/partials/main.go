@@ -24,7 +24,7 @@ func main() {
 
 	fmt.Println(output)
 
-	promptTemplate.SetPartials(&template.Inputs{
+	promptTemplate.SetPartials(template.Inputs{
 		"bar": "baz",
 	})
 
@@ -42,7 +42,7 @@ func main() {
 		[]string{"foo", "bar"},
 		[]string{},
 		"{{.foo}}{{.bar}}",
-		&template.Inputs{
+		template.Inputs{
 			"bar": "baz",
 		},
 	)
