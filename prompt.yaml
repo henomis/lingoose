@@ -1,5 +1,0 @@
-inputs:
-    - name
-outputs: []
-template: Hello {{.name}}
-partials: null
