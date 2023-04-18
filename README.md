@@ -2,21 +2,168 @@
 
 [![Build Status](https://github.com/henomis/lingopipes/actions/workflows/test.yml/badge.svg)](https://github.com/henomis/lingopipes/actions/workflows/test.yml) [![GoDoc](https://godoc.org/github.com/henomis/lingopipes?status.svg)](https://godoc.org/github.com/henomis/lingopipes) [![Go Report Card](https://goreportcard.com/badge/github.com/henomis/lingopipes)](https://goreportcard.com/report/github.com/henomis/lingopipes) [![GitHub release](https://img.shields.io/github/release/henomis/lingopipes.svg)](https://github.com/henomis/lingopipes/releases)
 
-LinGoPipes is a Go module for creating LLM (Language Learning Machine) pipelines. It is a work in progress, and is not yet ready for production use. :warning: **API are unstable. Do not use in production.**
+LinGoPipes is a Go framework for creating LLM (Language Learning Machine) pipelines.
+> :warning: It is a work in progress, and is not yet ready for production use. **API are unstable. Do not use in production.**
 
+# Overview
+**LinGoPipes** aims to be a complete framework for creating LLM apps. :robot: :gear:
 
-## Installation
-Be sure to have a working Go environment, then run the following command:
+# Modules
+**LinGoPipes** is composed of multiple modules, each one with its own purpose.
+## Prompt
 
+Please refer to the [examples directory](examples/prompt/) to see other examples.
+<details>
+<summary>Simple prompt template</summary>
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/henomis/lingopipes/prompt/template"
+)
+
+func main() {
+
+	promptTemplate := template.New(
+		[]string{"name"},
+		[]string{},
+		"Hello {{.name}}",
+		nil,
+	)
+
+	output, err := promptTemplate.Format(template.Inputs{
+		"name": "World",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(output)
+
+}
 ```
-go get github.com/henomis/lingopipes
+</details>
+
+<details>
+<summary>Prompt template with examples</summary>
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/henomis/lingopipes/prompt/example"
+	"github.com/henomis/lingopipes/prompt/template"
+)
+
+func main() {
+
+	promptExamples := example.Examples{
+		Examples: []example.Example{
+			{
+				"question": "Red is a color?",
+				"answer":   "Yes",
+			},
+			{
+				"question": "Car is a color?",
+				"answer":   "No",
+			},
+		},
+		Separator: "\n\n",
+		Prefix:    "Answer to questions.",
+		Suffix:    "Question: {{.input}}\nAnswer: ",
+	}
+
+	examplesTemplate := template.New(
+		[]string{"question", "answer"},
+		[]string{},
+		"Question: {{.question}}\nAnswer: {{.answer}}",
+		nil,
+	)
+
+	promptTemplate, err := template.NewWithExamples(
+		[]string{"input"},
+		[]string{},
+		promptExamples,
+		examplesTemplate,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	output, err := promptTemplate.Format(template.Inputs{
+		"input": "World is a color?",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(output)
+
+}
 ```
+</details>
 
-## Usage
-Please refer to the [examples directory](examples/) to see how to use the prompt.
+<details>
+<summary>Prompt chat template</summary>
 
-## Features
+```go
+package main
 
+import (
+	"fmt"
+
+	"github.com/henomis/lingopipes/prompt/chat"
+	"github.com/henomis/lingopipes/prompt/template"
+)
+
+func main() {
+
+	chatTemplate := chat.New(
+		[]chat.MessageTemplate{
+			{
+				Type: chat.MessageTypeSystem,
+				Template: template.New(
+					[]string{"input_language", "output_language"},
+					[]string{},
+					"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
+					nil,
+				),
+			},
+			{
+				Type: chat.MessageTypeUser,
+				Template: template.New(
+					[]string{"text"},
+					[]string{},
+					"{{.text}}",
+					nil,
+				),
+			},
+		},
+	)
+
+	messages, err := chatTemplate.ToMessages(
+		template.Inputs{
+			"input_language":  "English",
+			"output_language": "French",
+			"text":            "I love programming.",
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%+v", messages)
+
+}
+```
+</details>
+
+### Current development status
 🟢 ready | 🟡 developing | 🔴 not started
 
 - 🟢 Prompts
@@ -29,3 +176,14 @@ Please refer to the [examples directory](examples/) to see how to use the prompt
 - 🟡 LLM
 - 🔴 Pipelines
 - 🔴 Agents
+
+# Installation
+Be sure to have a working Go environment, then run the following command:
+
+```shell
+go get github.com/henomis/lingopipes
+```
+
+# License
+© Simone Vellei, 2023~`time.Now()`
+Released under the [MIT License](LICENSE)
