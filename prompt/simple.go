@@ -12,11 +12,7 @@ func New(prompt string) *SimplePrompt {
 	}
 }
 
-func (p *SimplePrompt) Format() error {
-	return nil
-}
-
-func (p *SimplePrompt) FormatWithInput(input interface{}) error {
+func (p *SimplePrompt) Format(input interface{}) error {
 	return nil
 }
 

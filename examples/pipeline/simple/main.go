@@ -17,7 +17,7 @@ func main() {
 	prompt1 := prompt.New("ciao come stai?")
 	pipe1 := pipeline.New(llm, prompt1, simpleDecoder)
 
-	prompt2 := prompt.NewPromptTemplate(
+	prompt2, _ := prompt.NewPromptTemplate(
 		"basato su '{{.output}}', sto bene {{.saluti}}",
 		map[string]string{
 			"saluti": "ciao",

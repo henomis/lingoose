@@ -2,61 +2,65 @@ package prompt
 
 import (
 	"bytes"
+	"fmt"
 	texttemplate "text/template"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type PromptTemplate struct {
-	Input    interface{}
-	Template string
-
+	input          interface{}
+	template       string
 	value          string
 	templateEngine *texttemplate.Template
 }
 
-func NewPromptTemplate(template string, input interface{}) *PromptTemplate {
-	return &PromptTemplate{
-		Input:    input,
-		Template: template,
-	}
-}
-
-// Format formats the prompt using the template engine and the provided inputs.
-func (p *PromptTemplate) Format() error {
-
-	if p.Input == nil {
-		return nil
-	}
-
-	err := p.initTemplateEngine()
-	if err != nil {
-		return err
-	}
-
-	var buffer bytes.Buffer
-	err = p.templateEngine.Execute(&buffer, p.Input)
-	if err != nil {
-		return err
-	}
-
-	p.value = buffer.String()
-
-	return nil
-}
-
-// Format formats the prompt using the template engine and the provided inputs.
-func (p *PromptTemplate) FormatWithInput(input interface{}) error {
+func NewPromptTemplate(template string, input interface{}) (*PromptTemplate, error) {
 
 	if input == nil {
-		return nil
+		input = map[string]interface{}{}
 	}
 
-	err := p.initTemplateEngine()
+	genericMap := map[string]interface{}{}
+	err := mapstructure.Decode(input, &genericMap)
+	if err != nil {
+		return nil, err
+	}
+	input = genericMap
+
+	promptTemplate := &PromptTemplate{
+		input:    input,
+		template: template,
+	}
+
+	err = promptTemplate.initTemplateEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	return promptTemplate, nil
+}
+
+// Format formats the prompt using the template engine and the provided inputs.
+func (p *PromptTemplate) Format(input interface{}) error {
+
+	if p.templateEngine == nil {
+		return fmt.Errorf("template engine not initialized")
+	}
+
+	if input == nil {
+		input = map[string]interface{}{}
+	}
+
+	input, err := structToMap(input)
 	if err != nil {
 		return err
 	}
 
+	overallMap := mergeMaps(p.input.(map[string]interface{}), input.(map[string]interface{}))
+
 	var buffer bytes.Buffer
-	err = p.templateEngine.Execute(&buffer, input)
+	err = p.templateEngine.Execute(&buffer, overallMap)
 	if err != nil {
 		return err
 	}
@@ -64,6 +68,10 @@ func (p *PromptTemplate) FormatWithInput(input interface{}) error {
 	p.value = buffer.String()
 
 	return nil
+}
+
+func (p *PromptTemplate) Prompt() string {
+	return p.value
 }
 
 func (p *PromptTemplate) initTemplateEngine() error {
@@ -72,7 +80,7 @@ func (p *PromptTemplate) initTemplateEngine() error {
 		return nil
 	}
 
-	templateEngine, err := texttemplate.New("prompt").Parse(p.Template)
+	templateEngine, err := texttemplate.New("prompt").Parse(p.template)
 	if err != nil {
 		return err
 	}
@@ -82,6 +90,19 @@ func (p *PromptTemplate) initTemplateEngine() error {
 	return nil
 }
 
-func (p *PromptTemplate) Prompt() string {
-	return p.value
+func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]interface{} {
+	merged := make(map[string]interface{})
+	for k, v := range m1 {
+		merged[k] = v
+	}
+	for key, value := range m2 {
+		merged[key] = value
+	}
+	return merged
+}
+
+func structToMap(obj interface{}) (map[string]interface{}, error) {
+	genericMap := map[string]interface{}{}
+	mapstructure.Decode(obj, &genericMap)
+	return genericMap, nil
 }

@@ -6,8 +6,7 @@ import (
 
 type Prompt interface {
 	Prompt() string
-	Format() error
-	FormatWithInput(input interface{}) error
+	Format(input interface{}) error
 }
 
 type Llm interface {
@@ -33,17 +32,15 @@ func New(llm Llm, prompt Prompt, decoder decoder.Decoder) *Pipeline {
 
 func (p *Pipeline) Run(input interface{}) (interface{}, error) {
 
-	err := p.prompt.Format()
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.prompt.FormatWithInput(input)
+	err := p.prompt.FormatWithInput(input)
 	if err != nil {
 		return nil, err
 	}
 
 	response, err := p.llm.Completion(p.prompt.Prompt())
+	if err != nil {
+		return nil, err
+	}
 
 	decoded, err := p.decoder(response)
 	if err != nil {
