@@ -5,14 +5,14 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/decoder"
-	"github.com/henomis/lingoose/llm"
+	llmmock "github.com/henomis/lingoose/llm/mock"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {
 
-	llm1 := &llm.LlmMock{}
+	llm1 := &llmmock.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")
 	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), nil)
 
@@ -20,7 +20,7 @@ func main() {
 		First  string
 		Second string
 	}{}
-	llm2 := &llm.JsonLllMock{}
+	llm2 := &llmmock.JsonLllMock{}
 	prompt2, _ := prompt.NewPromptTemplate(
 		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!",
 		map[string]string{

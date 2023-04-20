@@ -1,4 +1,4 @@
-package llm
+package llmmock
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ func (l *LlmMock) Completion(prompt string) (string, error) {
 	return output, nil
 }
 
-func (l *LlmMock) Chat(prompt chat.Chat) (interface{}, error) {
+func (l *LlmMock) Chat(prompt *chat.Chat) (interface{}, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {
@@ -39,7 +39,7 @@ func (l *LlmMock) Chat(prompt chat.Chat) (interface{}, error) {
 	for _, message := range messages {
 		if message.Type == chat.MessageTypeUser {
 			fmt.Printf("User: %s\n", message.Content)
-		} else if message.Type == chat.MessageTypeAI {
+		} else if message.Type == chat.MessageTypeAssistant {
 			fmt.Printf("AI: %s\n", message.Content)
 		} else if message.Type == chat.MessageTypeSystem {
 			fmt.Printf("System: %s\n", message.Content)
@@ -94,7 +94,7 @@ func getRandomStrings(number int) []string {
 	return result
 }
 
-func (l *JsonLllMock) Chat(prompt chat.Chat) (interface{}, error) {
+func (l *JsonLllMock) Chat(prompt *chat.Chat) (interface{}, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {
@@ -104,7 +104,7 @@ func (l *JsonLllMock) Chat(prompt chat.Chat) (interface{}, error) {
 	for _, message := range messages {
 		if message.Type == chat.MessageTypeUser {
 			fmt.Printf("User: %s\n", message.Content)
-		} else if message.Type == chat.MessageTypeAI {
+		} else if message.Type == chat.MessageTypeAssistant {
 			fmt.Printf("AI: %s\n", message.Content)
 		} else if message.Type == chat.MessageTypeSystem {
 			fmt.Printf("System: %s\n", message.Content)

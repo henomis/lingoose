@@ -128,7 +128,7 @@ Final output: grass, lake, fly mountain fly
 |**Templates** | 🟢 READY|
 |**Chat** | 🟢 READY|
 |**Output decoders** | 🟢 READY|
-|**LLM** | 🟡 DEVELOPING|
+|**LLM** | 🟢 READY (OpenAI)|
 |**Pipelines** | 🟢 READY|
 |**Memory** | 🟢 READY|
 

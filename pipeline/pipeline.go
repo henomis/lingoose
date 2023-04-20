@@ -20,7 +20,7 @@ type Prompt interface {
 
 type Llm interface {
 	Completion(string) (string, error)
-	Chat(chat chat.Chat) (interface{}, error)
+	Chat(chat *chat.Chat) (interface{}, error)
 }
 
 type Memory interface {
