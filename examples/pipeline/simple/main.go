@@ -11,44 +11,31 @@ import (
 
 func main() {
 
-	var output string
-	promptTemplate, err := prompt.New(
-		map[string]string{
-			"text": "How are you?",
-		},
-		&output,
-		decoder.NewStringDecoderFn(),
-		newString("{{.text}}"),
-	)
-	if err != nil {
-		panic(err)
-	}
 	llm := &llm.LlmMock{}
-	pipeline1 := pipeline.New(llm, promptTemplate)
+	simpleDecoder := decoder.NewSimpleDecoder()
 
-	var output2 []string
-	promptTemplate2, err := prompt.New(
-		nil,
-		&output2,
-		decoder.NewRegexDecoderFn(`(\w+), (\w+)`),
-		newString(""),
+	prompt1 := prompt.New("ciao come stai?")
+	pipe1 := pipeline.New(llm, prompt1, simpleDecoder)
+
+	prompt2 := prompt.NewPromptTemplate(
+		"basato su '{{.output}}', sto bene {{.saluti}}",
+		map[string]string{
+			"saluti": "ciao",
+		},
 	)
-	if err != nil {
-		panic(err)
+	pipe2 := pipeline.New(llm, prompt2, simpleDecoder)
+
+	ovearallPipe := pipeline.Pipelines{
+		*pipe1,
+		*pipe2,
 	}
-	pipeline2 := pipeline.New(llm, promptTemplate2)
 
-	var pipelines pipeline.Pipelines
-	pipelines = append(pipelines, *pipeline1)
-	pipelines = append(pipelines, *pipeline2)
-
-	result, err := pipelines.Run()
+	response, err := ovearallPipe.Run(nil)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
-	_ = result
 
-	fmt.Printf("%#v", output2)
+	fmt.Println(response)
 
 }
 

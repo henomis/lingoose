@@ -2,44 +2,52 @@ package llm
 
 import (
 	"fmt"
-
-	"github.com/henomis/lingoose/prompt"
-	"github.com/henomis/lingoose/prompt/chat"
+	"math/rand"
+	"strings"
+	"time"
 )
-
-type Llm interface {
-	Completion(prompt *prompt.Prompt) (interface{}, error)
-	Chat(chat chat.Chat) (interface{}, error)
-}
 
 type LlmMock struct {
 }
 
-func (l *LlmMock) Completion(prompt *prompt.Prompt) (interface{}, error) {
-	formattedPrompt, err := prompt.Format()
-	if err != nil {
-		return nil, err
+// getRandomStrings returns a random selection of strings from the data slice
+func getRandomStrings(number int) []string {
+
+	// pre-configured data slice with 30 random english words
+	data := []string{"air", "fly", "ball", "kite", "tree", "grass", "house", "ocean", "river", "lake", "road", "bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer", "window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
+
+	rand.Seed(time.Now().UnixNano())
+
+	// create empty slice
+	result := []string{}
+
+	// append randomly selected strings from data to result
+	for i := 0; i < number; i++ {
+		result = append(result, data[rand.Intn(len(data))])
 	}
-	_ = formattedPrompt
 
-	fmt.Printf("User: %s\n", formattedPrompt)
+	return result
+}
 
-	output := "Fine, thanks."
+func (l *LlmMock) Completion(prompt string) (string, error) {
+	fmt.Printf("User: %s\n", prompt)
+
+	// generate random number between 1 and 5
+	rand.Seed(time.Now().UnixNano())
+	number := rand.Intn(5) + 1
+
+	// get random strings
+	randomStrings := getRandomStrings(number)
+	output := strings.Join(randomStrings, " ")
 
 	fmt.Printf("AI: %s\n", output)
 
 	var llmResponse interface{}
 	_ = llmResponse // llm response
 
-	// decode output
-	err = prompt.OutputDecoder(output).Decode(prompt.Output)
-	if err != nil {
-		return nil, err
-	}
-
-	return llmResponse, err
+	return output, nil
 }
 
-func (l *LlmMock) Chat(chat chat.Chat) (interface{}, error) {
-	return nil, nil
-}
+// func (l *LlmMock) Chat(chat chat.Chat) (interface{}, error) {
+// 	return nil, nil
+// }

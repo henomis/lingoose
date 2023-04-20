@@ -1,61 +1,77 @@
 package pipeline
 
 import (
-	"github.com/henomis/lingoose/llm"
-	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/prompt/decoder"
 )
 
+type Prompt interface {
+	Prompt() string
+	Format() error
+	FormatWithInput(input interface{}) error
+}
+
+type Llm interface {
+	Completion(string) (string, error)
+	// Chat(chat chat.Chat) (interface{}, error)
+}
+
 type Pipeline struct {
-	llm    llm.Llm
-	prompt *prompt.Prompt
+	llm     Llm
+	prompt  Prompt
+	decoder decoder.Decoder
 }
 
 type Pipelines []Pipeline
 
-func New(llm llm.Llm, prompt *prompt.Prompt) *Pipeline {
+func New(llm Llm, prompt Prompt, decoder decoder.Decoder) *Pipeline {
 	return &Pipeline{
-		llm:    llm,
-		prompt: prompt,
+		llm:     llm,
+		prompt:  prompt,
+		decoder: decoder,
 	}
 }
 
-func (p *Pipeline) Run() (interface{}, error) {
-	response, err := p.llm.Completion(p.prompt)
+func (p *Pipeline) Run(input interface{}) (interface{}, error) {
+
+	err := p.prompt.Format()
 	if err != nil {
 		return nil, err
 	}
-	_ = response
 
-	return p.prompt.Output, nil
+	err = p.prompt.FormatWithInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := p.llm.Completion(p.prompt.Prompt())
+
+	decoded, err := p.decoder(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return decoded, nil
+
 }
 
-func (p Pipelines) Run() (interface{}, error) {
+func (p Pipelines) Run(input interface{}) (interface{}, error) {
 	var err error
-	var promptTemplate *prompt.Prompt
-
+	var output interface{}
 	for i, pipeline := range p {
 
 		if i == 0 {
-			promptTemplate = pipeline.prompt
-		} else {
-			promptTemplate, err = prompt.New(
-				p[i-1].prompt.Output,
-				pipeline.prompt.Output,
-				pipeline.prompt.OutputDecoder,
-				pipeline.prompt.Template,
-			)
+			output, err = pipeline.Run(input)
 			if err != nil {
 				return nil, err
 			}
-			p[i].prompt = promptTemplate
-		}
-
-		_, err := pipeline.llm.Completion(promptTemplate)
-		if err != nil {
-			return nil, err
+		} else {
+			output, err = pipeline.Run(output)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 	}
 
-	return p[len(p)-1].prompt.Output, nil
+	return output, nil
 }
