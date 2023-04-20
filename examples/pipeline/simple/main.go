@@ -38,13 +38,13 @@ func main() {
 	)
 	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`), nil)
 
-	ovearallPipe := pipeline.New(
+	pipelineSteps := pipeline.New(
 		pipe1,
 		pipe2,
 		pipe3,
 	)
 
-	response, err := ovearallPipe.Run(nil)
+	response, err := pipelineSteps.Run(nil)
 	if err != nil {
 		fmt.Println(err)
 	}
