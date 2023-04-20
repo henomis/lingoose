@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/henomis/lingoose/llm"
+	"github.com/henomis/lingoose/memory"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/prompt/decoder"
@@ -11,9 +13,11 @@ import (
 
 func main() {
 
+	cache := memory.NewSimpleMemory()
+
 	llm1 := &llm.LlmMock{}
 	prompt1 := prompt.New("ciao come stai?")
-	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), nil)
+	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), cache)
 
 	myout := &struct {
 		First  string
@@ -26,16 +30,16 @@ func main() {
 			"saluti": "ciao",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), nil)
+	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), cache)
 
 	var values []string
 	prompt3, _ := prompt.NewPromptTemplate(
-		"basato su '{{.First}}' e soprattutto su '{{.Second}}', sto bene {{.saluti}}",
+		"basato su '{{.First}}' e soprattutto su '{{.Second}}', sto bene {{.saluti}}. Primo passo: {{.step1.output}}",
 		map[string]string{
 			"saluti": "ciao",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`), nil)
+	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`), cache)
 
 	ovearallPipe := pipeline.New(
 		pipe1,
@@ -49,4 +53,7 @@ func main() {
 	}
 
 	fmt.Printf("%#v\n", response)
+	fmt.Println("---Memory---")
+	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
+	fmt.Printf("%s\n", string(dump))
 }
