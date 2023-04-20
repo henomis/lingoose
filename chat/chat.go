@@ -14,9 +14,9 @@ type Prompt interface {
 type MessageType string
 
 const (
-	MessageTypeSystem MessageType = "system"
-	MessageTypeUser   MessageType = "user"
-	MessageTypeAI     MessageType = "ai"
+	MessageTypeSystem    MessageType = "system"
+	MessageTypeUser      MessageType = "user"
+	MessageTypeAssistant MessageType = "assistant"
 )
 
 type PromptMessage struct {

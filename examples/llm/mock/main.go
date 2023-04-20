@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/henomis/lingoose/llm"
+	llmmock "github.com/henomis/lingoose/llm/mock"
 	"github.com/henomis/lingoose/prompt"
 )
 
@@ -9,7 +9,7 @@ func main() {
 
 	prompt := prompt.New("How are you?")
 
-	llm := llm.LlmMock{}
+	llm := llmmock.LlmMock{}
 
 	output, err := llm.Completion(prompt.Prompt())
 	if err != nil {
