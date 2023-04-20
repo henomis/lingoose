@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"github.com/henomis/lingoose/prompt/decoder"
+	promptdecoder "github.com/henomis/lingoose/prompt/decoder"
 )
 
 type Prompt interface {
@@ -14,25 +15,40 @@ type Llm interface {
 	// Chat(chat chat.Chat) (interface{}, error)
 }
 
-type Pipeline struct {
+type PipelineStep struct {
 	llm     Llm
 	prompt  Prompt
+	output  interface{}
 	decoder decoder.Decoder
 }
 
-type Pipelines []Pipeline
+type Pipeline []*PipelineStep
 
-func New(llm Llm, prompt Prompt, decoder decoder.Decoder) *Pipeline {
-	return &Pipeline{
+func New(steps ...*PipelineStep) Pipeline {
+	return steps
+}
+
+func NewStep(llm Llm, prompt Prompt, output interface{}, decoder decoder.Decoder) *PipelineStep {
+
+	if decoder == nil {
+		decoder = promptdecoder.NewDefaultDecoder()
+	}
+
+	if output == nil {
+		output = map[string]interface{}{}
+	}
+
+	return &PipelineStep{
 		llm:     llm,
 		prompt:  prompt,
+		output:  output,
 		decoder: decoder,
 	}
 }
 
-func (p *Pipeline) Run(input interface{}) (interface{}, error) {
+func (p *PipelineStep) Run(input interface{}) (interface{}, error) {
 
-	err := p.prompt.FormatWithInput(input)
+	err := p.prompt.Format(input)
 	if err != nil {
 		return nil, err
 	}
@@ -42,16 +58,16 @@ func (p *Pipeline) Run(input interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	decoded, err := p.decoder(response)
+	p.output, err = p.decoder(response, p.output)
 	if err != nil {
 		return nil, err
 	}
 
-	return decoded, nil
+	return p.output, nil
 
 }
 
-func (p Pipelines) Run(input interface{}) (interface{}, error) {
+func (p Pipeline) Run(input interface{}) (interface{}, error) {
 	var err error
 	var output interface{}
 	for i, pipeline := range p {

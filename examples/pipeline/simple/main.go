@@ -11,34 +11,42 @@ import (
 
 func main() {
 
-	llm := &llm.LlmMock{}
-	simpleDecoder := decoder.NewSimpleDecoder()
-
+	llm1 := &llm.LlmMock{}
 	prompt1 := prompt.New("ciao come stai?")
-	pipe1 := pipeline.New(llm, prompt1, simpleDecoder)
+	pipe1 := pipeline.NewStep(llm1, prompt1, nil, decoder.NewDefaultDecoder())
 
+	myout := &struct {
+		First  string
+		Second string
+	}{}
+	llm2 := &llm.JsonLllMock{}
 	prompt2, _ := prompt.NewPromptTemplate(
 		"basato su '{{.output}}', sto bene {{.saluti}}",
 		map[string]string{
 			"saluti": "ciao",
 		},
 	)
-	pipe2 := pipeline.New(llm, prompt2, simpleDecoder)
+	pipe2 := pipeline.NewStep(llm2, prompt2, myout, decoder.NewJSONDecoder())
 
-	ovearallPipe := pipeline.Pipelines{
-		*pipe1,
-		*pipe2,
-	}
+	var values []string
+	prompt3, _ := prompt.NewPromptTemplate(
+		"basato su '{{.First}}' e soprattutto su '{{.Second}}', sto bene {{.saluti}}",
+		map[string]string{
+			"saluti": "ciao",
+		},
+	)
+	pipe3 := pipeline.NewStep(llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`))
+
+	ovearallPipe := pipeline.New(
+		pipe1,
+		pipe2,
+		pipe3,
+	)
 
 	response, err := ovearallPipe.Run(nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(response)
-
-}
-
-func newString(s string) *string {
-	return &s
+	fmt.Printf("%#v\n", response)
 }

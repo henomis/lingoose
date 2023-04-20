@@ -80,7 +80,7 @@ func (p *PromptTemplate) initTemplateEngine() error {
 		return nil
 	}
 
-	templateEngine, err := texttemplate.New("prompt").Parse(p.template)
+	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(p.template)
 	if err != nil {
 		return err
 	}

@@ -22,7 +22,7 @@ func main() {
 		panic(err)
 	}
 	llm := &llm.LlmMock{}
-	pipeline1 := pipeline.New(llm, promptTemplate)
+	pipeline1 := pipeline.NewStep(llm, promptTemplate)
 
 	var output2 []string
 	promptTemplate2, err := prompt.New(
@@ -34,9 +34,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	pipeline2 := pipeline.New(llm, promptTemplate2)
+	pipeline2 := pipeline.NewStep(llm, promptTemplate2)
 
-	var pipelines pipeline.Pipelines
+	var pipelines pipeline.Pipeline
 	pipelines = append(pipelines, *pipeline1)
 	pipelines = append(pipelines, *pipeline2)
 

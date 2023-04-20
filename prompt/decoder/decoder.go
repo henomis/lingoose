@@ -1,81 +1,45 @@
 package decoder
 
-type Decoder func(string) (interface{}, error)
+import (
+	"encoding/json"
+	"regexp"
+)
 
-func NewSimpleDecoder() Decoder {
-	return func(s string) (interface{}, error) {
-		return map[string]string{
-			"output": s,
-		}, nil
+type Decoder func(string, interface{}) (interface{}, error)
+
+func NewDefaultDecoder() Decoder {
+	return func(input string, output interface{}) (interface{}, error) {
+		output = map[string]interface{}{
+			"output": input,
+		}
+		return output, nil
 	}
 }
 
-// var (
-// 	ErrInvalidType = fmt.Errorf("invalid type")
-// )
+func NewJSONDecoder() Decoder {
+	return func(input string, output interface{}) (interface{}, error) {
+		err := json.Unmarshal([]byte(input), output)
+		return output, err
+	}
+}
 
-// type Decoder interface {
-// 	Decode(interface{}) error
-// }
+func NewRegExDecoder(regex string) Decoder {
+	return func(input string, output interface{}) (interface{}, error) {
+		//use regex to parse input
+		re, err := regexp.Compile(regex) // Prepare our regex
+		if err != nil {
+			return nil, err
+		}
+		matches := re.FindStringSubmatch(input)
 
-// type DecoderFn func(string) Decoder
+		output = []string{}
+		for i, match := range matches {
+			if i == 0 {
+				continue
+			}
+			output = append(output.([]string), match)
+		}
 
-// func NewJsonDecoderFn() DecoderFn {
-// 	return func(s string) Decoder {
-// 		return json.NewDecoder(strings.NewReader(s))
-// 	}
-// }
-
-// type stringDecoder string
-
-// func (d *stringDecoder) Decode(v interface{}) error {
-
-// 	_, ok := v.(*string)
-// 	if !ok {
-// 		return ErrInvalidType
-// 	}
-
-// 	*v.(*string) = string(*d)
-// 	return nil
-// }
-
-// func NewStringDecoderFn() DecoderFn {
-// 	return func(s string) Decoder {
-// 		return (*stringDecoder)(&s)
-// 	}
-// }
-
-// type regexDecoder struct {
-// 	regex string
-// 	value string
-// }
-
-// func (d *regexDecoder) Decode(v interface{}) error {
-
-// 	_, ok := v.(*[]string)
-// 	if !ok {
-// 		return ErrInvalidType
-// 	}
-
-// 	re := regexp.MustCompile(d.regex) // Prepare our regex
-// 	matches := re.FindStringSubmatch(d.value)
-
-// 	for i, match := range matches {
-// 		if i == 0 {
-// 			continue
-// 		}
-// 		*v.(*[]string) = append(*v.(*[]string), match)
-// 		i++
-// 	}
-
-// 	return nil
-// }
-
-// func NewRegexDecoderFn(regex string) DecoderFn {
-// 	return func(s string) Decoder {
-// 		return &regexDecoder{
-// 			regex: regex,
-// 			value: s,
-// 		}
-// 	}
-// }
+		return output, nil
+	}
+}

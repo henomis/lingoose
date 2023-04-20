@@ -34,7 +34,7 @@ func (l *LlmMock) Completion(prompt string) (string, error) {
 
 	// generate random number between 1 and 5
 	rand.Seed(time.Now().UnixNano())
-	number := rand.Intn(5) + 1
+	number := rand.Intn(3) + 3
 
 	// get random strings
 	randomStrings := getRandomStrings(number)
@@ -51,3 +51,24 @@ func (l *LlmMock) Completion(prompt string) (string, error) {
 // func (l *LlmMock) Chat(chat chat.Chat) (interface{}, error) {
 // 	return nil, nil
 // }
+
+type JsonLllMock struct{}
+
+func (l *JsonLllMock) Completion(prompt string) (string, error) {
+	fmt.Printf("User: %s\n", prompt)
+
+	// generate random number between 1 and 5
+	rand.Seed(time.Now().UnixNano())
+
+	// get random strings
+
+	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
+		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
+
+	fmt.Printf("AI: %s\n", output)
+
+	var llmResponse interface{}
+	_ = llmResponse // llm response
+
+	return output, nil
+}
