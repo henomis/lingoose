@@ -7,14 +7,14 @@ import (
 
 	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm"
-	"github.com/henomis/lingoose/memory"
+	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {
 
-	cache := memory.NewSimpleMemory()
+	cache := ram.New()
 
 	llm1 := &llm.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")

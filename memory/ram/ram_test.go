@@ -1,4 +1,4 @@
-package memory
+package ram
 
 import (
 	"reflect"
@@ -47,7 +47,7 @@ func TestSimpleMemory_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &SimpleMemory{
+			m := &Ram{
 				memory: tt.fields.memory,
 			}
 			if got := m.Get(tt.args.key); !reflect.DeepEqual(got, tt.want) {
@@ -88,7 +88,7 @@ func TestSimpleMemory_Set(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &SimpleMemory{
+			m := &Ram{
 				memory: tt.fields.memory,
 			}
 			if err := m.Set(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
@@ -123,7 +123,7 @@ func TestSimpleMemory_All(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &SimpleMemory{
+			m := &Ram{
 				memory: tt.fields.memory,
 			}
 			if got := m.All(); !reflect.DeepEqual(got, tt.want) {
@@ -175,7 +175,7 @@ func TestSimpleMemory_Delete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &SimpleMemory{
+			m := &Ram{
 				memory: tt.fields.memory,
 			}
 			if err := m.Delete(tt.args.key); (err != nil) != tt.wantErr {
@@ -207,7 +207,7 @@ func TestSimpleMemory_Clear(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &SimpleMemory{
+			m := &Ram{
 				memory: tt.fields.memory,
 			}
 			if err := m.Clear(); (err != nil) != tt.wantErr {
