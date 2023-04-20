@@ -33,8 +33,8 @@ func NewJSONDecoder() Decoder {
 
 func NewRegExDecoder(regex string) Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
-		//use regex to parse input
-		re, err := regexp.Compile(regex) // Prepare our regex
+
+		re, err := regexp.Compile(regex)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 		}
@@ -45,10 +45,8 @@ func NewRegExDecoder(regex string) Decoder {
 			if i == 0 {
 				continue
 			}
-			output = append(output.([]string), match)
+			outputMatches = append(outputMatches, match)
 		}
-
-		output = outputMatches
 
 		return outputMatches, nil
 	}
