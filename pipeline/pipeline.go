@@ -73,6 +73,9 @@ func NewStep(
 	}
 }
 
+// Run execute the step and return the output.
+// The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
+// If the step has a memory, the output is stored in the memory.
 func (p *Step) Run(input interface{}) (interface{}, error) {
 
 	if input == nil {
@@ -114,6 +117,7 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 
 }
 
+// Run chains the steps of the pipeline and returns the output of the last step.
 func (p Pipeline) Run(input interface{}) (interface{}, error) {
 	var err error
 	var output interface{}

@@ -13,6 +13,7 @@ var (
 
 type Decoder func(string, interface{}) (interface{}, error)
 
+// NewDefaultDecoder is the default decoder that returns a map with a single key "output"
 func NewDefaultDecoder() Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
 		return map[string]interface{}{
@@ -21,6 +22,7 @@ func NewDefaultDecoder() Decoder {
 	}
 }
 
+// NewJSONDecoder is a decoder that decodes a JSON string into a struct
 func NewJSONDecoder() Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
 		err := json.Unmarshal([]byte(input), output)
@@ -31,6 +33,7 @@ func NewJSONDecoder() Decoder {
 	}
 }
 
+// NewRegExDecoder is a decoder that decodes a string into a slice of strings using a regular expression
 func NewRegExDecoder(regex string) Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
 
