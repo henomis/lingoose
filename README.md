@@ -55,8 +55,9 @@ func main() {
 		Second string
 	}{}
 	llm2 := &llm.JsonLllMock{}
-	prompt2, _ := prompt.NewTemplate(
-		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!",
+	prompt2, _ := prompt.NewPromptTemplate(
+		`It seems you are a random word generator. Your message '{{.output}}' is nonsense. 
+		Anyway I'm fine {{.value}}!`,
 		map[string]string{
 			"value": "thanks",
 		},
@@ -64,13 +65,16 @@ func main() {
 	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), cache)
 
 	var values []string
-	prompt3, _ := prompt.NewTemplate(
-		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.First}}' and second:'{{.Second}}'. {{.value}}\n\tHowever your first message was: '{{.step1.output}}'",
+	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
+	prompt3, _ := prompt.NewPromptTemplate(
+		`Oh! It seems you are a random JSON word generator. You generated two strings, 
+		first:'{{.First}}' and second:'{{.Second}}'. {{.value}}\n\tHowever your first 
+		message was: '{{.step1.output}}'`,
 		map[string]string{
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`), cache)
+	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, regexDecoder, cache)
 
 	pipelineSteps := pipeline.New(
 		pipe1,
@@ -92,7 +96,7 @@ func main() {
 
 Running this example you will get the following output:
 
-```shell
+```
 User: Hello how are you?
 AI: grass television door television
 User: It seems you are a random word generator. Your message 'grass television door television' is nonsense. Anyway I'm fine thanks!
