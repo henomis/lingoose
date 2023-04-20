@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/henomis/lingoose/decoder"
@@ -19,23 +20,46 @@ func main() {
 	cache := ram.New()
 
 	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep("step1", llmOpenAI, prompt1, nil, decoder.NewDefaultDecoder(), cache)
+	pipe1 := pipeline.NewStep(
+		"step1",
+		llmOpenAI,
+		prompt1,
+		nil,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
 
 	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\nTranslate it in {{.language}}!",
+		`Consider the following sentence.\n\nSentence:\n{{.output}}\n\n
+		Translate it in {{.language}}!`,
 		map[string]string{
 			"language": "italian",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llmOpenAI, prompt2, nil, decoder.NewDefaultDecoder(), nil)
+	pipe2 := pipeline.NewStep(
+		"step2",
+		llmOpenAI,
+		prompt2,
+		nil,
+		decoder.NewDefaultDecoder(),
+		nil,
+	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}\n\nTranslate it in {{.language}}!",
+		`Consider the following sentence.\n\nSentence:\n{{.step1.output}}
+		\n\nTranslate it in {{.language}}!`,
 		map[string]string{
 			"language": "spanish",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llmOpenAI, prompt3, nil, decoder.NewDefaultDecoder(), cache)
+	pipe3 := pipeline.NewStep(
+		"step3",
+		llmOpenAI,
+		prompt3,
+		nil,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
 
 	pipelineSteps := pipeline.New(
 		pipe1,
@@ -48,5 +72,9 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("\nFinal output: %#v\n", response)
+	fmt.Printf("\n\nFinal output: %#v\n\n", response)
+
+	fmt.Println("---Memory---")
+	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
+	fmt.Printf("%s\n", string(dump))
 }

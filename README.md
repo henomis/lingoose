@@ -2,30 +2,29 @@
 
 [![Build Status](https://github.com/henomis/lingoose/actions/workflows/test.yml/badge.svg)](https://github.com/henomis/lingoose/actions/workflows/test.yml) [![GoDoc](https://godoc.org/github.com/henomis/lingoose?status.svg)](https://godoc.org/github.com/henomis/lingoose) [![Go Report Card](https://goreportcard.com/badge/github.com/henomis/lingoose)](https://goreportcard.com/report/github.com/henomis/lingoose) [![GitHub release](https://img.shields.io/github/release/henomis/lingoose.svg)](https://github.com/henomis/lingoose/releases)
 
-**LinGoose** is a Go framework for creating LLM (Language Learning Machine) pipelines.
-> :warning: It is a work in progress, and is not yet ready for production use. **API are unstable. Do not use in production.**
+**LinGoose** aims to be a complete framework for creating LLM apps. :robot: :gear:
 
 # Overview
-**LinGoose** aims to be a complete framework for creating LLM apps. :robot: :gear:
+**LinGoose** is a powerful Go framework for developing Large Language Model (LLM) based applications using pipelines. It is designed to be a complete solution and provides multiple components, including Prompts, Templates, Chat, Output Decoders, LLM, Pipelines, and Memory. With **LinGoose**, you can interact with LLM AI through prompts and generate complex templates. Additionally, it includes a chat feature, allowing you to create chatbots. The Output Decoders component enables you to extract specific information from the output of the LLM, while the LLM interface allows you to send prompts to various AI, such as the ones provided by OpenAI. You can chain multiple LMM steps together using Pipelines and store the output of each step in Memory for later retrieval.
 
 # Components
 **LinGoose** is composed of multiple components, each one with its own purpose.
 
-| Component | Description |
-| --- | --- |
-|**Prompts** | Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. |
-|**Templates** | Templates are used to generate prompts formatting a generic input using a text template. |
-|**Chat** | Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot. |
-|**Output decoders** | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. |
-|**LLM** | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. |
-|**Pipelines** | Pipelines are used to chain multiple LMM steps together. |
-|**Memory** | Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. |
+| Component | Package|Description |
+| --- | --- | ---|
+|**Prompt** | [prompt](prompt/)| Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. |
+|**Prompt Template** | [prompt](prompt/)| Templates are used to generate prompts formatting a generic input using Go [text/template](https://golang.org/pkg/text/template/) package. |
+|**Chat Prompt** | [chat](chat/) | Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot. |
+|**Output decoders** | [decoder](decoder/) | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. |
+|**LLMs** |[llm/openai](llm/openai/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. |
+|**Pipelines** | [pipeline](pipeline/)|Pipelines are used to chain multiple LMM steps together. |
+|**Memory** | [memory/ram](memory/ram/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. |
 
 # Usage
 
 Please refer to the [examples directory](examples/) to see other examples. However, here is an example of what **LinGoose** is capable of:
 
-_Talk is cheap. Show me the code._ - Linus Torvalds
+_Talk is cheap. Show me the [code](examples/)._ - Linus Torvalds
 
 ```go
 package main
@@ -33,10 +32,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/henomis/lingoose/decoder"
-	"github.com/henomis/lingoose/llm"
+	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
@@ -44,37 +42,53 @@ import (
 
 func main() {
 
+	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
+	if err != nil {
+		panic(err)
+	}
 	cache := ram.New()
 
-	llm1 := &llm.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), cache)
+	pipe1 := pipeline.NewStep(
+		"step1",
+		llmOpenAI,
+		prompt1,
+		nil,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
 
-	myout := &struct {
-		First  string
-		Second string
-	}{}
-	llm2 := &llm.JsonLllMock{}
 	prompt2, _ := prompt.NewPromptTemplate(
-		`It seems you are a random word generator. Your message '{{.output}}' is nonsense. 
-		Anyway I'm fine {{.value}}!`,
+		`Consider the following sentence.\n\nSentence:\n{{.output}}\n\n
+		Translate it in {{.language}}!`,
 		map[string]string{
-			"value": "thanks",
+			"language": "italian",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), cache)
+	pipe2 := pipeline.NewStep(
+		"step2",
+		llmOpenAI,
+		prompt2,
+		nil,
+		decoder.NewDefaultDecoder(),
+		nil,
+	)
 
-	var values []string
-	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
-		`Oh! It seems you are a random JSON word generator. You generated two strings, 
-		first:'{{.First}}' and second:'{{.Second}}'. {{.value}}\n\tHowever your first 
-		message was: '{{.step1.output}}'`,
+		`Consider the following sentence.\n\nSentence:\n{{.step1.output}}
+		\n\nTranslate it in {{.language}}!`,
 		map[string]string{
-			"value": "Bye!",
+			"language": "spanish",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, regexDecoder, cache)
+	pipe3 := pipeline.NewStep(
+		"step3",
+		llmOpenAI,
+		prompt3,
+		nil,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
 
 	pipelineSteps := pipeline.New(
 		pipe1,
@@ -87,55 +101,45 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Final output: %s\n", strings.Join(response.([]string), ", "))
+	fmt.Printf("\n\nFinal output: %#v\n\n", response)
+
 	fmt.Println("---Memory---")
 	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
 	fmt.Printf("%s\n", string(dump))
 }
 ```
 
-Running this example you will get the following output:
+Running this example will produce the following output:
 
 ```
-User: Hello how are you?
-AI: grass television door television
-User: It seems you are a random word generator. Your message 'grass television door television' is nonsense. Anyway I'm fine thanks!
-AI: {"first": "wind", "second": "flower"}
-User: Oh! It seems you are a random JSON word generator. You generated two strings, first:'wind' and second:'flower'. Bye!
-        However your first message was: 'grass television door television'
-AI: grass lake fly mountain fly
-Final output: grass, lake, fly mountain fly
+---USER---
+Hello how are you?
+---AI---
+I'm doing well, thank you. How about you?
+---USER---
+Consider the following sentence.\n\nSentence:\nI'm doing well, thank you. How about you?\n\n
+                Translate it in italian!
+---AI---
+Sto bene, grazie. E tu come stai?
+---USER---
+Consider the following sentence.\n\nSentence:\nI'm doing well, thank you. How about you?
+                \n\nTranslate it in spanish!
+---AI---
+Estoy bien, gracias. ¿Y tú
+
+
+Final output: map[string]interface {}{"output":"Estoy bien, gracias. ¿Y tú"}
+
 ---Memory---
 {
   "step1": {
-    "output": "grass television door television"
+    "output": "I'm doing well, thank you. How about you?"
   },
-  "step2": {
-    "First": "wind",
-    "Second": "flower"
-  },
-  "step3": [
-    "grass",
-    "lake",
-    "fly mountain fly"
-  ]
+  "step3": {
+    "output": "Estoy bien, gracias. ¿Y tú"
+  }
 }
 ```
-
-
-
-# Current development status
-
-| Component | Status |
-| --- | --- |
-|**Prompts** | 🟢 READY|
-|**Templates** | 🟢 READY|
-|**Chat** | 🟢 READY|
-|**Output decoders** | 🟢 READY|
-|**LLM** | 🟢 READY (OpenAI)|
-|**Pipelines** | 🟢 READY|
-|**Memory** | 🟢 READY|
-
 
 # Installation
 Be sure to have a working Go environment, then run the following command:
