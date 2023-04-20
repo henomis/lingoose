@@ -2,24 +2,32 @@ package decoder
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"regexp"
+)
+
+var (
+	ErrDecoding = errors.New("decoding output error")
 )
 
 type Decoder func(string, interface{}) (interface{}, error)
 
 func NewDefaultDecoder() Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
-		output = map[string]interface{}{
+		return map[string]interface{}{
 			"output": input,
-		}
-		return output, nil
+		}, nil
 	}
 }
 
 func NewJSONDecoder() Decoder {
 	return func(input string, output interface{}) (interface{}, error) {
 		err := json.Unmarshal([]byte(input), output)
-		return output, err
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		}
+		return output, nil
 	}
 }
 
@@ -28,11 +36,11 @@ func NewRegExDecoder(regex string) Decoder {
 		//use regex to parse input
 		re, err := regexp.Compile(regex) // Prepare our regex
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 		}
 		matches := re.FindStringSubmatch(input)
 
-		output = []string{}
+		outputMatches := []string{}
 		for i, match := range matches {
 			if i == 0 {
 				continue
@@ -40,6 +48,8 @@ func NewRegExDecoder(regex string) Decoder {
 			output = append(output.([]string), match)
 		}
 
-		return output, nil
+		output = outputMatches
+
+		return outputMatches, nil
 	}
 }

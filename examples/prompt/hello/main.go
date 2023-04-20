@@ -15,25 +15,19 @@ func main() {
 	var input Inputs
 	input.Name = "world"
 
-	promptTemplate, err := prompt.New(
+	promptTemplate, err := prompt.NewPromptTemplate(
+		"Hello {{.Name}}. How are {{.you}}?",
 		input,
-		nil,
-		nil,
-		newString("Hello {{.Name}}"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	output, err := promptTemplate.Format()
+	err = promptTemplate.Format(map[string]interface{}{"you": "you"})
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(output)
+	fmt.Println(promptTemplate.Prompt())
 
-}
-
-func newString(s string) *string {
-	return &s
 }

@@ -11,7 +11,7 @@ func main() {
 
 	llm := llm.LlmMock{}
 
-	output, err := llm.Completion(prompt)
+	output, err := llm.Completion(prompt.Prompt())
 	if err != nil {
 		panic(err)
 	}

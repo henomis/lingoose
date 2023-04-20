@@ -8,15 +8,7 @@ import (
 
 func main() {
 
-	promptTemplate, err := prompt.New("Hello World", nil, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-	output, _ := promptTemplate.Format()
-	fmt.Println(output)
+	prompt1 := prompt.New("Hello World")
+	fmt.Println(prompt1.Prompt())
 
-}
-
-func newString(s string) *string {
-	return &s
 }

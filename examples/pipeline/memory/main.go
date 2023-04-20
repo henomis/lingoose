@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm"
 	"github.com/henomis/lingoose/memory"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
-	"github.com/henomis/lingoose/prompt/decoder"
 )
 
 func main() {

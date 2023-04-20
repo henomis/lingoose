@@ -24,7 +24,7 @@ func NewPromptTemplate(template string, input interface{}) (*PromptTemplate, err
 	genericMap := map[string]interface{}{}
 	err := mapstructure.Decode(input, &genericMap)
 	if err != nil {
-		return nil, err
+		return nil, ErrDecoding
 	}
 	input = genericMap
 
@@ -35,7 +35,7 @@ func NewPromptTemplate(template string, input interface{}) (*PromptTemplate, err
 
 	err = promptTemplate.initTemplateEngine()
 	if err != nil {
-		return nil, err
+		return nil, ErrTemplateEngine
 	}
 
 	return promptTemplate, nil
@@ -45,7 +45,10 @@ func NewPromptTemplate(template string, input interface{}) (*PromptTemplate, err
 func (p *PromptTemplate) Format(input interface{}) error {
 
 	if p.templateEngine == nil {
-		return fmt.Errorf("template engine not initialized")
+		err := p.initTemplateEngine()
+		if err != nil {
+			return ErrTemplateEngine
+		}
 	}
 
 	if input == nil {
@@ -54,7 +57,7 @@ func (p *PromptTemplate) Format(input interface{}) error {
 
 	input, err := structToMap(input)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
 	overallMap := mergeMaps(p.input.(map[string]interface{}), input.(map[string]interface{}))
@@ -62,7 +65,7 @@ func (p *PromptTemplate) Format(input interface{}) error {
 	var buffer bytes.Buffer
 	err = p.templateEngine.Execute(&buffer, overallMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
 	}
 
 	p.value = buffer.String()
@@ -82,7 +85,7 @@ func (p *PromptTemplate) initTemplateEngine() error {
 
 	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(p.template)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
 	}
 
 	p.templateEngine = templateEngine

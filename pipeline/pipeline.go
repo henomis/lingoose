@@ -1,9 +1,16 @@
 package pipeline
 
 import (
-	"github.com/henomis/lingoose/prompt/decoder"
-	promptdecoder "github.com/henomis/lingoose/prompt/decoder"
+	"errors"
+	"fmt"
+
+	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/decoder"
 	"github.com/mitchellh/mapstructure"
+)
+
+var (
+	ErrDecoding = errors.New("decoding input error")
 )
 
 type Prompt interface {
@@ -13,16 +20,18 @@ type Prompt interface {
 
 type Llm interface {
 	Completion(string) (string, error)
-	// Chat(chat chat.Chat) (interface{}, error)
+	Chat(chat chat.Chat) (interface{}, error)
 }
 
 type Memory interface {
 	Get(key string) interface{}
 	Set(key string, value interface{}) error
 	All() map[string]interface{}
+	Delete(key string) error
+	Clear() error
 }
 
-type PipelineStep struct {
+type Step struct {
 	name    string
 	llm     Llm
 	prompt  Prompt
@@ -31,9 +40,9 @@ type PipelineStep struct {
 	memory  Memory
 }
 
-type Pipeline []*PipelineStep
+type Pipeline []*Step
 
-func New(steps ...*PipelineStep) Pipeline {
+func New(steps ...*Step) Pipeline {
 	return steps
 }
 
@@ -42,29 +51,29 @@ func NewStep(
 	llm Llm,
 	prompt Prompt,
 	output interface{},
-	decoder decoder.Decoder,
+	outputDecoder decoder.Decoder,
 	memory Memory,
-) *PipelineStep {
+) *Step {
 
-	if decoder == nil {
-		decoder = promptdecoder.NewDefaultDecoder()
+	if outputDecoder == nil {
+		outputDecoder = decoder.NewDefaultDecoder()
 	}
 
 	if output == nil {
 		output = map[string]interface{}{}
 	}
 
-	return &PipelineStep{
+	return &Step{
 		name:    name,
 		llm:     llm,
 		prompt:  prompt,
 		output:  output,
-		decoder: decoder,
+		decoder: outputDecoder,
 		memory:  memory,
 	}
 }
 
-func (p *PipelineStep) Run(input interface{}) (interface{}, error) {
+func (p *Step) Run(input interface{}) (interface{}, error) {
 
 	if input == nil {
 		input = map[string]interface{}{}
@@ -72,7 +81,7 @@ func (p *PipelineStep) Run(input interface{}) (interface{}, error) {
 
 	input, err := structToMap(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
 	if p.memory != nil {
@@ -91,7 +100,7 @@ func (p *PipelineStep) Run(input interface{}) (interface{}, error) {
 
 	p.output, err = p.decoder(response, p.output)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
 	if p.memory != nil {

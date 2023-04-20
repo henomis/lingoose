@@ -3,16 +3,16 @@ package main
 import (
 	"fmt"
 
+	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
-	"github.com/henomis/lingoose/prompt/decoder"
 )
 
 func main() {
 
 	llm1 := &llm.LlmMock{}
-	prompt1 := prompt.New("ciao come stai?")
+	prompt1 := prompt.New("Hello how are you?")
 	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), nil)
 
 	myout := &struct {
@@ -21,18 +21,18 @@ func main() {
 	}{}
 	llm2 := &llm.JsonLllMock{}
 	prompt2, _ := prompt.NewPromptTemplate(
-		"basato su '{{.output}}', sto bene {{.saluti}}",
+		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!",
 		map[string]string{
-			"saluti": "ciao",
+			"value": "thanks",
 		},
 	)
 	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), nil)
 
 	var values []string
 	prompt3, _ := prompt.NewPromptTemplate(
-		"basato su '{{.First}}' e soprattutto su '{{.Second}}', sto bene {{.saluti}}",
+		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.First}}' and second:'{{.Second}}'. {{.value}}",
 		map[string]string{
-			"saluti": "ciao",
+			"value": "Bye!",
 		},
 	)
 	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`), nil)

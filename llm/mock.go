@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/henomis/lingoose/chat"
 )
 
 type LlmMock struct {
@@ -12,6 +14,37 @@ type LlmMock struct {
 
 func (l *LlmMock) Completion(prompt string) (string, error) {
 	fmt.Printf("User: %s\n", prompt)
+
+	rand.Seed(time.Now().UnixNano())
+	number := rand.Intn(3) + 3
+
+	randomStrings := getRandomStrings(number)
+	output := strings.Join(randomStrings, " ")
+
+	fmt.Printf("AI: %s\n", output)
+
+	var llmResponse interface{}
+	_ = llmResponse
+
+	return output, nil
+}
+
+func (l *LlmMock) Chat(prompt chat.Chat) (interface{}, error) {
+
+	messages, err := prompt.ToMessages()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, message := range messages {
+		if message.Type == chat.MessageTypeUser {
+			fmt.Printf("User: %s\n", message.Content)
+		} else if message.Type == chat.MessageTypeAI {
+			fmt.Printf("AI: %s\n", message.Content)
+		} else if message.Type == chat.MessageTypeSystem {
+			fmt.Printf("System: %s\n", message.Content)
+		}
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	number := rand.Intn(3) + 3
@@ -59,4 +92,34 @@ func getRandomStrings(number int) []string {
 	}
 
 	return result
+}
+
+func (l *JsonLllMock) Chat(prompt chat.Chat) (interface{}, error) {
+
+	messages, err := prompt.ToMessages()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, message := range messages {
+		if message.Type == chat.MessageTypeUser {
+			fmt.Printf("User: %s\n", message.Content)
+		} else if message.Type == chat.MessageTypeAI {
+			fmt.Printf("AI: %s\n", message.Content)
+		} else if message.Type == chat.MessageTypeSystem {
+			fmt.Printf("System: %s\n", message.Content)
+		}
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
+	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
+		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
+
+	fmt.Printf("AI: %s\n", output)
+
+	var llmResponse interface{}
+	_ = llmResponse
+
+	return output, nil
 }

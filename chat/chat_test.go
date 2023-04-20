@@ -8,6 +8,17 @@ import (
 )
 
 func TestChat_ToMessages(t *testing.T) {
+
+	prompt1, _ := prompt.NewPromptTemplate(
+		"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
+		map[string]string{
+			"input_language":  "English",
+			"output_language": "Spanish",
+		},
+	)
+
+	prompt2 := prompt.New("What is your name?")
+
 	type fields struct {
 		PromptMessages PromptMessages
 	}
@@ -22,23 +33,12 @@ func TestChat_ToMessages(t *testing.T) {
 			fields: fields{
 				PromptMessages: PromptMessages{
 					{
-						Type: MessageTypeSystem,
-						Prompt: &prompt.Prompt{
-							Input: map[string]interface{}{
-								"input_language":  "English",
-								"output_language": "Spanish",
-							},
-							Template: newString("You are a helpful assistant that translates {{.input_language}} to {{.output_language}}."),
-						},
+						Type:   MessageTypeSystem,
+						Prompt: prompt1,
 					},
 					{
-						Type: MessageTypeUser,
-						Prompt: &prompt.Prompt{
-							Input: map[string]interface{}{
-								"text": "I love programming.",
-							},
-							Template: newString("{{.text}}"),
-						},
+						Type:   MessageTypeUser,
+						Prompt: prompt2,
 					},
 				},
 			},
@@ -49,7 +49,7 @@ func TestChat_ToMessages(t *testing.T) {
 				},
 				{
 					Type:    MessageTypeUser,
-					Content: "I love programming.",
+					Content: "What is your name?",
 				},
 			},
 			wantErr: false,
@@ -70,8 +70,4 @@ func TestChat_ToMessages(t *testing.T) {
 			}
 		})
 	}
-}
-
-func newString(s string) *string {
-	return &s
 }
