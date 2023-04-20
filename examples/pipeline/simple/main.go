@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm"
@@ -35,7 +36,7 @@ func main() {
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`), nil)
+	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`), nil)
 
 	ovearallPipe := pipeline.New(
 		pipe1,
@@ -48,5 +49,5 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("%#v\n", response)
+	fmt.Printf("Final output: %s\n", strings.Join(response.([]string), ", "))
 }
