@@ -37,7 +37,7 @@
         <header class="masthead bg-primary text-white text-center">
             <div class="container d-flex align-items-center flex-column">
                 <!-- Masthead Avatar Image-->
-                <img class="masthead-avatar mb-5" src="assets/img/gopher.png" alt="..." />
+                <img class="masthead-avatar mb-5" src="assets/img/lingoose-small.png" alt="..." />
                 <!-- <div class="big-emoji">🪿</div> -->
                 <!-- Masthead Heading-->
                 <h1 class="masthead-heading text-uppercase mb-0">LinGoose</h1>
@@ -112,116 +112,119 @@
                 <h1 id="usage">Usage</h1>
                 <p>Please refer to the <a href="../examples/">examples directory</a> to see other examples. However, here is an example of what <strong>LinGoose</strong> is capable of:</p>
                 <p><em>Talk is cheap. Show me the <a href="../examples/">code</a>.</em> - Linus Torvalds</p>
-                <pre><code class="language-go">package main
-                
-                import (
-                    &quot;encoding/json&quot;
-                    &quot;fmt&quot;
-                
-                    &quot;github.com/henomis/lingoose/decoder&quot;
-                    &quot;github.com/henomis/lingoose/llm/openai&quot;
-                    &quot;github.com/henomis/lingoose/memory/ram&quot;
-                    &quot;github.com/henomis/lingoose/pipeline&quot;
-                    &quot;github.com/henomis/lingoose/prompt&quot;
-                )
-                
-                func main() {
-                
-                    llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
-                    if err != nil {
-                        panic(err)
-                    }
-                    cache := ram.New()
-                
-                    prompt1 := prompt.New(&quot;Hello how are you?&quot;)
-                    pipe1 := pipeline.NewStep(
-                        &quot;step1&quot;,
-                        llmOpenAI,
-                        prompt1,
-                        nil,
-                        decoder.NewDefaultDecoder(),
-                        cache,
-                    )
-                
-                    prompt2, _ := prompt.NewPromptTemplate(
-                        "Consider the following sentence.\n\nSentence:\n{{.output}}\n\n" +
-                        "Translate it in {{.language}}!"",
-                        map[string]string{
-                            &quot;language&quot;: &quot;italian&quot;,
-                        },
-                    )
-                    pipe2 := pipeline.NewStep(
-                        &quot;step2&quot;,
-                        llmOpenAI,
-                        prompt2,
-                        nil,
-                        decoder.NewDefaultDecoder(),
-                        nil,
-                    )
-                    
-                    prompt3, _ := prompt.NewPromptTemplate(
-                        "Consider the following sentence.\n\nSentence:\n{{.step1.output}}" +
-                        "\n\nTranslate it in {{.language}}!`"",
-                        map[string]string{
-                            &quot;language&quot;: &quot;spanish&quot;,
-                        },
-                    )
-                    pipe3 := pipeline.NewStep(
-                        &quot;step3&quot;,
-                        llmOpenAI,
-                        prompt3,
-                        nil,
-                        decoder.NewDefaultDecoder(),
-                        cache,
-                    )
-                    
-                    pipelineSteps := pipeline.New(
-                        pipe1,
-                        pipe2,
-                        pipe3,
-                    )
-                    
-                    response, err := pipelineSteps.Run(nil)
-                    if err != nil {
-                        fmt.Println(err)
-                    }
-                
-                    fmt.Printf(&quot;\n\nFinal output: %#v\n\n&quot;, response)
-                
-                    fmt.Println(&quot;---Memory---&quot;)
-                    dump, _ := json.MarshalIndent(cache.All(), &quot;&quot;, &quot;  &quot;)
-                    fmt.Printf(&quot;%s\n&quot;, string(dump))
-                }
-                </code></pre>
+                <pre>
+                    <code class="language-go">
+package main
+
+import (
+	&quot;encoding/json&quot;
+	&quot;fmt&quot;
+
+	&quot;github.com/henomis/lingoose/decoder&quot;
+	&quot;github.com/henomis/lingoose/llm/openai&quot;
+	&quot;github.com/henomis/lingoose/memory/ram&quot;
+	&quot;github.com/henomis/lingoose/pipeline&quot;
+	&quot;github.com/henomis/lingoose/prompt&quot;
+)
+
+func main() {
+
+	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
+	if err != nil {
+		panic(err)
+	}
+	cache := ram.New()
+
+	prompt1 := prompt.New(&quot;Hello how are you?&quot;)
+	pipe1 := pipeline.NewStep(
+		&quot;step1&quot;,
+		llmOpenAI,
+		prompt1,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
+
+	prompt2, _ := prompt.NewPromptTemplate(
+		&quot;Consider the following sentence.\n\nSentence:\n{{.output}}\n\n&quot;+
+			&quot;Translate it in {{.language}}!&quot;,
+		map[string]string{
+			&quot;language&quot;: &quot;italian&quot;,
+		},
+	)
+	pipe2 := pipeline.NewStep(
+		&quot;step2&quot;,
+		llmOpenAI,
+		prompt2,
+		decoder.NewDefaultDecoder(),
+		nil,
+	)
+
+	prompt3, _ := prompt.NewPromptTemplate(
+		&quot;Consider the following sentence.\n\nSentence:\n{{.step1.output}}&quot;+
+			&quot;\n\nTranslate it in {{.language}}!&quot;,
+		map[string]string{
+			&quot;language&quot;: &quot;spanish&quot;,
+		},
+	)
+	pipe3 := pipeline.NewStep(
+		&quot;step3&quot;,
+		llmOpenAI,
+		prompt3,
+		decoder.NewDefaultDecoder(),
+		cache,
+	)
+
+	pipelineSteps := pipeline.New(
+		pipe1,
+		pipe2,
+		pipe3,
+	)
+
+	response, err := pipelineSteps.Run(nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf(&quot;\n\nFinal output: %#v\n\n&quot;, response)
+
+	fmt.Println(&quot;---Memory---&quot;)
+	dump, _ := json.MarshalIndent(cache.All(), &quot;&quot;, &quot;  &quot;)
+	fmt.Printf(&quot;%s\n&quot;, string(dump))
+}
+                    </code>
+                </pre>
                 <p>Running this example will produce the following output:</p>
-                <pre><code>---USER---
-                Hello how are you?
-                ---AI---
-                I&#39;m doing well, thank you. How about you?
-                ---USER---
-                Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?\n\n
-                                Translate it in italian!
-                ---AI---
-                Sto bene, grazie. E tu come stai?
-                ---USER---
-                Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?
-                                \n\nTranslate it in spanish!
-                ---AI---
-                Estoy bien, gracias. ¿Y tú
-                
-                
-                Final output: map[string]interface {}{&quot;output&quot;:&quot;Estoy bien, gracias. ¿Y tú&quot;}
-                
-                ---Memory---
-                {
-                  &quot;step1&quot;: {
-                    &quot;output&quot;: &quot;I&#39;m doing well, thank you. How about you?&quot;
-                  },
-                  &quot;step3&quot;: {
-                    &quot;output&quot;: &quot;Estoy bien, gracias. ¿Y tú&quot;
-                  }
-                }
-                </code></pre>
+                <pre>
+                    <code>
+---USER---
+Hello how are you?
+---AI---
+I&#39;m doing well, thank you. How about you?
+---USER---
+Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?\n\n
+                Translate it in italian!
+---AI---
+Sto bene, grazie. E tu come stai?
+---USER---
+Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?
+                \n\nTranslate it in spanish!
+---AI---
+Estoy bien, gracias. ¿Y tú
+
+
+Final output: map[string]interface {}{&quot;output&quot;:&quot;Estoy bien, gracias. ¿Y tú&quot;}
+
+---Memory---
+{
+    &quot;step1&quot;: {
+    &quot;output&quot;: &quot;I&#39;m doing well, thank you. How about you?&quot;
+    },
+    &quot;step3&quot;: {
+    &quot;output&quot;: &quot;Estoy bien, gracias. ¿Y tú&quot;
+    }
+}
+                    </code>
+                </pre>
                 <h1 id="installation">Installation</h1>
                 <p>Be sure to have a working Go environment, then run the following command:</p>
                 <pre><code class="language-shell">go get github.com/henomis/lingoose
