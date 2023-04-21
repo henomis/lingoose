@@ -4,24 +4,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/decoder"
 	"github.com/mitchellh/mapstructure"
 )
 
 var (
-	ErrDecoding = errors.New("decoding input error")
+	ErrDecoding       = errors.New("decoding input error")
+	ErrInvalidLmmMode = errors.New("invalid LLM mode")
 )
-
-type Prompt interface {
-	Prompt() string
-	Format(input interface{}) error
-}
-
-type Llm interface {
-	Completion(string) (string, error)
-	Chat(chat *chat.Chat) (interface{}, error)
-}
 
 type Memory interface {
 	Get(key string) interface{}
@@ -38,21 +28,23 @@ type Decoder interface {
 type Step struct {
 	name    string
 	llm     Llm
-	prompt  Prompt
 	decoder Decoder
 	memory  Memory
 }
 
-type Pipeline []*Step
+type Pipeline struct {
+	steps []*Step
+}
 
 func New(steps ...*Step) Pipeline {
-	return steps
+	return Pipeline{
+		steps: steps,
+	}
 }
 
 func NewStep(
 	name string,
 	llm Llm,
-	prompt Prompt,
 	outputDecoder Decoder,
 	memory Memory,
 ) *Step {
@@ -64,7 +56,6 @@ func NewStep(
 	return &Step{
 		name:    name,
 		llm:     llm,
-		prompt:  prompt,
 		decoder: outputDecoder,
 		memory:  memory,
 	}
@@ -73,7 +64,7 @@ func NewStep(
 // Run execute the step and return the output.
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
-func (p *Step) Run(input interface{}) (interface{}, error) {
+func (s *Step) Run(input interface{}) (interface{}, error) {
 
 	if input == nil {
 		input = map[string]interface{}{}
@@ -84,27 +75,22 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
-	if p.memory != nil {
-		input = mergeMaps(input.(map[string]interface{}), p.memory.All())
+	if s.memory != nil {
+		input = mergeMaps(input.(map[string]interface{}), s.memory.All())
 	}
 
-	err = p.prompt.Format(input)
+	response, err := s.executeLLM(input)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := p.llm.Completion(p.prompt.Prompt())
-	if err != nil {
-		return nil, err
-	}
-
-	decodedOutput, err := p.decoder.Decode(response)
+	decodedOutput, err := s.decoder.Decode(response)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
-	if p.memory != nil {
-		err = p.memory.Set(p.name, decodedOutput)
+	if s.memory != nil {
+		err = s.memory.Set(s.name, decodedOutput)
 		if err != nil {
 			return nil, err
 		}
@@ -114,11 +100,56 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 
 }
 
+func (s *Step) executeLLM(input interface{}) (string, error) {
+	if s.llm.LlmMode == LlmModeCompletion {
+		return s.executeLLMCompletion(input)
+	} else if s.llm.LlmMode == LlmModeChat {
+		return s.executeLLMChat(input)
+	}
+
+	return "", ErrInvalidLmmMode
+}
+
+func (s *Step) executeLLMCompletion(input interface{}) (string, error) {
+	err := s.llm.Prompt.Format(input)
+	if err != nil {
+		return "", err
+	}
+
+	response, err := s.llm.LlmEngine.Completion(s.llm.Prompt.Prompt())
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (s *Step) executeLLMChat(input interface{}) (string, error) {
+
+	for _, promptMessage := range s.llm.Chat.PromptMessages {
+		err := promptMessage.Prompt.Format(input)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	response, err := s.llm.LlmEngine.Chat(s.llm.Chat)
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (p *Pipeline) AddNext(step *Step) {
+	p.steps = append(p.steps, step)
+}
+
 // Run chains the steps of the pipeline and returns the output of the last step.
 func (p Pipeline) Run(input interface{}) (interface{}, error) {
 	var err error
 	var output interface{}
-	for i, pipeline := range p {
+	for i, pipeline := range p.steps {
 
 		if i == 0 {
 			output, err = pipeline.Run(input)

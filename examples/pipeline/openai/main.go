@@ -13,17 +13,21 @@ import (
 
 func main() {
 
+	cache := ram.New()
+
 	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
 	if err != nil {
 		panic(err)
 	}
-	cache := ram.New()
 
-	prompt1 := prompt.New("Hello how are you?")
+	llm := pipeline.Llm{
+		LlmEngine: llmOpenAI,
+		LlmMode:   pipeline.LlmModeCompletion,
+		Prompt:    prompt.New("Hello how are you?"),
+	}
 	pipe1 := pipeline.NewStep(
 		"step1",
-		llmOpenAI,
-		prompt1,
+		llm,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)
@@ -35,10 +39,10 @@ func main() {
 			"language": "italian",
 		},
 	)
+	llm.Prompt = prompt2
 	pipe2 := pipeline.NewStep(
 		"step2",
-		llmOpenAI,
-		prompt2,
+		llm,
 		decoder.NewDefaultDecoder(),
 		nil,
 	)
@@ -50,10 +54,10 @@ func main() {
 			"language": "spanish",
 		},
 	)
+	llm.Prompt = prompt3
 	pipe3 := pipeline.NewStep(
 		"step3",
-		llmOpenAI,
-		prompt3,
+		llm,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)

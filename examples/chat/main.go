@@ -11,15 +11,13 @@ import (
 func main() {
 
 	chat := chat.New(
-		chat.PromptMessages{
-			{
-				Type:   chat.MessageTypeSystem,
-				Prompt: prompt.New("You are a professional joke writer"),
-			},
-			{
-				Type:   chat.MessageTypeUser,
-				Prompt: prompt.New("Write a joke about a cat"),
-			},
+		chat.PromptMessage{
+			Type:   chat.MessageTypeSystem,
+			Prompt: prompt.New("You are a professional joke writer"),
+		},
+		chat.PromptMessage{
+			Type:   chat.MessageTypeUser,
+			Prompt: prompt.New("Write a joke about a cat"),
 		},
 	)
 

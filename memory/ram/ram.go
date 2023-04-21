@@ -16,34 +16,34 @@ func New() *Ram {
 	}
 }
 
-func (m *Ram) Get(key string) interface{} {
-	value, ok := m.memory[key]
+func (r *Ram) Get(key string) interface{} {
+	value, ok := r.memory[key]
 	if !ok {
 		return nil
 	}
 	return value
 }
 
-func (m *Ram) Set(key string, value interface{}) error {
-	m.memory[key] = value
+func (r *Ram) Set(key string, value interface{}) error {
+	r.memory[key] = value
 	return nil
 }
 
-func (m *Ram) All() map[string]interface{} {
-	return m.memory
+func (r *Ram) All() map[string]interface{} {
+	return r.memory
 }
 
-func (m *Ram) Delete(key string) error {
-	_, ok := m.memory[key]
+func (r *Ram) Delete(key string) error {
+	_, ok := r.memory[key]
 	if !ok {
 		return ErrObjectNotFound
 	}
 
-	delete(m.memory, key)
+	delete(r.memory, key)
 	return nil
 }
 
-func (m *Ram) Clear() error {
-	m.memory = map[string]interface{}{}
+func (r *Ram) Clear() error {
+	r.memory = map[string]interface{}{}
 	return nil
 }

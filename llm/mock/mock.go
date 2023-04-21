@@ -29,11 +29,11 @@ func (l *LlmMock) Completion(prompt string) (string, error) {
 	return output, nil
 }
 
-func (l *LlmMock) Chat(prompt *chat.Chat) (interface{}, error) {
+func (l *LlmMock) Chat(prompt *chat.Chat) (string, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	for _, message := range messages {
@@ -94,11 +94,11 @@ func getRandomStrings(number int) []string {
 	return result
 }
 
-func (l *JsonLllMock) Chat(prompt *chat.Chat) (interface{}, error) {
+func (l *JsonLllMock) Chat(prompt *chat.Chat) (string, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	for _, message := range messages {

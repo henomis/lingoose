@@ -33,16 +33,16 @@ type Message struct {
 
 type Messages []Message
 
-func New(promptMessages PromptMessages) *Chat {
+func New(promptMessages ...PromptMessage) *Chat {
 	chatPromptTemplate := &Chat{}
 	for _, message := range promptMessages {
-		chatPromptTemplate.AddMessagePromptTemplate(message)
+		chatPromptTemplate.addMessagePromptTemplate(message)
 	}
 
 	return chatPromptTemplate
 }
 
-func (p *Chat) AddMessagePromptTemplate(message PromptMessage) {
+func (p *Chat) addMessagePromptTemplate(message PromptMessage) {
 	p.PromptMessages = append(p.PromptMessages, message)
 }
 
@@ -56,9 +56,11 @@ func (p *Chat) ToMessages() (Messages, error) {
 		message.Type = messagePromptTemplate.Type
 
 		if messagePromptTemplate.Prompt != nil {
-			err = messagePromptTemplate.Prompt.Format(map[string]interface{}{})
-			if err != nil {
-				return nil, err
+			if len(messagePromptTemplate.Prompt.Prompt()) == 0 {
+				err = messagePromptTemplate.Prompt.Format(map[string]interface{}{})
+				if err != nil {
+					return nil, err
+				}
 			}
 			message.Content = messagePromptTemplate.Prompt.Prompt()
 		}

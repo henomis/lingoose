@@ -52,8 +52,9 @@ func (o *OpenAI) Completion(prompt string) (string, error) {
 	response, err := o.openAIClient.CreateCompletion(
 		context.Background(),
 		openai.CompletionRequest{
-			Model:  openai.GPT3TextDavinci003,
-			Prompt: prompt,
+			Model:     openai.GPT3TextDavinci003,
+			Prompt:    prompt,
+			MaxTokens: 1000,
 		},
 	)
 
@@ -74,12 +75,12 @@ func (o *OpenAI) Completion(prompt string) (string, error) {
 	return output, nil
 }
 
-func (o *OpenAI) Chat(prompt *chat.Chat) (interface{}, error) {
+func (o *OpenAI) Chat(prompt *chat.Chat) (string, error) {
 
 	var messages []openai.ChatCompletionMessage
 	promptMessages, err := prompt.ToMessages()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	for _, message := range promptMessages {
@@ -110,19 +111,14 @@ func (o *OpenAI) Chat(prompt *chat.Chat) (interface{}, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("openai: %w", err)
+		return "", fmt.Errorf("openai: %w", err)
 	}
 
 	if len(response.Choices) == 0 {
-		return nil, fmt.Errorf("no choices returned")
+		return "", fmt.Errorf("no choices returned")
 	}
 
 	content := response.Choices[0].Message.Content
-
-	message := &chat.Message{
-		Type:    chat.MessageTypeAssistant,
-		Content: content,
-	}
 
 	if o.verbose {
 		for _, message := range promptMessages {
@@ -137,5 +133,5 @@ func (o *OpenAI) Chat(prompt *chat.Chat) (interface{}, error) {
 		fmt.Printf("---AI---\n%s\n", content)
 	}
 
-	return message, nil
+	return content, nil
 }
