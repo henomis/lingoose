@@ -33,9 +33,9 @@ func main() {
 		},
 	)
 	prompt2, _ := prompt.NewPromptTemplate(
-		"Write a {{.lenght}} joke about a {{.animal}}.",
+		"Write a {{.length}} joke about a {{.animal}}.",
 		map[string]string{
-			"lenght": "short",
+			"length": "short",
 		},
 	)
 	chat := chat.New(
@@ -65,7 +65,7 @@ func main() {
 		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
 		map[string]string{
 			"command": "Put the joke in a JSON object with only one field called 'joke'. " +
-				"Do not add other json fiels. Do not add other information.",
+				"Do not add other json fields. Do not add other information.",
 		},
 	)
 	llm2 := pipeline.Llm{
