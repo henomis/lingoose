@@ -1,3 +1,4 @@
+// Package openai provides a wrapper around the OpenAI API.
 package openai
 
 import (
