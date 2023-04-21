@@ -31,12 +31,15 @@ type Memory interface {
 	Clear() error
 }
 
+type Decoder interface {
+	Decode(input string) (interface{}, error)
+}
+
 type Step struct {
 	name    string
 	llm     Llm
 	prompt  Prompt
-	output  interface{}
-	decoder decoder.Decoder
+	decoder Decoder
 	memory  Memory
 }
 
@@ -50,8 +53,7 @@ func NewStep(
 	name string,
 	llm Llm,
 	prompt Prompt,
-	output interface{},
-	outputDecoder decoder.Decoder,
+	outputDecoder Decoder,
 	memory Memory,
 ) *Step {
 
@@ -59,15 +61,10 @@ func NewStep(
 		outputDecoder = decoder.NewDefaultDecoder()
 	}
 
-	if output == nil {
-		output = map[string]interface{}{}
-	}
-
 	return &Step{
 		name:    name,
 		llm:     llm,
 		prompt:  prompt,
-		output:  output,
 		decoder: outputDecoder,
 		memory:  memory,
 	}
@@ -101,19 +98,19 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	p.output, err = p.decoder(response, p.output)
+	decodedOutput, err := p.decoder.Decode(response)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
 	if p.memory != nil {
-		err = p.memory.Set(p.name, p.output)
+		err = p.memory.Set(p.name, decodedOutput)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return p.output, nil
+	return decodedOutput, nil
 
 }
 

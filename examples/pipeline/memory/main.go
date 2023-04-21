@@ -18,7 +18,7 @@ func main() {
 
 	llm1 := &llmmock.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep("step1", llm1, prompt1, nil, decoder.NewDefaultDecoder(), cache)
+	pipe1 := pipeline.NewStep("step1", llm1, prompt1, decoder.NewDefaultDecoder(), cache)
 
 	myout := &struct {
 		First  string
@@ -32,9 +32,8 @@ func main() {
 			"value": "thanks",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, prompt2, myout, decoder.NewJSONDecoder(), cache)
+	pipe2 := pipeline.NewStep("step2", llm2, prompt2, decoder.NewJSONDecoder(myout), cache)
 
-	var values []string
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
 		`Oh! It seems you are a random JSON word generator. You generated two strings, 
@@ -44,7 +43,7 @@ func main() {
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, prompt3, values, regexDecoder, cache)
+	pipe3 := pipeline.NewStep("step3", llm1, prompt3, regexDecoder, cache)
 
 	pipelineSteps := pipeline.New(
 		pipe1,
