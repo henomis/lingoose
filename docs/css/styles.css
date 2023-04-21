@@ -11048,3 +11048,9 @@ html {
 .big-emoji {
   font-size: 10rem !important;
 }
+
+blockquote {
+  border-left: 0.2rem solid #1abc9c;
+  padding: 1rem;
+
+}

@@ -87,7 +87,7 @@ func main() {
 
 	values := map[string]string{
 		"role":   "joke writer",
-		"animal": "cat",
+		"animal": "goose",
 	}
 	response, err := pipe.Run(values)
 	if err != nil {
