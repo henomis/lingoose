@@ -52,8 +52,9 @@ func (o *OpenAI) Completion(prompt string) (string, error) {
 	response, err := o.openAIClient.CreateCompletion(
 		context.Background(),
 		openai.CompletionRequest{
-			Model:  openai.GPT3TextDavinci003,
-			Prompt: prompt,
+			Model:     openai.GPT3TextDavinci003,
+			Prompt:    prompt,
+			MaxTokens: 1000,
 		},
 	)
 

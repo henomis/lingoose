@@ -31,15 +31,13 @@ func main() {
 	}
 
 	chatTemplate := chat.New(
-		[]chat.PromptMessage{
-			{
-				Type:   chat.MessageTypeSystem,
-				Prompt: prompt1,
-			},
-			{
-				Type:   chat.MessageTypeUser,
-				Prompt: prompt2,
-			},
+		chat.PromptMessage{
+			Type:   chat.MessageTypeSystem,
+			Prompt: prompt1,
+		},
+		chat.PromptMessage{
+			Type:   chat.MessageTypeUser,
+			Prompt: prompt2,
 		},
 	)
 
