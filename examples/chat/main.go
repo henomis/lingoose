@@ -17,7 +17,7 @@ func main() {
 		},
 		chat.PromptMessage{
 			Type:   chat.MessageTypeUser,
-			Prompt: prompt.New("Write a joke about a cat"),
+			Prompt: prompt.New("Write a joke about a goose"),
 		},
 	)
 
