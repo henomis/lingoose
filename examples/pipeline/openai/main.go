@@ -25,14 +25,13 @@ func main() {
 		llmOpenAI,
 		pipeline.LlmModeCompletion,
 		prompt1,
-		nil,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)
 
 	prompt2, _ := prompt.NewPromptTemplate(
-		`Consider the following sentence.\n\nSentence:\n{{.output}}\n\n
-		Translate it in {{.language}}!`,
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
+			"Translate it in {{.language}}!",
 		map[string]string{
 			"language": "italian",
 		},
@@ -42,14 +41,13 @@ func main() {
 		llmOpenAI,
 		pipeline.LlmModeCompletion,
 		prompt2,
-		nil,
 		decoder.NewDefaultDecoder(),
 		nil,
 	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		`Consider the following sentence.\n\nSentence:\n{{.step1.output}}
-		\n\nTranslate it in {{.language}}!`,
+		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
+			"\n\nTranslate it in {{.language}}!",
 		map[string]string{
 			"language": "spanish",
 		},
@@ -59,7 +57,6 @@ func main() {
 		llmOpenAI,
 		pipeline.LlmModeCompletion,
 		prompt3,
-		nil,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)

@@ -14,7 +14,7 @@ func main() {
 
 	llm1 := &llmmock.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep("step1", llm1, pipeline.LlmModeCompletion, prompt1, nil, decoder.NewDefaultDecoder(), nil)
+	pipe1 := pipeline.NewStep("step1", llm1, pipeline.LlmModeCompletion, prompt1, decoder.NewDefaultDecoder(), nil)
 
 	myout := &struct {
 		First  string
@@ -27,16 +27,15 @@ func main() {
 			"value": "thanks",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, pipeline.LlmModeCompletion, prompt2, myout, decoder.NewJSONDecoder(), nil)
+	pipe2 := pipeline.NewStep("step2", llm2, pipeline.LlmModeCompletion, prompt2, decoder.NewJSONDecoder(myout), nil)
 
-	var values []string
 	prompt3, _ := prompt.NewPromptTemplate(
 		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.First}}' and second:'{{.Second}}'. {{.value}}",
 		map[string]string{
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, pipeline.LlmModeCompletion, prompt3, values, decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`), nil)
+	pipe3 := pipeline.NewStep("step3", llm1, pipeline.LlmModeCompletion, prompt3, decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`), nil)
 
 	pipelineSteps := pipeline.New(
 		pipe1,

@@ -32,9 +32,8 @@ func main() {
 			"value": "thanks",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, pipeline.LlmModeCompletion, prompt2, myout, decoder.NewJSONDecoder(), cache)
+	pipe2 := pipeline.NewStep("step2", llm2, pipeline.LlmModeCompletion, prompt2, decoder.NewJSONDecoder(myout), cache)
 
-	var values []string
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
 		`Oh! It seems you are a random JSON word generator. You generated two strings, 
@@ -44,7 +43,7 @@ func main() {
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, pipeline.LlmModeCompletion, prompt3, values, regexDecoder, cache)
+	pipe3 := pipeline.NewStep("step3", llm1, pipeline.LlmModeCompletion, prompt3, regexDecoder, cache)
 
 	pipelineSteps := pipeline.New(
 		pipe1,
