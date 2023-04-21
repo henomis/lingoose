@@ -23,6 +23,7 @@ func main() {
 	pipe1 := pipeline.NewStep(
 		"step1",
 		llmOpenAI,
+		pipeline.LlmModeCompletion,
 		prompt1,
 		nil,
 		decoder.NewDefaultDecoder(),
@@ -39,6 +40,7 @@ func main() {
 	pipe2 := pipeline.NewStep(
 		"step2",
 		llmOpenAI,
+		pipeline.LlmModeCompletion,
 		prompt2,
 		nil,
 		decoder.NewDefaultDecoder(),
@@ -55,6 +57,7 @@ func main() {
 	pipe3 := pipeline.NewStep(
 		"step3",
 		llmOpenAI,
+		pipeline.LlmModeCompletion,
 		prompt3,
 		nil,
 		decoder.NewDefaultDecoder(),

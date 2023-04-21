@@ -13,6 +13,13 @@ var (
 	ErrDecoding = errors.New("decoding input error")
 )
 
+type LlmMode int
+
+const (
+	LlmModeChat LlmMode = iota
+	LlmModeCompletion
+)
+
 type Prompt interface {
 	Prompt() string
 	Format(input interface{}) error
@@ -20,7 +27,7 @@ type Prompt interface {
 
 type Llm interface {
 	Completion(string) (string, error)
-	Chat(chat *chat.Chat) (interface{}, error)
+	Chat(chat *chat.Chat) (string, error)
 }
 
 type Memory interface {
@@ -34,6 +41,7 @@ type Memory interface {
 type Step struct {
 	name    string
 	llm     Llm
+	llmmode LlmMode
 	prompt  Prompt
 	output  interface{}
 	decoder decoder.Decoder
@@ -49,6 +57,7 @@ func New(steps ...*Step) Pipeline {
 func NewStep(
 	name string,
 	llm Llm,
+	llmmode LlmMode,
 	prompt Prompt,
 	output interface{},
 	outputDecoder decoder.Decoder,
@@ -66,6 +75,7 @@ func NewStep(
 	return &Step{
 		name:    name,
 		llm:     llm,
+		llmmode: llmmode,
 		prompt:  prompt,
 		output:  output,
 		decoder: outputDecoder,
@@ -115,6 +125,35 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 
 	return p.output, nil
 
+}
+
+func (p *Step) executeLLM(input interface{}) (interface{}, error) {
+	if p.llmmode == LlmModeChat {
+		return p.executeLLMCompletion(input)
+	} else if p.llmmode == LlmModeCompletion {
+		return p.executeLLMChat(input)
+	}
+
+	return nil, errors.New("invalid LLM mode")
+}
+
+func (p *Step) executeLLMCompletion(input interface{}) (string, error) {
+	response, err := p.llm.Completion(p.prompt.Prompt())
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (p *Step) executeLLMChat(input interface{}) (interface{}, error) {
+
+	messages, err := p.llm.Chat(input.(*chat.Chat))
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
