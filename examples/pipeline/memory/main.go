@@ -16,15 +16,18 @@ func main() {
 
 	cache := ram.New()
 
-	llm1 := &llmmock.LlmMock{}
 	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep("step1", llm1, pipeline.LlmModeCompletion, prompt1, decoder.NewDefaultDecoder(), cache)
+	llm1 := pipeline.Llm{
+		LlmEngine: &llmmock.LlmMock{},
+		LlmMode:   pipeline.LlmModeCompletion,
+		Prompt:    prompt1,
+	}
+	pipe1 := pipeline.NewStep("step1", llm1, decoder.NewDefaultDecoder(), cache)
 
 	myout := &struct {
 		First  string
 		Second string
 	}{}
-	llm2 := &llmmock.JsonLllMock{}
 	prompt2, _ := prompt.NewPromptTemplate(
 		`It seems you are a random word generator. Your message '{{.output}}' is nonsense. 
 		Anyway I'm fine {{.value}}!`,
@@ -32,7 +35,12 @@ func main() {
 			"value": "thanks",
 		},
 	)
-	pipe2 := pipeline.NewStep("step2", llm2, pipeline.LlmModeCompletion, prompt2, decoder.NewJSONDecoder(myout), cache)
+	llm2 := pipeline.Llm{
+		LlmEngine: &llmmock.JsonLllMock{},
+		LlmMode:   pipeline.LlmModeCompletion,
+		Prompt:    prompt2,
+	}
+	pipe2 := pipeline.NewStep("step2", llm2, decoder.NewJSONDecoder(myout), cache)
 
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
@@ -43,7 +51,8 @@ func main() {
 			"value": "Bye!",
 		},
 	)
-	pipe3 := pipeline.NewStep("step3", llm1, pipeline.LlmModeCompletion, prompt3, regexDecoder, cache)
+	llm1.Prompt = prompt3
+	pipe3 := pipeline.NewStep("step3", llm1, regexDecoder, cache)
 
 	pipelineSteps := pipeline.New(
 		pipe1,

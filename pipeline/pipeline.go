@@ -13,23 +13,6 @@ var (
 	ErrDecoding = errors.New("decoding input error")
 )
 
-type LlmMode int
-
-const (
-	LlmModeChat LlmMode = iota
-	LlmModeCompletion
-)
-
-type Prompt interface {
-	Prompt() string
-	Format(input interface{}) error
-}
-
-type Llm interface {
-	Completion(string) (string, error)
-	Chat(chat *chat.Chat) (string, error)
-}
-
 type Memory interface {
 	Get(key string) interface{}
 	Set(key string, value interface{}) error
@@ -45,8 +28,6 @@ type Decoder interface {
 type Step struct {
 	name    string
 	llm     Llm
-	llmmode LlmMode
-	prompt  Prompt
 	decoder Decoder
 	memory  Memory
 }
@@ -60,8 +41,6 @@ func New(steps ...*Step) Pipeline {
 func NewStep(
 	name string,
 	llm Llm,
-	llmmode LlmMode,
-	prompt Prompt,
 	outputDecoder Decoder,
 	memory Memory,
 ) *Step {
@@ -73,8 +52,6 @@ func NewStep(
 	return &Step{
 		name:    name,
 		llm:     llm,
-		llmmode: llmmode,
-		prompt:  prompt,
 		decoder: outputDecoder,
 		memory:  memory,
 	}
@@ -98,12 +75,12 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 		input = mergeMaps(input.(map[string]interface{}), p.memory.All())
 	}
 
-	err = p.prompt.Format(input)
+	err = p.llm.Prompt.Format(input)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := p.llm.Completion(p.prompt.Prompt())
+	response, err := p.llm.LlmEngine.Completion(p.llm.Prompt.Prompt())
 	if err != nil {
 		return nil, err
 	}
@@ -125,9 +102,9 @@ func (p *Step) Run(input interface{}) (interface{}, error) {
 }
 
 func (p *Step) executeLLM(input interface{}) (interface{}, error) {
-	if p.llmmode == LlmModeChat {
+	if p.llm.LlmMode == LlmModeChat {
 		return p.executeLLMCompletion(input)
-	} else if p.llmmode == LlmModeCompletion {
+	} else if p.llm.LlmMode == LlmModeCompletion {
 		return p.executeLLMChat(input)
 	}
 
@@ -135,7 +112,7 @@ func (p *Step) executeLLM(input interface{}) (interface{}, error) {
 }
 
 func (p *Step) executeLLMCompletion(input interface{}) (string, error) {
-	response, err := p.llm.Completion(p.prompt.Prompt())
+	response, err := p.llm.LlmEngine.Completion(p.llm.Prompt.Prompt())
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +122,7 @@ func (p *Step) executeLLMCompletion(input interface{}) (string, error) {
 
 func (p *Step) executeLLMChat(input interface{}) (interface{}, error) {
 
-	messages, err := p.llm.Chat(input.(*chat.Chat))
+	messages, err := p.llm.LlmEngine.Chat(input.(*chat.Chat))
 	if err != nil {
 		return nil, err
 	}
