@@ -24,14 +24,13 @@ func main() {
 		"step1",
 		llmOpenAI,
 		prompt1,
-		nil,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)
 
 	prompt2, _ := prompt.NewPromptTemplate(
-		`Consider the following sentence.\n\nSentence:\n{{.output}}\n\n
-		Translate it in {{.language}}!`,
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
+			"Translate it in {{.language}}!",
 		map[string]string{
 			"language": "italian",
 		},
@@ -40,14 +39,13 @@ func main() {
 		"step2",
 		llmOpenAI,
 		prompt2,
-		nil,
 		decoder.NewDefaultDecoder(),
 		nil,
 	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		`Consider the following sentence.\n\nSentence:\n{{.step1.output}}
-		\n\nTranslate it in {{.language}}!`,
+		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
+			"\n\nTranslate it in {{.language}}!",
 		map[string]string{
 			"language": "spanish",
 		},
@@ -56,7 +54,6 @@ func main() {
 		"step3",
 		llmOpenAI,
 		prompt3,
-		nil,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)
