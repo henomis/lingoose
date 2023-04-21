@@ -16,12 +16,12 @@ func main() {
 
 	cache := ram.New()
 
-	llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, true)
+	llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
 		panic(err)
 	}
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, true)
+	llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
 		panic(err)
 	}

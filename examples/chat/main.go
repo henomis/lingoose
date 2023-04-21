@@ -21,7 +21,7 @@ func main() {
 		},
 	)
 
-	llmOpenAI, err := openai.New(openai.GPT3Dot5Turbo, true)
+	llmOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
 		panic(err)
 	}

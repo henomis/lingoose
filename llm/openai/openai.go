@@ -11,6 +11,13 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+const (
+	DefaultOpenAIMaxTokens   = 256
+	DefaultOpenAITemperature = 0.7
+	DefaultOpenAINumResults  = 1
+	DefaultOpenAITopP        = 1.0
+)
+
 type Model string
 
 const (
@@ -31,10 +38,12 @@ const (
 type OpenAI struct {
 	openAIClient *openai.Client
 	model        Model
+	temperature  float32
+	maxTokens    int
 	verbose      bool
 }
 
-func New(model Model, verbose bool) (*OpenAI, error) {
+func New(model Model, temperature float32, maxTokens int, verbose bool) (*OpenAI, error) {
 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
@@ -44,6 +53,8 @@ func New(model Model, verbose bool) (*OpenAI, error) {
 	return &OpenAI{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
+		temperature:  temperature,
+		maxTokens:    maxTokens,
 		verbose:      verbose,
 	}, nil
 }
@@ -53,9 +64,12 @@ func (o *OpenAI) Completion(prompt string) (string, error) {
 	response, err := o.openAIClient.CreateCompletion(
 		context.Background(),
 		openai.CompletionRequest{
-			Model:     openai.GPT3TextDavinci003,
-			Prompt:    prompt,
-			MaxTokens: 1000,
+			Model:       string(o.model),
+			Prompt:      prompt,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
 		},
 	)
 
@@ -106,8 +120,12 @@ func (o *OpenAI) Chat(prompt *chat.Chat) (string, error) {
 	response, err := o.openAIClient.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    openai.GPT3Dot5Turbo,
-			Messages: messages,
+			Model:       string(o.model),
+			Messages:    messages,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
 		},
 	)
 
