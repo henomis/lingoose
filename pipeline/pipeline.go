@@ -1,3 +1,4 @@
+// Package pipeline provides a way to chain multiple llm executions.
 package pipeline
 
 import (

@@ -1,3 +1,4 @@
+// Package decoder provides a set of decoders to decode the output of a command
 package decoder
 
 import (

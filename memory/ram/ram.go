@@ -1,3 +1,4 @@
+// Package ram provides a memory storage that stores data in RAM.
 package ram
 
 import "errors"

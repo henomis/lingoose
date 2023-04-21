@@ -1,3 +1,4 @@
+// Package llmmock provides a mock implementation of the LLM interface.
 package llmmock
 
 import (
