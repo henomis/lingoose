@@ -1,14 +1,20 @@
 package index
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
 )
+
+type Embedder interface {
+	Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error)
+}
 
 type SimpleVectorIndexData struct {
 	Document  document.Document  `json:"document"`
@@ -16,46 +22,85 @@ type SimpleVectorIndexData struct {
 }
 
 type SimpleVectorIndex struct {
-	Data []SimpleVectorIndexData `json:"data"`
+	Data       []SimpleVectorIndexData `json:"data"`
+	outputPath string                  `json:"-"`
+	name       string                  `json:"-"`
+	embedder   Embedder                `json:"-"`
 }
 
-func NewSimpleVectorIndex(documents []document.Document, embeddings []embedder.Embedding) *SimpleVectorIndex {
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
+	simpleVectorIndex := &SimpleVectorIndex{
+		Data:       []SimpleVectorIndexData{},
+		outputPath: outputPath,
+		name:       name,
+		embedder:   embedder,
+	}
 
-	simpleVectorIndex := &SimpleVectorIndex{}
-
-	for i, document := range documents {
-		simpleVectorIndex.Data = append(simpleVectorIndex.Data, SimpleVectorIndexData{
-			Document:  document,
-			Embedding: embeddings[i],
-		})
+	_, err := os.Stat(simpleVectorIndex.database())
+	if err == nil {
+		simpleVectorIndex.load()
 	}
 
 	return simpleVectorIndex
 }
 
-func (e SimpleVectorIndex) Save(filename string) error {
+func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
-	jsonContent, err := json.Marshal(e)
+	embeddings, err := s.embedder.Embed(ctx, documents)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(filename, jsonContent, 0644)
+	s.Data = []SimpleVectorIndexData{}
+
+	for i, document := range documents {
+		s.Data = append(s.Data, SimpleVectorIndexData{
+			Document:  document,
+			Embedding: embeddings[i],
+		})
+	}
+
+	s.save()
+
+	return nil
 }
 
-func (e *SimpleVectorIndex) Load(filename string) error {
+func (s SimpleVectorIndex) save() error {
 
-	content, err := os.ReadFile(filename)
+	jsonContent, err := json.Marshal(s)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(content, &e)
+	return os.WriteFile(s.database(), jsonContent, 0644)
 }
 
-func (s *SimpleVectorIndex) Search(embeddingVector embedder.Embedding, topK *int) []SearchResponse {
+func (s *SimpleVectorIndex) load() error {
 
-	scores := s.cosineSimilarityBatch(embeddingVector)
+	content, err := os.ReadFile(s.database())
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(content, &s)
+}
+
+func (s *SimpleVectorIndex) database() string {
+	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
+}
+
+func (s *SimpleVectorIndex) Size() int {
+	return len(s.Data)
+}
+
+func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+
+	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
+	if err != nil {
+		return nil, err
+	}
+
+	scores := s.cosineSimilarityBatch(embeddings[0])
 
 	searchResponses := make([]SearchResponse, len(scores))
 
@@ -74,10 +119,10 @@ func (s *SimpleVectorIndex) Search(embeddingVector embedder.Embedding, topK *int
 
 	//return topK
 	if topK == nil {
-		return searchResponses
+		return searchResponses, nil
 	}
 
-	return searchResponses[:*topK]
+	return searchResponses[:*topK], nil
 
 }
 

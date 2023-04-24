@@ -13,9 +13,9 @@ type DirectoryLoader struct {
 	regExp  *regexp.Regexp
 }
 
-func NewDirectoryLoader(dirname string, regExMatch string) (*DirectoryLoader, error) {
+func NewDirectoryLoader(dirname string, regExPathMatch string) (*DirectoryLoader, error) {
 
-	regExp, err := regexp.Compile(regExMatch)
+	regExp, err := regexp.Compile(regExPathMatch)
 	if err != nil {
 		return nil, err
 	}

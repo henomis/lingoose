@@ -3,113 +3,90 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/henomis/lingoose/document"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
+	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
+	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 )
 
-func loadDocuments() *index.SimpleVectorIndex {
-
-	docsVectorIndex := new(index.SimpleVectorIndex)
-	_, err := os.Stat("docs.json")
-	if err == nil {
-		docsVectorIndex.Load("docs.json")
-		return docsVectorIndex
-	}
-
-	loader, err := loader.NewDirectoryLoader(".", ".txt")
-	if err != nil {
-		panic(err)
-	}
-
-	documents, err := loader.Load()
-	if err != nil {
-		panic(err)
-	}
-
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 0, nil, nil)
-
-	documentChunks := textSplitter.SplitDocuments(documents)
-
-	for _, doc := range documentChunks {
-		fmt.Println(doc.Content)
-		fmt.Println("----------")
-		fmt.Println(doc.Metadata)
-		fmt.Println("----------")
-		fmt.Println()
-
-	}
+func main() {
 
 	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 	if err != nil {
 		panic(err)
 	}
 
-	objs, err := openaiEmbedder.Embed(context.Background(), documentChunks)
-	if err != nil {
-		panic(err)
+	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+
+	if docsVectorIndex.Size() == 0 {
+		loader, err := loader.NewDirectoryLoader(".", ".txt")
+		if err != nil {
+			panic(err)
+		}
+
+		documents, err := loader.Load()
+		if err != nil {
+			panic(err)
+		}
+
+		textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+
+		documentChunks := textSplitter.SplitDocuments(documents)
+
+		for _, doc := range documentChunks {
+			fmt.Println(doc.Content)
+			fmt.Println("----------")
+			fmt.Println(doc.Metadata)
+			fmt.Println("----------")
+			fmt.Println()
+
+		}
+
+		docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
 	}
 
-	vector := index.NewSimpleVectorIndex(documentChunks, objs)
-	vector.Save("docs.json")
-
-	docsVectorIndex.Load("docs.json")
-
-	return docsVectorIndex
-}
-
-func loadQuery() *index.SimpleVectorIndex {
-
-	queryVectorIndex := new(index.SimpleVectorIndex)
-	_, err := os.Stat("query.json")
-	if err == nil {
-		queryVectorIndex.Load("query.json")
-		return queryVectorIndex
-	}
-
-	docs := []document.Document{
-		{
-			Content: "What is the purpose of the NATO Alliance?",
-		},
-	}
-
-	embed, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
-
-	objs, err := embed.Embed(context.Background(), docs)
-	if err != nil {
-		panic(err)
-	}
-
-	vector := index.NewSimpleVectorIndex(docs, objs)
-	vector.Save("query.json")
-
-	queryVectorIndex.Load("query.json")
-
-	return queryVectorIndex
-}
-
-func main() {
-
-	vectorDocs := loadDocuments()
-
-	vectorQuery := loadQuery()
-
+	query := "What is the purpose of the NATO Alliance?"
 	topk := 3
-
-	similarities := vectorDocs.Search(vectorQuery.Data[0].Embedding, &topk)
+	similarities, err := docsVectorIndex.SimilaritySearch(
+		context.Background(),
+		query,
+		&topk,
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	for _, similarity := range similarities {
 		fmt.Printf("Similarity: %f\n", similarity.Score)
-		fmt.Printf("Document: %s\n", vectorDocs.Data[similarity.Index].Document.Content)
-		fmt.Println("Metadata: ", vectorDocs.Data[similarity.Index].Document.Metadata)
+		fmt.Printf("Document: %s\n", docsVectorIndex.Data[similarity.Index].Document.Content)
+		fmt.Println("Metadata: ", docsVectorIndex.Data[similarity.Index].Document.Metadata)
 		fmt.Println("----------")
 	}
+
+	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+	if err != nil {
+		panic(err)
+	}
+
+	prompt1, err := prompt.NewPromptTemplate(
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+		map[string]string{
+			"query":   query,
+			"context": similarities[0].Document.Content,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = prompt1.Format(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	llmOpenAI.Completion(prompt1.Prompt())
 
 }
