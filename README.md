@@ -11,7 +11,7 @@
 here below an image from docs/assets/img/lingoose.png
 
 # Overview
-**LinGoose** is a powerful Go framework for developing Large Language Model (LLM) based applications using pipelines. It is designed to be a complete solution and provides multiple components, including Prompts, Templates, Chat, Output Decoders, LLM, Pipelines, and Memory. With **LinGoose**, you can interact with LLM AI through prompts and generate complex templates. Additionally, it includes a chat feature, allowing you to create chatbots. The Output Decoders component enables you to extract specific information from the output of the LLM, while the LLM interface allows you to send prompts to various AI, such as the ones provided by OpenAI. You can chain multiple LLM steps together using Pipelines and store the output of each step in Memory for later retrieval.
+**LinGoose** is a powerful Go framework for developing Large Language Model (LLM) based applications using pipelines. It is designed to be a complete solution and provides multiple components, including Prompts, Templates, Chat, Output Decoders, LLM, Pipelines, and Memory. With **LinGoose**, you can interact with LLM AI through prompts and generate complex templates. Additionally, it includes a chat feature, allowing you to create chatbots. The Output Decoders component enables you to extract specific information from the output of the LLM, while the LLM interface allows you to send prompts to various AI, such as the ones provided by OpenAI. You can chain multiple LLM steps together using Pipelines and store the output of each step in Memory for later retrieval. **LinGoose** also includes a Document component, which is used to store text, and a Loader component, which is used to load Documents from various sources. Finally, it includes TextSplitters, which are used to split text or Documents into multiple parts, Embedders, which are used to embed text or Documents into embeddings, and Indexes, which are used to store embeddings and documents and to perform searches.
 
 # Components
 **LinGoose** is composed of multiple components, each one with its own purpose.
@@ -25,6 +25,11 @@ here below an image from docs/assets/img/lingoose.png
 |**LLMs** |[llm/openai](llm/openai/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. |
 |**Pipelines** | [pipeline](pipeline/)|Pipelines are used to chain multiple LLM steps together. |
 |**Memory** | [memory/ram](memory/ram/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. |
+|**Document** | [document](document/)|Document is used to store a text |
+|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. |
+|**TextSplitters**| [textsplitter](textsplitter/)|TextSplitters are used to split text or Documents into multiple parts. |
+|**Embedders** | [embedder](embedder/)|Embedders are used to embed text or Documents into embeddings. |
+|**Indexes**| [index](index/)|Indexes are used to store embeddings and documents and to perform searches. |
 
 # Usage
 
