@@ -8,34 +8,32 @@ import (
 	"regexp"
 )
 
-type DirLoader struct {
-	dirname  string
-	metadata map[string]interface{}
-
-	regExp *regexp.Regexp
+type DirectoryLoader struct {
+	dirname string
+	regExp  *regexp.Regexp
 }
 
-func NewDirLoader(dirname string, regExMatch string) (*DirLoader, error) {
+func NewDirectoryLoader(dirname string, regExMatch string) (*DirectoryLoader, error) {
 
 	regExp, err := regexp.Compile(regExMatch)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DirLoader{
+	return &DirectoryLoader{
 		dirname: dirname,
 		regExp:  regExp,
 	}, nil
 
 }
 
-func (t *DirLoader) Load() ([]document.Document, error) {
+func (t *DirectoryLoader) Load() ([]document.Document, error) {
 	docs := []document.Document{}
 
 	err := filepath.Walk(t.dirname, func(path string, info os.FileInfo, err error) error {
 		if err == nil && t.regExp.MatchString(info.Name()) {
 
-			l, err := NewTextLoader(path, map[string]interface{}{"source": path})
+			l, err := NewTextLoader(path, nil)
 			if err != nil {
 				return err
 			}

@@ -15,10 +15,6 @@ type textSplitter struct {
 
 func (p *textSplitter) mergeSplits(splits []string, separator string) []string {
 
-	p.lengthFunction = func(s string) int {
-		return len(s)
-	}
-
 	docs := make([]string, 0)
 	current_doc := make([]string, 0)
 	total := 0
@@ -35,7 +31,7 @@ func (p *textSplitter) mergeSplits(splits []string, separator string) []string {
 					docs = append(docs, doc)
 				}
 				for (total > p.chunkOverlap) || (getSLen(current_doc, separator, 0) > p.chunkSize) && total > 0 {
-					total -= len(current_doc[0]) + getSLen(current_doc, separator, 1)
+					total -= p.lengthFunction(current_doc[0]) + getSLen(current_doc, separator, 1)
 					current_doc = current_doc[1:]
 				}
 			}

@@ -11,7 +11,7 @@ type RecursiveCharacterTextSplitter struct {
 	separators []string
 }
 
-func NewRecursiveCharacterTextSplitter(separators []string, chunkSize int, chunkOverlap int, lengthFunction LenFunction) *RecursiveCharacterTextSplitter {
+func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int, separators []string, lengthFunction LenFunction) *RecursiveCharacterTextSplitter {
 
 	if lengthFunction == nil {
 		lengthFunction = func(s string) int {
@@ -34,12 +34,12 @@ func NewRecursiveCharacterTextSplitter(separators []string, chunkSize int, chunk
 
 }
 
-func (t *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
+func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
 
 	docs := make([]document.Document, 0)
 
 	for i, doc := range documents {
-		for _, chunk := range t.SplitText(doc.Content) {
+		for _, chunk := range r.SplitText(doc.Content) {
 			docs = append(docs,
 				document.Document{
 					Content:  chunk,
@@ -50,15 +50,14 @@ func (t *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Doc
 	}
 
 	return docs
-
 }
 
-func (t *RecursiveCharacterTextSplitter) SplitText(text string) []string {
+func (r *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	// Split incoming text and return chunks.
 	finalChunks := []string{}
 	// Get appropriate separator to use
-	separator := t.separators[len(t.separators)-1]
-	for _, s := range t.separators {
+	separator := r.separators[len(r.separators)-1]
+	for _, s := range r.separators {
 		if s == "" {
 			separator = s
 			break
@@ -78,20 +77,20 @@ func (t *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	// Now go merging things, recursively splitting longer texts.
 	goodSplits := []string{}
 	for _, s := range splits {
-		if t.lengthFunction(s) < t.chunkSize {
+		if r.lengthFunction(s) < r.chunkSize {
 			goodSplits = append(goodSplits, s)
 		} else {
 			if len(goodSplits) > 0 {
-				mergedText := t.mergeSplits(goodSplits, separator)
+				mergedText := r.mergeSplits(goodSplits, separator)
 				finalChunks = append(finalChunks, mergedText...)
 				goodSplits = []string{}
 			}
-			otherInfo := t.SplitText(s)
+			otherInfo := r.SplitText(s)
 			finalChunks = append(finalChunks, otherInfo...)
 		}
 	}
 	if len(goodSplits) > 0 {
-		mergedText := t.mergeSplits(goodSplits, separator)
+		mergedText := r.mergeSplits(goodSplits, separator)
 		finalChunks = append(finalChunks, mergedText...)
 	}
 	return finalChunks

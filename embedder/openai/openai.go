@@ -1,4 +1,4 @@
-package embedding
+package openaiembedder
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/embedder"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -32,24 +33,24 @@ const (
 	AdaEmbeddingV2
 )
 
-type OpenAIEmbeddings struct {
+type OpenAIEmbedder struct {
 	openAIClient *openai.Client
 	model        Model
 }
 
-func NewOpenAIEmbeddings(model Model) (*OpenAIEmbeddings, error) {
+func New(model Model) (*OpenAIEmbedder, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	return &OpenAIEmbeddings{
+	return &OpenAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
 	}, nil
 }
 
-func (t *OpenAIEmbeddings) Embed(ctx context.Context, docs []document.Document) ([]EmbeddingObject, error) {
+func (t *OpenAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error) {
 
 	input := []string{}
 	for _, doc := range docs {
@@ -67,12 +68,12 @@ func (t *OpenAIEmbeddings) Embed(ctx context.Context, docs []document.Document) 
 		return nil, err
 	}
 
-	var embeddings []EmbeddingObject
+	var embeddings []embedder.Embedding
 
 	for _, obj := range resp.Data {
-		embeddings = append(embeddings, EmbeddingObject{
-			Vector: obj.Embedding,
-			Index:  obj.Index,
+		embeddings = append(embeddings, embedder.Embedding{
+			Embedding: obj.Embedding,
+			Index:     obj.Index,
 		})
 	}
 

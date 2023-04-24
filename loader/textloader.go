@@ -1,9 +1,14 @@
 package loader
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/henomis/lingoose/document"
+)
+
+const (
+	SourceMetadataKey = "source"
 )
 
 type TextLoader struct {
@@ -12,6 +17,17 @@ type TextLoader struct {
 }
 
 func NewTextLoader(filename string, metadata map[string]interface{}) (*TextLoader, error) {
+
+	if metadata == nil {
+		metadata = make(map[string]interface{})
+	} else {
+		_, ok := metadata[SourceMetadataKey]
+		if ok {
+			return nil, fmt.Errorf("metadata key %s is reserved", SourceMetadataKey)
+		}
+	}
+
+	metadata[SourceMetadataKey] = filename
 
 	fileStat, err := os.Stat(filename)
 	if err != nil {
