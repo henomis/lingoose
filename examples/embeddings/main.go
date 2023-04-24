@@ -5,52 +5,48 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedding"
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/textsplitter"
-
-	"github.com/pkoukk/tiktoken-go"
-	"github.com/sashabaranov/go-openai"
 )
 
-func NumTokensFromMessages(messages []openai.ChatCompletionMessage, model string) (num_tokens int) {
-	tkm, err := tiktoken.EncodingForModel(model)
-	if err != nil {
-		err = fmt.Errorf("EncodingForModel: %v", err)
-		fmt.Println(err)
-		return
-	}
-
-	var tokens_per_message int
-	var tokens_per_name int
-	if model == "gpt-3.5-turbo-0301" || model == "gpt-3.5-turbo" {
-		tokens_per_message = 4
-		tokens_per_name = -1
-	} else if model == "gpt-4-0314" || model == "gpt-4" {
-		tokens_per_message = 3
-		tokens_per_name = 1
-	} else {
-		fmt.Println("Warning: model not found. Using cl100k_base encoding.")
-		tokens_per_message = 3
-		tokens_per_name = 1
-	}
-
-	for _, message := range messages {
-		num_tokens += tokens_per_message
-		num_tokens += len(tkm.Encode(message.Content, nil, nil))
-		num_tokens += len(tkm.Encode(message.Role, nil, nil))
-		if message.Name != "" {
-			num_tokens += tokens_per_name
-		}
-	}
-	num_tokens += 3
-	return num_tokens
+type Document struct {
+	Content  string                 `json:"content"`
+	Metadata map[string]interface{} `json:"metadata"`
 }
 
-func main() {
+type Loader interface {
+	Load() []document.Document
+}
 
-	loader, err := loader.NewDirLoader(".", ".md")
+type TextSplitter interface {
+	SplitDocuments([]document.Document) []document.Document
+	SplitText(string) []string // ??? not sure if this is needed
+}
+
+type EmbeddingObject struct {
+	Vector []float32 `json:"vector"`
+	Index  int       `json:"index"`
+}
+
+type Embedder interface {
+	Embed(ctx context.Context, docs []document.Document) ([]EmbeddingObject, error)
+}
+
+type Similarity struct {
+	Score float32
+	Index int
+}
+
+type Index interface {
+	Search(embedding embedding.EmbeddingObject, topK *int) []index.Similarity
+}
+
+func loadDocuments() (*index.SimpleVector, []document.Document) {
+
+	loader, err := loader.NewDirLoader(".", ".txt")
 	if err != nil {
 		panic(err)
 	}
@@ -78,8 +74,8 @@ func main() {
 		panic(err)
 	}
 
-	vector := new(index.VectorIndex)
-	_, err = os.Stat("vector.json")
+	vectorDocs := new(index.SimpleVector)
+	_, err = os.Stat("docs.json")
 	if err != nil {
 
 		objs, err := embed.Embed(context.Background(), docs)
@@ -88,35 +84,56 @@ func main() {
 		}
 
 		vector := index.NewVectorIndex(objs)
-		vector.Save("vector.json")
+		vector.Save("docs.json")
 	}
-	vector.Load("vector.json")
+	vectorDocs.Load("docs.json")
 
-	objs, err := embed.Embed(context.Background(), docs)
+	return vectorDocs, docs
+}
+
+func loadQuery() *index.SimpleVector {
+
+	docs := []document.Document{
+		{
+			Content: "What is the purpose of the NATO Alliance?",
+		},
+	}
+
+	embed, err := embedding.NewOpenAIEmbeddings(embedding.AdaSimilarity)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("%#v", objs)
+	vectorDocs := new(index.SimpleVector)
+	_, err = os.Stat("query.json")
+	if err != nil {
 
-	// model := "davinci"
+		objs, err := embed.Embed(context.Background(), docs)
+		if err != nil {
+			panic(err)
+		}
 
-	// b, err := os.ReadFile("README.md")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
+		vector := index.NewVectorIndex(objs)
+		vector.Save("query.json")
+	}
+	vectorDocs.Load("query.json")
 
-	// tkm, err := tiktoken.EncodingForModel(model)
-	// if err != nil {
-	// 	err = fmt.Errorf("getEncoding: %v", err)
-	// 	return
-	// }
+	return vectorDocs
+}
 
-	// // encode
-	// token := tkm.Encode(string(b), nil, nil)
+func main() {
 
-	// // num_tokens
-	// fmt.Println(len(token))
-	// fmt.Printf("%#v", token)
+	vectorDocs, docs := loadDocuments()
+
+	vectorQuery := loadQuery()
+
+	topk := 3
+
+	similarities := vectorDocs.Search(vectorQuery.Embeddings()[0], &topk)
+
+	for _, similarity := range similarities {
+		fmt.Printf("Similarity: %f\n", similarity.Score)
+		fmt.Printf("Document: %s\n", docs[similarity.Index].Content)
+		fmt.Println("----------")
+	}
 }
