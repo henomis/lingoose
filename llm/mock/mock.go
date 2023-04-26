@@ -2,6 +2,7 @@
 package llmmock
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -13,7 +14,7 @@ import (
 type LlmMock struct {
 }
 
-func (l *LlmMock) Completion(prompt string) (string, error) {
+func (l *LlmMock) Completion(ctx context.Context, prompt string) (string, error) {
 	fmt.Printf("User: %s\n", prompt)
 
 	rand.Seed(time.Now().UnixNano())
@@ -30,7 +31,7 @@ func (l *LlmMock) Completion(prompt string) (string, error) {
 	return output, nil
 }
 
-func (l *LlmMock) Chat(prompt *chat.Chat) (string, error) {
+func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {
@@ -63,7 +64,7 @@ func (l *LlmMock) Chat(prompt *chat.Chat) (string, error) {
 
 type JsonLllMock struct{}
 
-func (l *JsonLllMock) Completion(prompt string) (string, error) {
+func (l *JsonLllMock) Completion(ctx context.Context, prompt string) (string, error) {
 	fmt.Printf("User: %s\n", prompt)
 
 	rand.Seed(time.Now().UnixNano())
@@ -95,7 +96,7 @@ func getRandomStrings(number int) []string {
 	return result
 }
 
-func (l *JsonLllMock) Chat(prompt *chat.Chat) (string, error) {
+func (l *JsonLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {

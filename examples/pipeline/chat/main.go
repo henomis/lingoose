@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -89,7 +90,7 @@ func main() {
 		"role":   "joke writer",
 		"animal": "goose",
 	}
-	response, err := pipe.Run(values)
+	response, err := pipe.Run(context.Background(), values)
 	if err != nil {
 		panic(err)
 	}

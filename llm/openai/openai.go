@@ -59,10 +59,10 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) (*OpenAI
 	}, nil
 }
 
-func (o *OpenAI) Completion(prompt string) (string, error) {
+func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
 
 	response, err := o.openAIClient.CreateCompletion(
-		context.Background(),
+		ctx,
 		openai.CompletionRequest{
 			Model:       string(o.model),
 			Prompt:      prompt,
@@ -90,7 +90,7 @@ func (o *OpenAI) Completion(prompt string) (string, error) {
 	return output, nil
 }
 
-func (o *OpenAI) Chat(prompt *chat.Chat) (string, error) {
+func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	var messages []openai.ChatCompletionMessage
 	promptMessages, err := prompt.ToMessages()
@@ -118,7 +118,7 @@ func (o *OpenAI) Chat(prompt *chat.Chat) (string, error) {
 	}
 
 	response, err := o.openAIClient.CreateChatCompletion(
-		context.Background(),
+		ctx,
 		openai.ChatCompletionRequest{
 			Model:       string(o.model),
 			Messages:    messages,

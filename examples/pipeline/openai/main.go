@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -68,7 +69,7 @@ func main() {
 		pipe3,
 	)
 
-	response, err := pipelineSteps.Run(nil)
+	response, err := pipelineSteps.Run(context.Background(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
