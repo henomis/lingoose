@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -52,7 +53,7 @@ func main() {
 		pipe3,
 	)
 
-	response, err := pipelineSteps.Run(nil)
+	response, err := pipelineSteps.Run(context.TODO(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}

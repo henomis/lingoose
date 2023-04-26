@@ -1,6 +1,10 @@
 package pipeline
 
-import "github.com/henomis/lingoose/chat"
+import (
+	"context"
+
+	"github.com/henomis/lingoose/chat"
+)
 
 type Llm struct {
 	LlmEngine LlmEngine
@@ -22,6 +26,6 @@ type Prompt interface {
 }
 
 type LlmEngine interface {
-	Completion(string) (string, error)
-	Chat(chat *chat.Chat) (string, error)
+	Completion(ctx context.Context, prompt string) (string, error)
+	Chat(ctx context.Context, chat *chat.Chat) (string, error)
 }

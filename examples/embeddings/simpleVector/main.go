@@ -89,6 +89,6 @@ func main() {
 		panic(err)
 	}
 
-	llmOpenAI.Completion(prompt1.Prompt())
+	llmOpenAI.Completion(context.Background(), prompt1.Prompt())
 
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	llmmock "github.com/henomis/lingoose/llm/mock"
 	"github.com/henomis/lingoose/prompt"
 )
@@ -11,7 +13,7 @@ func main() {
 
 	llm := llmmock.LlmMock{}
 
-	output, err := llm.Completion(prompt.Prompt())
+	output, err := llm.Completion(context.TODO(), prompt.Prompt())
 	if err != nil {
 		panic(err)
 	}

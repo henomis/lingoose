@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/henomis/lingoose/chat"
@@ -26,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	response, err := llmOpenAI.Chat(chat)
+	response, err := llmOpenAI.Chat(context.Background(), chat)
 	if err != nil {
 		panic(err)
 	}

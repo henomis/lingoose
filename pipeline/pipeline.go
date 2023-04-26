@@ -2,6 +2,7 @@
 package pipeline
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -65,7 +66,7 @@ func NewStep(
 // Run execute the step and return the output.
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
-func (s *Step) Run(input interface{}) (interface{}, error) {
+func (s *Step) Run(ctx context.Context, input interface{}) (interface{}, error) {
 
 	if input == nil {
 		input = map[string]interface{}{}
@@ -80,7 +81,7 @@ func (s *Step) Run(input interface{}) (interface{}, error) {
 		input = mergeMaps(input.(map[string]interface{}), s.memory.All())
 	}
 
-	response, err := s.executeLLM(input)
+	response, err := s.executeLLM(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -101,23 +102,23 @@ func (s *Step) Run(input interface{}) (interface{}, error) {
 
 }
 
-func (s *Step) executeLLM(input interface{}) (string, error) {
+func (s *Step) executeLLM(ctx context.Context, input interface{}) (string, error) {
 	if s.llm.LlmMode == LlmModeCompletion {
-		return s.executeLLMCompletion(input)
+		return s.executeLLMCompletion(ctx, input)
 	} else if s.llm.LlmMode == LlmModeChat {
-		return s.executeLLMChat(input)
+		return s.executeLLMChat(ctx, input)
 	}
 
 	return "", ErrInvalidLmmMode
 }
 
-func (s *Step) executeLLMCompletion(input interface{}) (string, error) {
+func (s *Step) executeLLMCompletion(ctx context.Context, input interface{}) (string, error) {
 	err := s.llm.Prompt.Format(input)
 	if err != nil {
 		return "", err
 	}
 
-	response, err := s.llm.LlmEngine.Completion(s.llm.Prompt.Prompt())
+	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.Prompt())
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +126,7 @@ func (s *Step) executeLLMCompletion(input interface{}) (string, error) {
 	return response, nil
 }
 
-func (s *Step) executeLLMChat(input interface{}) (string, error) {
+func (s *Step) executeLLMChat(ctx context.Context, input interface{}) (string, error) {
 
 	for _, promptMessage := range s.llm.Chat.PromptMessages {
 		err := promptMessage.Prompt.Format(input)
@@ -134,7 +135,7 @@ func (s *Step) executeLLMChat(input interface{}) (string, error) {
 		}
 	}
 
-	response, err := s.llm.LlmEngine.Chat(s.llm.Chat)
+	response, err := s.llm.LlmEngine.Chat(ctx, s.llm.Chat)
 	if err != nil {
 		return "", err
 	}
@@ -147,18 +148,18 @@ func (p *Pipeline) AddNext(step *Step) {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
-func (p Pipeline) Run(input interface{}) (interface{}, error) {
+func (p Pipeline) Run(ctx context.Context, input interface{}) (interface{}, error) {
 	var err error
 	var output interface{}
 	for i, pipeline := range p.steps {
 
 		if i == 0 {
-			output, err = pipeline.Run(input)
+			output, err = pipeline.Run(ctx, input)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			output, err = pipeline.Run(output)
+			output, err = pipeline.Run(ctx, output)
 			if err != nil {
 				return nil, err
 			}
