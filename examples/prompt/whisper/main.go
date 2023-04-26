@@ -7,16 +7,9 @@ import (
 	"github.com/henomis/lingoose/prompt"
 )
 
-type Inputs struct {
-	Name string `json:"name"`
-}
-
 func main() {
 
-	var input Inputs
-	input.Name = "world"
-
-	promptTemplate, err := prompt.NewPromptFromAudioFile(
+	prompt, err := prompt.NewPromptFromAudioFile(
 		context.Background(),
 		"hello.mp3",
 	)
@@ -24,6 +17,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(promptTemplate.Prompt())
+	fmt.Println(prompt.Prompt())
 
 }
