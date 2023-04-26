@@ -40,9 +40,11 @@ _Talk is cheap. Show me the [code](examples/)._ - Linus Torvalds
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
+	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/memory/ram"
@@ -52,98 +54,122 @@ import (
 
 func main() {
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
+	cache := ram.New()
+
+	llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
 		panic(err)
 	}
-	cache := ram.New()
 
-	prompt1 := prompt.New("Hello how are you?")
-	pipe1 := pipeline.NewStep(
-		"step1",
-		llmOpenAI,
-		prompt1,
-		decoder.NewDefaultDecoder(),
-		cache,
-	)
+	llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+	if err != nil {
+		panic(err)
+	}
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-			"Translate it in {{.language}}!",
+	prompt1, _ := prompt.NewPromptTemplate(
+		"You are a {{.mode}} {{.role}}",
 		map[string]string{
-			"language": "italian",
+			"mode": "professional",
 		},
 	)
-	pipe2 := pipeline.NewStep(
-		"step2",
-		llmOpenAI,
-		prompt2,
-		decoder.NewDefaultDecoder(),
+	prompt2, _ := prompt.NewPromptTemplate(
+		"Write a {{.length}} joke about a {{.animal}}.",
+		map[string]string{
+			"length": "short",
+		},
+	)
+	chat := chat.New(
+		chat.PromptMessage{
+			Type:   chat.MessageTypeSystem,
+			Prompt: prompt1,
+		},
+		chat.PromptMessage{
+			Type:   chat.MessageTypeUser,
+			Prompt: prompt2,
+		},
+	)
+
+	llm1 := pipeline.Llm{
+		LlmEngine: llmChatOpenAI,
+		LlmMode:   pipeline.LlmModeChat,
+		Chat:      chat,
+	}
+	pipeStep1 := pipeline.NewStep(
+		"step1",
+		llm1,
 		nil,
+		cache,
 	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
-			"\n\nTranslate it in {{.language}}!",
+		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
 		map[string]string{
-			"language": "spanish",
+			"command": "Put the joke in a JSON object with only one field called 'joke'. " +
+				"Do not add other json fields. Do not add other information.",
 		},
 	)
-	pipe3 := pipeline.NewStep(
-		"step3",
-		llmOpenAI,
-		prompt3,
-		decoder.NewDefaultDecoder(),
+	llm2 := pipeline.Llm{
+		LlmEngine: llmOpenAI,
+		LlmMode:   pipeline.LlmModeCompletion,
+		Prompt:    prompt3,
+	}
+	joke := struct {
+		Joke string `json:"joke"`
+	}{}
+	pipeStep2 := pipeline.NewStep(
+		"step2",
+		llm2,
+		decoder.NewJSONDecoder(&joke),
 		cache,
 	)
 
-	pipelineSteps := pipeline.New(
-		pipe1,
-		pipe2,
-		pipe3,
-	)
+	pipe := pipeline.New(pipeStep1, pipeStep2)
 
-	response, err := pipelineSteps.Run(nil)
+	values := map[string]string{
+		"role":   "joke writer",
+		"animal": "goose",
+	}
+	response, err := pipe.Run(context.Background(), values)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
-	fmt.Printf("\n\nFinal output: %#v\n\n", response)
-
+	fmt.Printf("Final output: %#v\n", response)
 	fmt.Println("---Memory---")
 	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
 	fmt.Printf("%s\n", string(dump))
+
 }
 ```
 
 Running this example will produce the following output:
 
 ```
+---SYSTEM---
+You are a professional joke writer
 ---USER---
-Hello how are you?
+Write a short joke about a goose.
 ---AI---
-I'm doing well, thank you. How about you?
+Why did the goose cross the playground? To get to the other slide!
 ---USER---
-Consider the following sentence.\n\nSentence:\nI'm doing well, thank you. How about you?\n\n
-                Translate it in italian!
+Considering the following joke.
+
+joke:
+Why did the goose cross the playground? To get to the other slide!
+
+Put the joke in a JSON object with only one field called 'joke'. Do not add other json fields. Do not add other information.
 ---AI---
-Sto bene, grazie. E tu come stai?
----USER---
-Consider the following sentence.\n\nSentence:\nI'm doing well, thank you. How about you?
-                \n\nTranslate it in spanish!
----AI---
-Estoy bien, gracias. ¿Y tú
-
-
-Final output: map[string]interface {}{"output":"Estoy bien, gracias. ¿Y tú"}
-
+{
+        "joke": "Why did the goose cross the playground? To get to the other slide!"
+}
+Final output: &struct { Joke string "json:\"joke\"" }{Joke:"Why did the goose cross the playground? To get to the other slide!"}
 ---Memory---
 {
   "step1": {
-    "output": "I'm doing well, thank you. How about you?"
+    "output": "Why did the goose cross the playground? To get to the other slide!"
   },
-  "step3": {
-    "output": "Estoy bien, gracias. ¿Y tú"
+  "step2": {
+    "joke": "Why did the goose cross the playground? To get to the other slide!"
   }
 }
 ```

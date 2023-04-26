@@ -137,110 +137,136 @@
 package main
 
 import (
-	&quot;encoding/json&quot;
-	&quot;fmt&quot;
+    &quot;context&quot;
+    &quot;encoding/json&quot;
+    &quot;fmt&quot;
 
-	&quot;github.com/henomis/lingoose/decoder&quot;
-	&quot;github.com/henomis/lingoose/llm/openai&quot;
-	&quot;github.com/henomis/lingoose/memory/ram&quot;
-	&quot;github.com/henomis/lingoose/pipeline&quot;
-	&quot;github.com/henomis/lingoose/prompt&quot;
+    &quot;github.com/henomis/lingoose/chat&quot;
+    &quot;github.com/henomis/lingoose/decoder&quot;
+    &quot;github.com/henomis/lingoose/llm/openai&quot;
+    &quot;github.com/henomis/lingoose/memory/ram&quot;
+    &quot;github.com/henomis/lingoose/pipeline&quot;
+    &quot;github.com/henomis/lingoose/prompt&quot;
 )
 
 func main() {
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, true)
-	if err != nil {
-		panic(err)
-	}
-	cache := ram.New()
+    cache := ram.New()
 
-	prompt1 := prompt.New(&quot;Hello how are you?&quot;)
-	pipe1 := pipeline.NewStep(
-		&quot;step1&quot;,
-		llmOpenAI,
-		prompt1,
-		decoder.NewDefaultDecoder(),
-		cache,
-	)
+    llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+    if err != nil {
+        panic(err)
+    }
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		&quot;Consider the following sentence.\n\nSentence:\n{{.output}}\n\n&quot;+
-			&quot;Translate it in {{.language}}!&quot;,
-		map[string]string{
-			&quot;language&quot;: &quot;italian&quot;,
-		},
-	)
-	pipe2 := pipeline.NewStep(
-		&quot;step2&quot;,
-		llmOpenAI,
-		prompt2,
-		decoder.NewDefaultDecoder(),
-		nil,
-	)
+    llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+    if err != nil {
+        panic(err)
+    }
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		&quot;Consider the following sentence.\n\nSentence:\n{{.step1.output}}&quot;+
-			&quot;\n\nTranslate it in {{.language}}!&quot;,
-		map[string]string{
-			&quot;language&quot;: &quot;spanish&quot;,
-		},
-	)
-	pipe3 := pipeline.NewStep(
-		&quot;step3&quot;,
-		llmOpenAI,
-		prompt3,
-		decoder.NewDefaultDecoder(),
-		cache,
-	)
+    prompt1, _ := prompt.NewPromptTemplate(
+        &quot;You are a {{.mode}} {{.role}}&quot;,
+        map[string]string{
+            &quot;mode&quot;: &quot;professional&quot;,
+        },
+    )
+    prompt2, _ := prompt.NewPromptTemplate(
+        &quot;Write a {{.length}} joke about a {{.animal}}.&quot;,
+        map[string]string{
+            &quot;length&quot;: &quot;short&quot;,
+        },
+    )
+    chat := chat.New(
+        chat.PromptMessage{
+            Type:   chat.MessageTypeSystem,
+            Prompt: prompt1,
+        },
+        chat.PromptMessage{
+            Type:   chat.MessageTypeUser,
+            Prompt: prompt2,
+        },
+    )
 
-	pipelineSteps := pipeline.New(
-		pipe1,
-		pipe2,
-		pipe3,
-	)
+    llm1 := pipeline.Llm{
+        LlmEngine: llmChatOpenAI,
+        LlmMode:   pipeline.LlmModeChat,
+        Chat:      chat,
+    }
+    pipeStep1 := pipeline.NewStep(
+        &quot;step1&quot;,
+        llm1,
+        nil,
+        cache,
+    )
 
-	response, err := pipelineSteps.Run(nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+    prompt3, _ := prompt.NewPromptTemplate(
+        &quot;Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}&quot;,
+        map[string]string{
+            &quot;command&quot;: &quot;Put the joke in a JSON object with only one field called 'joke'. &quot; +
+                &quot;Do not add other json fields. Do not add other information.&quot;,
+        },
+    )
+    llm2 := pipeline.Llm{
+        LlmEngine: llmOpenAI,
+        LlmMode:   pipeline.LlmModeCompletion,
+        Prompt:    prompt3,
+    }
+    joke := struct {
+        Joke string `json:&quot;joke&quot;`
+    }{}
+    pipeStep2 := pipeline.NewStep(
+        &quot;step2&quot;,
+        llm2,
+        decoder.NewJSONDecoder(&amp;joke),
+        cache,
+    )
 
-	fmt.Printf(&quot;\n\nFinal output: %#v\n\n&quot;, response)
+    pipe := pipeline.New(pipeStep1, pipeStep2)
 
-	fmt.Println(&quot;---Memory---&quot;)
-	dump, _ := json.MarshalIndent(cache.All(), &quot;&quot;, &quot;  &quot;)
-	fmt.Printf(&quot;%s\n&quot;, string(dump))
+    values := map[string]string{
+        &quot;role&quot;:   &quot;joke writer&quot;,
+        &quot;animal&quot;: &quot;goose&quot;,
+    }
+    response, err := pipe.Run(context.Background(), values)
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf(&quot;Final output: %#v\n&quot;, response)
+    fmt.Println(&quot;---Memory---&quot;)
+    dump, _ := json.MarshalIndent(cache.All(), &quot;&quot;, &quot;  &quot;)
+    fmt.Printf(&quot;%s\n&quot;, string(dump))
+
 }
                     </code>
                 </pre>
                 <p>Running this example will produce the following output:</p>
                 <pre>
                     <code>
+---SYSTEM---
+You are a professional joke writer
 ---USER---
-Hello how are you?
+Write a short joke about a goose.
 ---AI---
-I&#39;m doing well, thank you. How about you?
+Why did the goose cross the playground? To get to the other slide!
 ---USER---
-Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?\n\n
-                Translate it in italian!
+Considering the following joke.
+
+joke:
+Why did the goose cross the playground? To get to the other slide!
+
+Put the joke in a JSON object with only one field called 'joke'. Do not add other json fields. Do not add other information.
 ---AI---
-Sto bene, grazie. E tu come stai?
----USER---
-Consider the following sentence.\n\nSentence:\nI&#39;m doing well, thank you. How about you?
-                \n\nTranslate it in spanish!
----AI---
-Estoy bien, gracias. ¿Y tú
-
-
-Final output: map[string]interface {}{&quot;output&quot;:&quot;Estoy bien, gracias. ¿Y tú&quot;}
-
+{
+        &quot;joke&quot;: &quot;Why did the goose cross the playground? To get to the other slide!&quot;
+}
+Final output: &amp;struct { Joke string &quot;json:\&quot;joke\&quot;&quot; }{Joke:&quot;Why did the goose cross the playground? To get to the other slide!&quot;}
 ---Memory---
 {
     &quot;step1&quot;: {
-    &quot;output&quot;: &quot;I&#39;m doing well, thank you. How about you?&quot;
+    &quot;output&quot;: &quot;Why did the goose cross the playground? To get to the other slide!&quot;
     },
-    &quot;step3&quot;: {
-    &quot;output&quot;: &quot;Estoy bien, gracias. ¿Y tú&quot;
+    &quot;step2&quot;: {
+    &quot;joke&quot;: &quot;Why did the goose cross the playground? To get to the other slide!&quot;
     }
 }
                     </code>
