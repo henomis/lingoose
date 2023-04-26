@@ -19,7 +19,10 @@ func main() {
 		panic(err)
 	}
 
-	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+	if err != nil {
+		panic(err)
+	}
 
 	indexSize, _ := docsVectorIndex.Size()
 

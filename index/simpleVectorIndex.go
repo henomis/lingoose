@@ -23,7 +23,7 @@ type SimpleVectorIndex struct {
 	embedder   Embedder                `json:"-"`
 }
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*SimpleVectorIndex, error) {
 	simpleVectorIndex := &SimpleVectorIndex{
 		Data:       []SimpleVectorIndexData{},
 		outputPath: outputPath,
@@ -33,10 +33,13 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *Si
 
 	_, err := os.Stat(simpleVectorIndex.database())
 	if err == nil {
-		simpleVectorIndex.load()
+		err = simpleVectorIndex.load()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return simpleVectorIndex
+	return simpleVectorIndex, nil
 }
 
 func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
@@ -55,7 +58,10 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 		})
 	}
 
-	s.save()
+	err = s.save()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
