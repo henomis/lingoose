@@ -21,7 +21,9 @@ func main() {
 
 	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 
-	if docsVectorIndex.Size() == 0 {
+	indexSize, _ := docsVectorIndex.Size()
+
+	if indexSize == 0 {
 		loader, err := loader.NewDirectoryLoader(".", ".txt")
 		if err != nil {
 			panic(err)

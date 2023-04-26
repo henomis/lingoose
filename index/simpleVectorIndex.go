@@ -12,10 +12,6 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
-type Embedder interface {
-	Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error)
-}
-
 type SimpleVectorIndexData struct {
 	Document  document.Document  `json:"document"`
 	Embedding embedder.Embedding `json:"embedding"`
@@ -89,8 +85,8 @@ func (s *SimpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *SimpleVectorIndex) Size() int {
-	return len(s.Data)
+func (s *SimpleVectorIndex) Size() (int64, error) {
+	return int64(len(s.Data)), nil
 }
 
 func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
