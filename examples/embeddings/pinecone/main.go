@@ -12,8 +12,8 @@ import (
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 	pineconego "github.com/henomis/pinecone-go"
-	"github.com/henomis/pinecone-go/request"
-	"github.com/henomis/pinecone-go/response"
+	pineconerequest "github.com/henomis/pinecone-go/request"
+	pineconeresponse "github.com/henomis/pinecone-go/response"
 )
 
 func main() {
@@ -35,8 +35,8 @@ func main() {
 
 	pineconeClient := pineconego.New(pineconeEnvironment, pineconeApiKey)
 
-	whoamiReq := &request.Whoami{}
-	whoamiResp := &response.Whoami{}
+	whoamiReq := &pineconerequest.Whoami{}
+	whoamiResp := &pineconeresponse.Whoami{}
 
 	err = pineconeClient.Whoami(context.Background(), whoamiReq, whoamiResp)
 	if err != nil {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	pineconego "github.com/henomis/pinecone-go"
-	"github.com/henomis/pinecone-go/request"
-	"github.com/henomis/pinecone-go/response"
+	pineconerequest "github.com/henomis/pinecone-go/request"
+	pineconeresponse "github.com/henomis/pinecone-go/response"
 )
 
 const (
@@ -51,7 +51,7 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	if err != nil {
 		return err
 	}
-	var vectors []request.Vector
+	var vectors []pineconerequest.Vector
 
 	for i, embedding := range embeddings {
 
@@ -63,23 +63,27 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 		metadata["index"] = fmt.Sprintf("%d", embedding.Index)
 		metadata["content"] = documents[i].Content
 
-		vectors = append(vectors, request.Vector{
+		vectors = append(vectors, pineconerequest.Vector{
 			ID:       fmt.Sprintf("id-%d", embedding.Index),
 			Values:   embedding.Embedding,
 			Metadata: metadata,
 		})
 	}
 
-	req := &request.VectorUpsert{
+	req := &pineconerequest.VectorUpsert{
 		IndexName: s.indexName,
 		ProjectID: s.projectID,
 		Vectors:   vectors,
 	}
-	res := &response.VectorUpsert{}
+	res := &pineconeresponse.VectorUpsert{}
 
 	err = s.pineconeClient.VectorUpsert(ctx, req, res)
 	if err != nil {
 		return err
+	}
+
+	if res.UpsertedCount == nil || res.UpsertedCount != nil && *res.UpsertedCount != int64(len(vectors)) {
+		return fmt.Errorf("error upserting embeddings")
 	}
 
 	return nil
@@ -87,11 +91,11 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 
 func (s *Pinecone) Size() (int64, error) {
 
-	req := &request.VectorDescribeIndexStats{
+	req := &pineconerequest.VectorDescribeIndexStats{
 		IndexName: s.indexName,
 		ProjectID: s.projectID,
 	}
-	res := &response.VectorDescribeIndexStats{}
+	res := &pineconeresponse.VectorDescribeIndexStats{}
 
 	err := s.pineconeClient.VectorDescribeIndexStats(context.Background(), req, res)
 	if err != nil {
@@ -99,7 +103,7 @@ func (s *Pinecone) Size() (int64, error) {
 	}
 
 	if res.TotalVectorCount == nil {
-		return 0, fmt.Errorf("TotalVectorCount is nil")
+		return 0, fmt.Errorf("failed to get total index size")
 	}
 
 	return *res.TotalVectorCount, nil
@@ -118,10 +122,10 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 	}
 
 	includeMetadata := true
-	res := &response.VectorQuery{}
+	res := &pineconeresponse.VectorQuery{}
 	err = s.pineconeClient.VectorQuery(
 		ctx,
-		&request.VectorQuery{
+		&pineconerequest.VectorQuery{
 			IndexName:       s.indexName,
 			ProjectID:       s.projectID,
 			TopK:            int32(pineconeTopK),
@@ -158,6 +162,11 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 			documentSource = ""
 		}
 
+		score := float32(0)
+		if match.Score != nil {
+			score = *match.Score
+		}
+
 		document := document.Document{
 			Content: documentContent,
 			Metadata: map[string]interface{}{
@@ -167,7 +176,7 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 
 		searchResponses[i] = SearchResponse{
 			Document: document,
-			Score:    *match.Score,
+			Score:    score,
 			Index:    documentIndexAsInt,
 		}
 	}
@@ -182,5 +191,10 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 		return searchResponses, nil
 	}
 
-	return searchResponses[:*topK], nil
+	maxTopK := *topK
+	if maxTopK > len(searchResponses) {
+		maxTopK = len(searchResponses)
+	}
+
+	return searchResponses[:maxTopK], nil
 }
