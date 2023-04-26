@@ -44,24 +44,10 @@ If you then still feel the need to ask a question and need clarification, we rec
 
 - Open an [Issue](https://github.com/henomis/lingoose/issues/new).
 - Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+- Provide project and platform versions, depending on what seems relevant.
 
 We will then take care of the issue as soon as possible.
 
-<!--
-You might want to create a separate issue tag for questions and include it in this description. People should then tag their issues accordingly.
-
-Depending on how large the project is, you may want to outsource the questioning, e.g. to Stack Overflow or Gitter. You may add additional contact and information possibilities:
-- IRC
-- Slack
-- Gitter
-- Stack Overflow tag
-- Blog
-- FAQ
-- Roadmap
-- E-Mail List
-- Forum
--->
 
 ## I Want To Contribute
 
@@ -134,26 +120,20 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/henomi
 <!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
 
 ### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
 
--->
+Follow the [first contribution guide](https://github.com/firstcontributions/first-contributions) to get started with your first code contribution to LinGoose.
+
 
 ### Improving The Documentation
-<!-- TODO
-Updating, improving and correcting the documentation
 
--->
+LinGoose could always use more documentation, whether as part of the official LinGoose docs, in docstrings, or even on the web in blog posts, articles, and such.
 
 ## Styleguides
+
+Please referr to [Go style guide](https://google.github.io/styleguide/go/) when contributing to the project.
+
 ### Commit Messages
-<!-- TODO
 
--->
+- Use the present tense ("Add feature" not "Added feature")
+- Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 
-## Join The Project Team
-<!-- TODO -->
-
-<!-- omit in toc -->
-## Attribution
-This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!

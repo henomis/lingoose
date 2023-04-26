@@ -183,6 +183,10 @@ func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]
 
 func structToMap(obj interface{}) (map[string]interface{}, error) {
 	genericMap := map[string]interface{}{}
-	mapstructure.Decode(obj, &genericMap)
+	err := mapstructure.Decode(obj, &genericMap)
+	if err != nil {
+		return nil, err
+	}
+
 	return genericMap, nil
 }
