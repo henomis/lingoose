@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"math"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/henomis/lingoose/document"
@@ -108,18 +107,7 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 		}
 	}
 
-	//sort by similarity score
-	sort.Slice(searchResponses, func(i, j int) bool {
-		return searchResponses[i].Score > searchResponses[j].Score
-	})
-
-	//return topK
-	if topK == nil {
-		return searchResponses, nil
-	}
-
-	return searchResponses[:*topK], nil
-
+	return filterSearchResponses(searchResponses, topK), nil
 }
 
 func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float32 {

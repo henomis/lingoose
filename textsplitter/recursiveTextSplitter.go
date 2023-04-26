@@ -34,6 +34,8 @@ func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int, separato
 
 }
 
+// AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
+
 func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
 
 	docs := make([]document.Document, 0)

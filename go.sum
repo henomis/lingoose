@@ -1,3 +1,5 @@
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/henomis/pinecone-go v1.0.3 h1:mhWH2IlfdjZW3rIxz23JHZ3HRUiQaoL5DqVcGq3HnOQ=
 github.com/henomis/pinecone-go v1.0.3/go.mod h1:FsMMRjLyiJ9zHqGOlmGvjolqOp2kkbMsRm8oc85vykU=
 github.com/henomis/restclientgo v1.0.3 h1:y5+ydfvWJ0/7crObdnCHSn7ya/h1whD+PV4Ir2dZ9Ig=

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	pineconego "github.com/henomis/pinecone-go"
 	pineconerequest "github.com/henomis/pinecone-go/request"
@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultTopK = 10
+	defaultPineconeTopK = 10
 )
 
 type Pinecone struct {
@@ -63,8 +63,10 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 		metadata["index"] = fmt.Sprintf("%d", embedding.Index)
 		metadata["content"] = documents[i].Content
 
+		vectorID := uuid.New()
+
 		vectors = append(vectors, pineconerequest.Vector{
-			ID:       fmt.Sprintf("id-%d", embedding.Index),
+			ID:       vectorID.String(),
 			Values:   embedding.Embedding,
 			Metadata: metadata,
 		})
@@ -111,7 +113,7 @@ func (s *Pinecone) Size() (int64, error) {
 
 func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
 
-	pineconeTopK := defaultTopK
+	pineconeTopK := defaultPineconeTopK
 	if topK != nil {
 		pineconeTopK = *topK
 	}
@@ -181,20 +183,5 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 		}
 	}
 
-	//sort by similarity score
-	sort.Slice(searchResponses, func(i, j int) bool {
-		return searchResponses[i].Score > searchResponses[j].Score
-	})
-
-	//return topK
-	if topK == nil {
-		return searchResponses, nil
-	}
-
-	maxTopK := *topK
-	if maxTopK > len(searchResponses) {
-		maxTopK = len(searchResponses)
-	}
-
-	return searchResponses[:maxTopK], nil
+	return filterSearchResponses(searchResponses, topK), nil
 }
