@@ -65,75 +65,70 @@
                 <h1 id="components">Components</h1>
                 <p><strong>LinGoose</strong> is composed of multiple components, each one with its own purpose.</p>
                 <table>
-                <thead>
-                <tr>
-                <th>Component</th>
-                <th>Package</th>
-                <th>Description</th>
-                </tr>
-                </thead>
-                <tbody><tr>
-                <td><strong>Prompt</strong></td>
-                <td><a href="../prompt/">prompt</a></td>
-                <td>Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates.</td>
-                </tr>
-                <tr>
-                <td><strong>Prompt Template</strong></td>
-                <td><a href="../prompt/">prompt</a></td>
-                <td>Templates are used to generate prompts formatting a generic input using Go <a href="https://golang.org/pkg/text/template/">text/template</a> package.</td>
-                </tr>
-                <tr>
-                <td><strong>Chat Prompt</strong></td>
-                <td><a href="../chat/">chat</a></td>
-                <td>Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot.</td>
-                </tr>
-                <tr>
-                <td><strong>Output decoders</strong></td>
-                <td><a href="../decoder/">decoder</a></td>
-                <td>Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output.</td>
-                </tr>
-                <tr>
-                <td><strong>LLMs</strong></td>
-                <td><a href="../llm/openai/">llm/openai</a></td>
-                <td>LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output.</td>
-                </tr>
-                <tr>
-                <td><strong>Pipelines</strong></td>
-                <td><a href="../pipeline/">pipeline</a></td>
-                <td>Pipelines are used to chain multiple LLM steps together.</td>
-                </tr>
-                <tr>
-                <td><strong>Memory</strong></td>
-                <td><a href="../memory/ram/">memory/ram</a></td>
-                <td>Memory is used to store the output of each step. It can be used to retrieve the output of a previous step.</td>
-                </tr>
-                <tr>
-                <td><strong>Memory</strong></td>
-                <td><a href="../document/">document</a></td>
-                <td>Document is used to store a text.</td>
-                </tr>
-                <tr>
-                <td><strong>Loader</strong></td>
-                <td><a href="../loader/">loader</a></td>
-                <td>Loaders are used to load Documents from various sources.</td>
-                </tr>
-                <tr>
-                <td><strong>TextSplitters</strong></td>
-                <td><a href="../textsplitter/">textsplitter</a></td>
-                <td>TextSplitters are used to split text or Documents into multiple parts.</td>
-                </tr>
-                <tr>
-                <td><strong>Embedders</strong></td>
-                <td><a href="../embedder/">embedder</a></td>
-                <td>Embedders are used to embed text or Documents into embeddings.</td>
-                </tr>
-                <tr>
-                <td><strong>Indexes</strong></td>
-                <td><a href="../index/">index</a></td>
-                <td>Indexes are used to store embeddings and documents and to perform searches.</td>
-                </tr>
-                </tbody></table>
-                <br>
+                    <thead>
+                    <tr>
+                    <th>Component</th>
+                    <th>Package</th>
+                    <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody><tr>
+                    <td><strong>Prompt</strong></td>
+                    <td><a href="prompt/">prompt</a></td>
+                    <td>Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. Supports <strong>Prompt Templates</strong> and  <strong><a href="https://openai.com">Whisper</a> prompt</strong></td>
+                    </tr>
+                    <tr>
+                    <td><strong>Chat Prompt</strong></td>
+                    <td><a href="chat/">chat</a></td>
+                    <td>Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot.</td>
+                    </tr>
+                    <tr>
+                    <td><strong>Decoders</strong></td>
+                    <td><a href="decoder/">decoder</a></td>
+                    <td>Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. Supports <strong>JSONDecoder</strong> and <strong>RegExDecoder</strong></td>
+                    </tr>
+                    <tr>
+                    <td><strong>LLMs</strong></td>
+                    <td><a href="llm/">llm</a></td>
+                    <td>LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. Supports <strong><a href="https://openai.com">OpenAI</a></strong></td>
+                    </tr>
+                    <tr>
+                    <td><strong>Pipelines</strong></td>
+                    <td><a href="pipeline/">pipeline</a></td>
+                    <td>Pipelines are used to chain multiple LLM steps together.</td>
+                    </tr>
+                    <tr>
+                    <td><strong>Memory</strong></td>
+                    <td><a href="memory/">memory</a></td>
+                    <td>Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. Supports memory in <strong>Ram</strong></td>
+                    </tr>
+                    <tr>
+                    <td><strong>Document</strong></td>
+                    <td><a href="document/">document</a></td>
+                    <td>Document is used to store a text</td>
+                    </tr>
+                    <tr>
+                    <td><strong>Loaders</strong></td>
+                    <td><a href="loader/">loader</a></td>
+                    <td>Loaders are used to load Documents from various sources. Supports <strong>TextLoader</strong> and <strong>DirectoryLoader</strong>.</td>
+                    </tr>
+                    <tr>
+                    <td><strong>TextSplitters</strong></td>
+                    <td><a href="textsplitter/">textsplitter</a></td>
+                    <td>TextSplitters are used to split text or Documents into multiple parts. Supports <strong>RecursiveTextSplitter</strong>.</td>
+                    </tr>
+                    <tr>
+                    <td><strong>Embedders</strong></td>
+                    <td><a href="embedder/">embedder</a></td>
+                    <td>Embedders are used to embed text or Documents into embeddings. Supports <strong><a href="https://openai.com">OpenAI</a></strong></td>
+                    </tr>
+                    <tr>
+                    <td><strong>Indexes</strong></td>
+                    <td><a href="index/">index</a></td>
+                    <td>Indexes are used to store embeddings and documents and to perform searches. Supports <strong>SimpleVectorIndex</strong> and <strong><a href="https://pinecone.io">Pinecone</a></strong></td>
+                    </tr>
+                    </tbody></table>
+                                    <br>
                 <h1 id="usage">Usage</h1>
                 <p>Please refer to the <a href="../examples/">examples directory</a> to see other examples. However, here is an example of what <strong>LinGoose</strong> is capable of:</p>
                 <p><em>Talk is cheap. Show me the <a href="../examples/">code</a>.</em> - Linus Torvalds</p>

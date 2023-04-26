@@ -18,18 +18,17 @@ here below an image from docs/assets/img/lingoose.png
 
 | Component | Package|Description |
 | --- | --- | ---|
-|**Prompt** | [prompt](prompt/)| Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. |
-|**Prompt Template** | [prompt](prompt/)| Templates are used to generate prompts formatting a generic input using Go [text/template](https://golang.org/pkg/text/template/) package. |
+|**Prompt** | [prompt](prompt/)| Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. Supports **Prompt Templates** and  **[Whisper](https://openai.com) prompt**|
 |**Chat Prompt** | [chat](chat/) | Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot. |
-|**Output decoders** | [decoder](decoder/) | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. |
-|**LLMs** |[llm/openai](llm/openai/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. |
+|**Decoders** | [decoder](decoder/) | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. Supports **JSONDecoder** and **RegExDecoder** |
+|**LLMs** |[llm](llm/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. Supports **[OpenAI](https://openai.com)**|
 |**Pipelines** | [pipeline](pipeline/)|Pipelines are used to chain multiple LLM steps together. |
-|**Memory** | [memory/ram](memory/ram/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. |
+|**Memory** | [memory](memory/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. Supports memory in **Ram**|
 |**Document** | [document](document/)|Document is used to store a text |
-|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. |
-|**TextSplitters**| [textsplitter](textsplitter/)|TextSplitters are used to split text or Documents into multiple parts. |
-|**Embedders** | [embedder](embedder/)|Embedders are used to embed text or Documents into embeddings. |
-|**Indexes**| [index](index/)|Indexes are used to store embeddings and documents and to perform searches. |
+|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. Supports **TextLoader** and **DirectoryLoader**. |
+|**TextSplitters**| [textsplitter](textsplitter/)|TextSplitters are used to split text or Documents into multiple parts. Supports **RecursiveTextSplitter**.|
+|**Embedders** | [embedder](embedder/)|Embedders are used to embed text or Documents into embeddings. Supports **[OpenAI](https://openai.com)** |
+|**Indexes**| [index](index/)|Indexes are used to store embeddings and documents and to perform searches. Supports **SimpleVectorIndex** and **[Pinecone](https://pinecone.io)**|
 
 # Usage
 
