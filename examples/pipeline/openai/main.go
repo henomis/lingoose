@@ -26,7 +26,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	pipe1 := pipeline.NewStep(
+	step1 := pipeline.NewStep(
 		"step1",
 		llm,
 		decoder.NewDefaultDecoder(),
@@ -41,7 +41,7 @@ func main() {
 		},
 	)
 	llm.Prompt = prompt2
-	pipe2 := pipeline.NewStep(
+	step2 := pipeline.NewStep(
 		"step2",
 		llm,
 		decoder.NewDefaultDecoder(),
@@ -56,20 +56,20 @@ func main() {
 		},
 	)
 	llm.Prompt = prompt3
-	pipe3 := pipeline.NewStep(
+	step3 := pipeline.NewStep(
 		"step3",
 		llm,
 		decoder.NewDefaultDecoder(),
 		cache,
 	)
 
-	pipelineSteps := pipeline.New(
-		pipe1,
-		pipe2,
-		pipe3,
+	pipeLine := pipeline.New(
+		step1,
+		step2,
+		step3,
 	)
 
-	response, err := pipelineSteps.Run(context.Background(), nil)
+	response, err := pipeLine.Run(context.Background(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
