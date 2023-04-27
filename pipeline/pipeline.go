@@ -23,35 +23,39 @@ type Memory interface {
 	Clear() error
 }
 
-type Step struct {
+type Tube struct {
 	name    string
 	llm     Llm
 	decoder Decoder
 	memory  Memory
 }
 
-type Pipeline struct {
-	steps []*Step
+type Pipe interface {
+	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
-func New(steps ...*Step) Pipeline {
+type Pipeline struct {
+	pipes []Pipe
+}
+
+func New(pipes ...Pipe) Pipeline {
 	return Pipeline{
-		steps: steps,
+		pipes: pipes,
 	}
 }
 
-func NewStep(
+func NewTube(
 	name string,
 	llm Llm,
 	outputDecoder Decoder,
 	memory Memory,
-) *Step {
+) *Tube {
 
 	if outputDecoder == nil {
 		outputDecoder = &defaultDecoder{}
 	}
 
-	return &Step{
+	return &Tube{
 		name:    name,
 		llm:     llm,
 		decoder: outputDecoder,
@@ -62,7 +66,7 @@ func NewStep(
 // Run execute the step and return the output.
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
-func (s *Step) Run(ctx context.Context, input types.M) (types.M, error) {
+func (s *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	if input == nil {
 		input = types.M{}
@@ -98,7 +102,7 @@ func (s *Step) Run(ctx context.Context, input types.M) (types.M, error) {
 
 }
 
-func (s *Step) executeLLM(ctx context.Context, input types.M) (string, error) {
+func (s *Tube) executeLLM(ctx context.Context, input types.M) (string, error) {
 	if s.llm.LlmMode == LlmModeCompletion {
 		return s.executeLLMCompletion(ctx, input)
 	} else if s.llm.LlmMode == LlmModeChat {
@@ -108,7 +112,7 @@ func (s *Step) executeLLM(ctx context.Context, input types.M) (string, error) {
 	return "", ErrInvalidLmmMode
 }
 
-func (s *Step) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {
+func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {
 	err := s.llm.Prompt.Format(input)
 	if err != nil {
 		return "", err
@@ -122,7 +126,7 @@ func (s *Step) executeLLMCompletion(ctx context.Context, input types.M) (string,
 	return response, nil
 }
 
-func (s *Step) executeLLMChat(ctx context.Context, input types.M) (string, error) {
+func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error) {
 
 	for _, promptMessage := range s.llm.Chat.PromptMessages {
 		err := promptMessage.Prompt.Format(input)
@@ -139,15 +143,11 @@ func (s *Step) executeLLMChat(ctx context.Context, input types.M) (string, error
 	return response, nil
 }
 
-func (p *Pipeline) AddNext(step *Step) {
-	p.steps = append(p.steps, step)
-}
-
 // Run chains the steps of the pipeline and returns the output of the last step.
 func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
 	var output types.M
-	for i, pipeline := range p.steps {
+	for i, pipeline := range p.pipes {
 
 		if i == 0 {
 			output, err = pipeline.Run(ctx, input)

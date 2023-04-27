@@ -6,14 +6,12 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func main() {
-
-	cache := ram.New()
 
 	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
@@ -29,43 +27,58 @@ func main() {
 		"step1",
 		llm,
 		nil,
-		cache,
+		nil,
 	)
 
 	prompt2, _ := prompt.NewPromptTemplate(
 		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
 			"Translate it in {{.language}}!",
-		map[string]string{
-			"language": "italian",
-		},
+		nil,
 	)
 	llm.Prompt = prompt2
-	tube2 := pipeline.NewTube(
+	tube2 := pipeline.NewSplitter(
 		"step2",
 		llm,
 		nil,
 		nil,
+		func(input types.M) ([]types.M, error) {
+			return []types.M{
+				mergeMaps(input, types.M{
+					"language": "italian",
+				}),
+				mergeMaps(input, types.M{
+					"language": "spanish",
+				}),
+				mergeMaps(input, types.M{
+					"language": "finnish",
+				}),
+				mergeMaps(input, types.M{
+					"language": "french",
+				}),
+				mergeMaps(input, types.M{
+					"language": "german",
+				}),
+			}, nil
+		},
 	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
-			"\n\nTranslate it in {{.language}}!",
-		map[string]string{
-			"language": "spanish",
-		},
+		"For each of the following sentences, detect the language.\n\nSentences:\n"+
+			"{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
+		nil,
 	)
 	llm.Prompt = prompt3
-	step3 := pipeline.NewTube(
+	tube3 := pipeline.NewTube(
 		"step3",
 		llm,
 		nil,
-		cache,
+		nil,
 	)
 
 	pipeLine := pipeline.New(
 		tube1,
 		tube2,
-		step3,
+		tube3,
 	)
 
 	response, err := pipeLine.Run(context.Background(), nil)
@@ -73,9 +86,19 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("\n\nFinal output: %#v\n\n", response)
+	data, _ := json.MarshalIndent(response, "", "  ")
 
-	fmt.Println("---Memory---")
-	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
-	fmt.Printf("%s\n", string(dump))
+	fmt.Printf("Final output: %s\n", data)
+
+}
+
+func mergeMaps(m1 types.M, m2 types.M) types.M {
+	merged := make(types.M)
+	for k, v := range m1 {
+		merged[k] = v
+	}
+	for key, value := range m2 {
+		merged[key] = value
+	}
+	return merged
 }
