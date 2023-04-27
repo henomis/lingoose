@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func TestChat_ToMessages(t *testing.T) {
 
 	prompt1, _ := prompt.NewPromptTemplate(
 		"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
-		map[string]string{
+		types.M{
 			"input_language":  "English",
 			"output_language": "Spanish",
 		},

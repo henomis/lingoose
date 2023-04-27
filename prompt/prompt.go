@@ -2,7 +2,11 @@
 // Prompts are defined using a template string and a list of inputs.
 package prompt
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/henomis/lingoose/types"
+)
 
 var (
 	ErrFormatting     = errors.New("formatting prompt error")
@@ -20,7 +24,7 @@ func New(prompt string) *Prompt {
 	}
 }
 
-func (p *Prompt) Format(input interface{}) error {
+func (p *Prompt) Format(input types.M) error {
 	return nil
 }
 

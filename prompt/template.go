@@ -5,6 +5,7 @@ import (
 	"fmt"
 	texttemplate "text/template"
 
+	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,10 +19,10 @@ type Template struct {
 func NewPromptTemplate(template string, input interface{}) (*Template, error) {
 
 	if input == nil {
-		input = map[string]interface{}{}
+		input = types.M{}
 	}
 
-	genericMap := map[string]interface{}{}
+	genericMap := types.M{}
 	err := mapstructure.Decode(input, &genericMap)
 	if err != nil {
 		return nil, ErrDecoding
@@ -42,7 +43,7 @@ func NewPromptTemplate(template string, input interface{}) (*Template, error) {
 }
 
 // Format formats the prompt using the template engine and the provided inputs.
-func (p *Template) Format(input interface{}) error {
+func (p *Template) Format(input types.M) error {
 
 	if p.templateEngine == nil {
 		err := p.initTemplateEngine()
@@ -52,7 +53,7 @@ func (p *Template) Format(input interface{}) error {
 	}
 
 	if input == nil {
-		input = map[string]interface{}{}
+		input = types.M{}
 	}
 
 	input, err := structToMap(input)
@@ -60,7 +61,7 @@ func (p *Template) Format(input interface{}) error {
 		return fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
-	overallMap := mergeMaps(p.input.(map[string]interface{}), input.(map[string]interface{}))
+	overallMap := mergeMaps(p.input.(types.M), input)
 
 	var buffer bytes.Buffer
 	err = p.templateEngine.Execute(&buffer, overallMap)
@@ -93,8 +94,8 @@ func (p *Template) initTemplateEngine() error {
 	return nil
 }
 
-func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]interface{} {
-	merged := make(map[string]interface{})
+func mergeMaps(m1 types.M, m2 types.M) types.M {
+	merged := make(types.M)
 	for k, v := range m1 {
 		merged[k] = v
 	}
@@ -104,8 +105,8 @@ func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]
 	return merged
 }
 
-func structToMap(obj interface{}) (map[string]interface{}, error) {
-	genericMap := map[string]interface{}{}
+func structToMap(obj interface{}) (types.M, error) {
+	genericMap := types.M{}
 	err := mapstructure.Decode(obj, &genericMap)
 	if err != nil {
 		return nil, err

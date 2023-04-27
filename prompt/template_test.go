@@ -3,6 +3,8 @@ package prompt
 import (
 	"testing"
 	texttemplate "text/template"
+
+	"github.com/henomis/lingoose/types"
 )
 
 func TestPromptTemplate_Format(t *testing.T) {
@@ -13,7 +15,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 		templateEngine *texttemplate.Template
 	}
 	type args struct {
-		input interface{}
+		input types.M
 	}
 	tests := []struct {
 		name    string
@@ -24,11 +26,11 @@ func TestPromptTemplate_Format(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				input:    map[string]interface{}{},
+				input:    types.M{},
 				template: "Hello {{.name}}",
 			},
 			args: args{
-				input: map[string]interface{}{
+				input: types.M{
 					"name": "John",
 				},
 			},
@@ -37,11 +39,11 @@ func TestPromptTemplate_Format(t *testing.T) {
 		{
 			name: "Test 2",
 			fields: fields{
-				input:    map[string]interface{}{"name": "Alan"},
+				input:    types.M{"name": "Alan"},
 				template: "Hello {{.name}}, i'm {{.age}} years old",
 			},
 			args: args{
-				input: map[string]interface{}{
+				input: types.M{
 					"age": 30,
 				},
 			},
@@ -69,7 +71,7 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 		template       string
 		value          string
 		templateEngine *texttemplate.Template
-		external       interface{}
+		external       types.M
 	}
 	tests := []struct {
 		name   string
@@ -79,9 +81,9 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				input:    map[string]interface{}{},
+				input:    types.M{},
 				template: "Hello {{.name}}",
-				external: map[string]interface{}{
+				external: types.M{
 					"name": "John",
 				},
 			},
@@ -90,9 +92,9 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 		{
 			name: "Test 2",
 			fields: fields{
-				input:    map[string]interface{}{"age": "33"},
+				input:    types.M{"age": "33"},
 				template: "Hello {{.name}}, i'm {{.age}} years old",
-				external: map[string]interface{}{
+				external: types.M{
 					"name": "John",
 				},
 			},
