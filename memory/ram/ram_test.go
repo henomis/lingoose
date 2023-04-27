@@ -3,11 +3,13 @@ package ram
 import (
 	"reflect"
 	"testing"
+
+	"github.com/henomis/lingoose/types"
 )
 
 func TestSimpleMemory_Get(t *testing.T) {
 	type fields struct {
-		memory map[string]interface{}
+		memory types.M
 	}
 	type args struct {
 		key string
@@ -21,7 +23,7 @@ func TestSimpleMemory_Get(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
@@ -34,7 +36,7 @@ func TestSimpleMemory_Get(t *testing.T) {
 		{
 			name: "Test 2",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
@@ -59,7 +61,7 @@ func TestSimpleMemory_Get(t *testing.T) {
 
 func TestSimpleMemory_Set(t *testing.T) {
 	type fields struct {
-		memory map[string]interface{}
+		memory types.M
 	}
 	type args struct {
 		key   string
@@ -74,7 +76,7 @@ func TestSimpleMemory_Set(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
@@ -100,22 +102,22 @@ func TestSimpleMemory_Set(t *testing.T) {
 
 func TestSimpleMemory_All(t *testing.T) {
 	type fields struct {
-		memory map[string]interface{}
+		memory types.M
 	}
 	tests := []struct {
 		name   string
 		fields fields
-		want   map[string]interface{}
+		want   types.M
 	}{
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
 			},
-			want: map[string]interface{}{
+			want: types.M{
 				"key1": "value1",
 				"key2": "value2",
 			},
@@ -135,7 +137,7 @@ func TestSimpleMemory_All(t *testing.T) {
 
 func TestSimpleMemory_Delete(t *testing.T) {
 	type fields struct {
-		memory map[string]interface{}
+		memory types.M
 	}
 	type args struct {
 		key string
@@ -149,7 +151,7 @@ func TestSimpleMemory_Delete(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
@@ -162,7 +164,7 @@ func TestSimpleMemory_Delete(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
@@ -187,7 +189,7 @@ func TestSimpleMemory_Delete(t *testing.T) {
 
 func TestSimpleMemory_Clear(t *testing.T) {
 	type fields struct {
-		memory map[string]interface{}
+		memory types.M
 	}
 	tests := []struct {
 		name    string
@@ -197,7 +199,7 @@ func TestSimpleMemory_Clear(t *testing.T) {
 		{
 			name: "Test 1",
 			fields: fields{
-				memory: map[string]interface{}{
+				memory: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},

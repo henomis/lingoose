@@ -1,19 +1,23 @@
 // Package ram provides a memory storage that stores data in RAM.
 package ram
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/henomis/lingoose/types"
+)
 
 var (
 	ErrObjectNotFound = errors.New("object not found")
 )
 
 type Ram struct {
-	memory map[string]interface{}
+	memory types.M
 }
 
 func New() *Ram {
 	return &Ram{
-		memory: map[string]interface{}{},
+		memory: types.M{},
 	}
 }
 
@@ -30,7 +34,7 @@ func (r *Ram) Set(key string, value interface{}) error {
 	return nil
 }
 
-func (r *Ram) All() map[string]interface{} {
+func (r *Ram) All() types.M {
 	return r.memory
 }
 
@@ -45,6 +49,6 @@ func (r *Ram) Delete(key string) error {
 }
 
 func (r *Ram) Clear() error {
-	r.memory = map[string]interface{}{}
+	r.memory = types.M{}
 	return nil
 }
