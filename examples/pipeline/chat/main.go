@@ -56,7 +56,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeChat,
 		Chat:      chat,
 	}
-	pipeStep1 := pipeline.NewStep(
+	pipeStep1 := pipeline.NewTube(
 		"step1",
 		llm1,
 		nil,
@@ -76,7 +76,7 @@ func main() {
 		Prompt:    prompt3,
 	}
 
-	pipeStep2 := pipeline.NewStep(
+	pipeStep2 := pipeline.NewTube(
 		"step2",
 		llm2,
 		decoder.NewJSONDecoder(),

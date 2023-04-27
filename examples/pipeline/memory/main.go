@@ -22,7 +22,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt1,
 	}
-	pipe1 := pipeline.NewStep("step1", llm1, nil, cache)
+	pipe1 := pipeline.NewTube("step1", llm1, nil, cache)
 
 	// myout := &struct {
 	// 	First  string
@@ -40,7 +40,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt2,
 	}
-	pipe2 := pipeline.NewStep("step2", llm2, decoder.NewJSONDecoder(), cache)
+	pipe2 := pipeline.NewTube("step2", llm2, decoder.NewJSONDecoder(), cache)
 
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
@@ -52,12 +52,12 @@ func main() {
 		},
 	)
 	llm1.Prompt = prompt3
-	pipe3 := pipeline.NewStep("step3", llm1, regexDecoder, cache)
+	pipe3 := pipeline.NewTube("step3", llm1, regexDecoder, cache)
 
 	prompt4, _ := prompt.NewPromptTemplate("Well here is your answer: "+
 		"{{ range  $value := .step3.output }}[{{$value}}] {{end}}", nil)
 	llm1.Prompt = prompt4
-	pipe4 := pipeline.NewStep("step4", llm1, nil, cache)
+	pipe4 := pipeline.NewTube("step4", llm1, nil, cache)
 
 	pipelineSteps := pipeline.New(
 		pipe1,

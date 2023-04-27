@@ -23,7 +23,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	step1 := pipeline.NewStep(
+	step1 := pipeline.NewTube(
 		"step1",
 		llm,
 		nil,
@@ -68,7 +68,7 @@ func main() {
 		nil,
 	)
 	llm.Prompt = prompt3
-	step3 := pipeline.NewStep(
+	step3 := pipeline.NewTube(
 		"step3",
 		llm,
 		nil,
