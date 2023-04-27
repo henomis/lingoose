@@ -49,14 +49,14 @@ func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 		wg.Add(1)
 		go func(i int, splittedInput types.M) {
 			defer wg.Done()
-			step := NewTube(
+			tube := NewTube(
 				fmt.Sprintf("%s-%d", s.name, i),
 				s.llm,
 				s.decoder,
 				s.memory,
 			)
 
-			output, err := step.Run(ctx, splittedInput)
+			output, err := tube.Run(ctx, splittedInput)
 			if err != nil {
 				return
 			}

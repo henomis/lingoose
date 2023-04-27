@@ -23,7 +23,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	step1 := pipeline.NewTube(
+	tube1 := pipeline.NewTube(
 		"step1",
 		llm,
 		nil,
@@ -36,7 +36,7 @@ func main() {
 		nil,
 	)
 	llm.Prompt = prompt2
-	step2 := pipeline.NewSplitter(
+	tube2 := pipeline.NewSplitter(
 		"step2",
 		llm,
 		nil,
@@ -68,7 +68,7 @@ func main() {
 		nil,
 	)
 	llm.Prompt = prompt3
-	step3 := pipeline.NewTube(
+	tube3 := pipeline.NewTube(
 		"step3",
 		llm,
 		nil,
@@ -76,9 +76,9 @@ func main() {
 	)
 
 	pipeLine := pipeline.New(
-		step1,
-		step2,
-		step3,
+		tube1,
+		tube2,
+		tube3,
 	)
 
 	response, err := pipeLine.Run(context.Background(), nil)

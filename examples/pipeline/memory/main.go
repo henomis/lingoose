@@ -22,12 +22,8 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt1,
 	}
-	pipe1 := pipeline.NewTube("step1", llm1, nil, cache)
+	tube1 := pipeline.NewTube("step1", llm1, nil, cache)
 
-	// myout := &struct {
-	// 	First  string
-	// 	Second string
-	// }{}
 	prompt2, _ := prompt.NewPromptTemplate(
 		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. "+
 			"Anyway I'm fine {{.value}}!",
@@ -40,7 +36,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt2,
 	}
-	pipe2 := pipeline.NewTube("step2", llm2, decoder.NewJSONDecoder(), cache)
+	tube2 := pipeline.NewTube("step2", llm2, decoder.NewJSONDecoder(), cache)
 
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
@@ -52,21 +48,21 @@ func main() {
 		},
 	)
 	llm1.Prompt = prompt3
-	pipe3 := pipeline.NewTube("step3", llm1, regexDecoder, cache)
+	tube3 := pipeline.NewTube("step3", llm1, regexDecoder, cache)
 
 	prompt4, _ := prompt.NewPromptTemplate("Well here is your answer: "+
 		"{{ range  $value := .step3.output }}[{{$value}}] {{end}}", nil)
 	llm1.Prompt = prompt4
-	pipe4 := pipeline.NewTube("step4", llm1, nil, cache)
+	tube4 := pipeline.NewTube("step4", llm1, nil, cache)
 
-	pipelineSteps := pipeline.New(
-		pipe1,
-		pipe2,
-		pipe3,
-		pipe4,
+	pipelineTubes := pipeline.New(
+		tube1,
+		tube2,
+		tube3,
+		tube4,
 	)
 
-	response, err := pipelineSteps.Run(context.Background(), nil)
+	response, err := pipelineTubes.Run(context.Background(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
