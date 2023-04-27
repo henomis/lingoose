@@ -3,31 +3,33 @@ package pipeline
 import (
 	"reflect"
 	"testing"
+
+	"github.com/henomis/lingoose/types"
 )
 
 func Test_mergeMaps(t *testing.T) {
 	type args struct {
-		m1 map[string]interface{}
-		m2 map[string]interface{}
+		m1 types.M
+		m2 types.M
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[string]interface{}
+		want types.M
 	}{
 		{
 			name: "Test 1",
 			args: args{
-				m1: map[string]interface{}{
+				m1: types.M{
 					"key1": "value1",
 					"key2": "value2",
 				},
-				m2: map[string]interface{}{
+				m2: types.M{
 					"key3": "value3",
 					"key4": "value4",
 				},
 			},
-			want: map[string]interface{}{
+			want: types.M{
 				"key1": "value1",
 				"key2": "value2",
 				"key3": "value3",

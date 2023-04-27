@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
@@ -29,7 +28,7 @@ func main() {
 	step1 := pipeline.NewStep(
 		"step1",
 		llm,
-		decoder.NewDefaultDecoder(),
+		nil,
 		cache,
 	)
 
@@ -44,7 +43,7 @@ func main() {
 	step2 := pipeline.NewStep(
 		"step2",
 		llm,
-		decoder.NewDefaultDecoder(),
+		nil,
 		nil,
 	)
 
@@ -59,7 +58,7 @@ func main() {
 	step3 := pipeline.NewStep(
 		"step3",
 		llm,
-		decoder.NewDefaultDecoder(),
+		nil,
 		cache,
 	)
 

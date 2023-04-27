@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/henomis/lingoose/decoder"
+	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,13 +18,9 @@ var (
 type Memory interface {
 	Get(key string) interface{}
 	Set(key string, value interface{}) error
-	All() map[string]interface{}
+	All() types.M
 	Delete(key string) error
 	Clear() error
-}
-
-type Decoder interface {
-	Decode(input string) (interface{}, error)
 }
 
 type Step struct {
@@ -52,7 +48,7 @@ func NewStep(
 ) *Step {
 
 	if outputDecoder == nil {
-		outputDecoder = decoder.NewDefaultDecoder()
+		outputDecoder = &defaultDecoder{}
 	}
 
 	return &Step{
@@ -66,10 +62,10 @@ func NewStep(
 // Run execute the step and return the output.
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
-func (s *Step) Run(ctx context.Context, input interface{}) (interface{}, error) {
+func (s *Step) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	if input == nil {
-		input = map[string]interface{}{}
+		input = types.M{}
 	}
 
 	input, err := structToMap(input)
@@ -78,7 +74,7 @@ func (s *Step) Run(ctx context.Context, input interface{}) (interface{}, error) 
 	}
 
 	if s.memory != nil {
-		input = mergeMaps(input.(map[string]interface{}), s.memory.All())
+		input = mergeMaps(input, s.memory.All())
 	}
 
 	response, err := s.executeLLM(ctx, input)
@@ -102,7 +98,7 @@ func (s *Step) Run(ctx context.Context, input interface{}) (interface{}, error) 
 
 }
 
-func (s *Step) executeLLM(ctx context.Context, input interface{}) (string, error) {
+func (s *Step) executeLLM(ctx context.Context, input types.M) (string, error) {
 	if s.llm.LlmMode == LlmModeCompletion {
 		return s.executeLLMCompletion(ctx, input)
 	} else if s.llm.LlmMode == LlmModeChat {
@@ -112,7 +108,7 @@ func (s *Step) executeLLM(ctx context.Context, input interface{}) (string, error
 	return "", ErrInvalidLmmMode
 }
 
-func (s *Step) executeLLMCompletion(ctx context.Context, input interface{}) (string, error) {
+func (s *Step) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {
 	err := s.llm.Prompt.Format(input)
 	if err != nil {
 		return "", err
@@ -126,7 +122,7 @@ func (s *Step) executeLLMCompletion(ctx context.Context, input interface{}) (str
 	return response, nil
 }
 
-func (s *Step) executeLLMChat(ctx context.Context, input interface{}) (string, error) {
+func (s *Step) executeLLMChat(ctx context.Context, input types.M) (string, error) {
 
 	for _, promptMessage := range s.llm.Chat.PromptMessages {
 		err := promptMessage.Prompt.Format(input)
@@ -148,9 +144,9 @@ func (p *Pipeline) AddNext(step *Step) {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
-func (p Pipeline) Run(ctx context.Context, input interface{}) (interface{}, error) {
+func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
-	var output interface{}
+	var output types.M
 	for i, pipeline := range p.steps {
 
 		if i == 0 {
@@ -170,8 +166,8 @@ func (p Pipeline) Run(ctx context.Context, input interface{}) (interface{}, erro
 	return output, nil
 }
 
-func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]interface{} {
-	merged := make(map[string]interface{})
+func mergeMaps(m1 types.M, m2 types.M) types.M {
+	merged := make(types.M)
 	for k, v := range m1 {
 		merged[k] = v
 	}
@@ -181,8 +177,8 @@ func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]
 	return merged
 }
 
-func structToMap(obj interface{}) (map[string]interface{}, error) {
-	genericMap := map[string]interface{}{}
+func structToMap(obj interface{}) (types.M, error) {
+	genericMap := types.M{}
 	err := mapstructure.Decode(obj, &genericMap)
 	if err != nil {
 		return nil, err

@@ -6,49 +6,35 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+
+	"github.com/henomis/lingoose/types"
 )
 
 var (
 	ErrDecoding = errors.New("decoding output error")
 )
 
-type DefaultDecoder struct {
-	output interface{}
-}
-
-func (d *DefaultDecoder) Decode(input string) (interface{}, error) {
-	d.output = map[string]interface{}{
-		"output": input,
-	}
-
-	return d.output, nil
-}
-
-func NewDefaultDecoder() *DefaultDecoder {
-	return &DefaultDecoder{}
-}
-
 type JSONDecoder struct {
-	output interface{}
+	output types.M
 }
 
-func NewJSONDecoder(output interface{}) *JSONDecoder {
-	return &JSONDecoder{
-		output: output,
-	}
+func NewJSONDecoder() *JSONDecoder {
+	return &JSONDecoder{}
 }
 
-func (d *JSONDecoder) Decode(input string) (interface{}, error) {
-	err := json.Unmarshal([]byte(input), d.output)
+func (d *JSONDecoder) Decode(input string) (types.M, error) {
+	err := json.Unmarshal([]byte(input), &d.output)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
-	return d.output, nil
+	return types.M{
+		types.DefaultOutputKey: d.output,
+	}, nil
 }
 
 type RegExDecoder struct {
-	output interface{}
+	output types.M
 	regex  string
 }
 
@@ -58,7 +44,7 @@ func NewRegExDecoder(regex string) *RegExDecoder {
 	}
 }
 
-func (d *RegExDecoder) Decode(input string) (interface{}, error) {
+func (d *RegExDecoder) Decode(input string) (types.M, error) {
 	re, err := regexp.Compile(d.regex)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
@@ -74,7 +60,9 @@ func (d *RegExDecoder) Decode(input string) (interface{}, error) {
 		outputMatches = append(outputMatches, match)
 	}
 
-	d.output = outputMatches
+	d.output = types.M{
+		types.DefaultOutputKey: outputMatches,
+	}
 
 	return d.output, nil
 }
