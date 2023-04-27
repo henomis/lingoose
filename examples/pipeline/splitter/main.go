@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 	step1 := pipeline.NewStep(
 		"step1",
 		llm,
-		decoder.NewDefaultDecoder(),
+		nil,
 		nil,
 	)
 
@@ -38,23 +39,23 @@ func main() {
 	step2 := pipeline.NewSplitter(
 		"step2",
 		llm,
-		decoder.NewDefaultDecoder(),
 		nil,
-		func(input interface{}) ([]interface{}, error) {
-			return []interface{}{
-				mergeMaps(input.(map[string]interface{}), map[string]interface{}{
+		nil,
+		func(input types.M) ([]types.M, error) {
+			return []types.M{
+				mergeMaps(input, types.M{
 					"language": "italian",
 				}),
-				mergeMaps(input.(map[string]interface{}), map[string]interface{}{
+				mergeMaps(input, types.M{
 					"language": "spanish",
 				}),
-				mergeMaps(input.(map[string]interface{}), map[string]interface{}{
+				mergeMaps(input, types.M{
 					"language": "finnish",
 				}),
-				mergeMaps(input.(map[string]interface{}), map[string]interface{}{
+				mergeMaps(input, types.M{
 					"language": "french",
 				}),
-				mergeMaps(input.(map[string]interface{}), map[string]interface{}{
+				mergeMaps(input, types.M{
 					"language": "german",
 				}),
 			}, nil
@@ -62,27 +63,16 @@ func main() {
 	)
 
 	prompt3, _ := prompt.NewPromptTemplate(
-		"For each of the following sentences, detect the language.\n\nSentences:\n{{.output}}\n\n",
+		"For each of the following sentences, detect the language.\n\nSentences:\n"+
+			"{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
 		nil,
 	)
 	llm.Prompt = prompt3
-	step3 := pipeline.NewFunnel(
+	step3 := pipeline.NewStep(
 		"step3",
 		llm,
-		decoder.NewDefaultDecoder(),
 		nil,
-		func(input []map[string]interface{}) (interface{}, error) {
-
-			outputString := ""
-
-			for _, sentence := range input {
-				outputString += "- " + sentence["output"].(string) + "\n"
-			}
-
-			return map[string]interface{}{
-				"output": outputString,
-			}, nil
-		},
+		nil,
 	)
 
 	pipeLine := pipeline.New(
@@ -96,12 +86,14 @@ func main() {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Final output: %#v\n", response)
+	data, _ := json.MarshalIndent(response, "", "  ")
+
+	fmt.Printf("Final output: %s\n", data)
 
 }
 
-func mergeMaps(m1 map[string]interface{}, m2 map[string]interface{}) map[string]interface{} {
-	merged := make(map[string]interface{})
+func mergeMaps(m1 types.M, m2 types.M) types.M {
+	merged := make(types.M)
 	for k, v := range m1 {
 		merged[k] = v
 	}

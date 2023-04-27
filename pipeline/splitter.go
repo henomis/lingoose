@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/henomis/lingoose/types"
 )
 
 type Splitter struct {
@@ -14,7 +16,7 @@ type Splitter struct {
 	splitterFn SplitterFn
 }
 
-type SplitterFn func(input interface{}) ([]interface{}, error)
+type SplitterFn func(input types.M) ([]types.M, error)
 
 func NewSplitter(
 	name string,
@@ -32,7 +34,7 @@ func NewSplitter(
 	}
 }
 
-func (s *Splitter) Run(ctx context.Context, input interface{}) (interface{}, error) {
+func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {
@@ -41,11 +43,11 @@ func (s *Splitter) Run(ctx context.Context, input interface{}) (interface{}, err
 
 	var wg sync.WaitGroup
 	var sm sync.Mutex
-	stepsOutput := []map[string]interface{}{}
+	pipeOutpus := []types.M{}
 
 	for i, splittedInput := range splittedInputs {
 		wg.Add(1)
-		go func(i int, splittedInput interface{}) {
+		go func(i int, splittedInput types.M) {
 			defer wg.Done()
 			step := NewStep(
 				fmt.Sprintf("%s-%d", s.name, i),
@@ -60,13 +62,13 @@ func (s *Splitter) Run(ctx context.Context, input interface{}) (interface{}, err
 			}
 
 			sm.Lock()
-			stepsOutput = append(stepsOutput, output.(map[string]interface{}))
+			pipeOutpus = append(pipeOutpus, output)
 			sm.Unlock()
 		}(i, splittedInput)
 	}
 
 	wg.Wait()
 
-	return stepsOutput, nil
+	return types.M{types.DefaultOutputKey: pipeOutpus}, nil
 
 }

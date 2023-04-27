@@ -30,15 +30,15 @@ type Step struct {
 	memory  Memory
 }
 
-type PipelineStep interface {
-	Run(ctx context.Context, input interface{}) (interface{}, error)
+type Pipe interface {
+	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
 type Pipeline struct {
-	steps []PipelineStep
+	steps []Pipe
 }
 
-func New(steps ...PipelineStep) Pipeline {
+func New(steps ...Pipe) Pipeline {
 	return Pipeline{
 		steps: steps,
 	}
