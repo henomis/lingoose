@@ -34,11 +34,15 @@ type Step struct {
 	memory  Memory
 }
 
-type Pipeline struct {
-	steps []*Step
+type PipelineStep interface {
+	Run(ctx context.Context, input interface{}) (interface{}, error)
 }
 
-func New(steps ...*Step) Pipeline {
+type Pipeline struct {
+	steps []PipelineStep
+}
+
+func New(steps ...PipelineStep) Pipeline {
 	return Pipeline{
 		steps: steps,
 	}
@@ -148,7 +152,7 @@ func (p *Pipeline) AddNext(step *Step) {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
-func (p Pipeline) Run(ctx context.Context, input interface{}) (interface{}, error) {
+func (p *Pipeline) Run(ctx context.Context, input interface{}) (interface{}, error) {
 	var err error
 	var output interface{}
 	for i, pipeline := range p.steps {
