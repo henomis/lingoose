@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/henomis/lingoose/types"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -27,7 +28,7 @@ func NewPromptFromAudioFile(ctx context.Context, filePath string) (*WhisperPromp
 	}, nil
 }
 
-func (p *WhisperPrompt) Format(input interface{}) error {
+func (p *WhisperPrompt) Format(input types.M) error {
 	return nil
 }
 

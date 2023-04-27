@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/types"
 )
 
 type Llm struct {
@@ -22,7 +23,7 @@ const (
 
 type Prompt interface {
 	Prompt() string
-	Format(input interface{}) error
+	Format(input types.M) error
 }
 
 type LlmEngine interface {

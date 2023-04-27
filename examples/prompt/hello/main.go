@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 type Inputs struct {
@@ -23,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	err = promptTemplate.Format(map[string]interface{}{"you": "you"})
+	err = promptTemplate.Format(types.M{"you": "you"})
 	if err != nil {
 		panic(err)
 	}

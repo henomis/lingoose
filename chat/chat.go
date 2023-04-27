@@ -2,13 +2,15 @@
 // Sometimes you need to define a chat prompt, this package provides a way to do that.
 package chat
 
+import "github.com/henomis/lingoose/types"
+
 type Chat struct {
 	PromptMessages PromptMessages
 }
 
 type Prompt interface {
 	Prompt() string
-	Format(input interface{}) error
+	Format(input types.M) error
 }
 
 type MessageType string
@@ -57,7 +59,7 @@ func (p *Chat) ToMessages() (Messages, error) {
 
 		if messagePromptTemplate.Prompt != nil {
 			if len(messagePromptTemplate.Prompt.Prompt()) == 0 {
-				err = messagePromptTemplate.Prompt.Format(map[string]interface{}{})
+				err = messagePromptTemplate.Prompt.Format(types.M{})
 				if err != nil {
 					return nil, err
 				}
