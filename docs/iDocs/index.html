@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no"
+    />
+    <link href="assets/images/favicon.png" rel="icon" />
+    <title>LinGoose documentation</title>
+    <meta name="description" content="LinGoose documentation" />
+    <meta name="author" content="Simone Vellei" />
+
+    <!-- Stylesheet
+============================== -->
+    <!-- Bootstrap -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="assets/vendor/bootstrap/css/bootstrap.min.css"
+    />
+    <!-- Font Awesome Icon -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="assets/vendor/font-awesome/css/all.min.css"
+    />
+    <!-- Magnific Popup -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="assets/vendor/magnific-popup/magnific-popup.min.css"
+    />
+    <!-- Highlight Syntax -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="assets/vendor/highlight.js/styles/github.css"
+    />
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css" />
+  </head>
+
+  <body data-spy="scroll" data-target=".idocs-navigation" data-offset="125">
+    <!-- Preloader -->
+    <div class="preloader">
+      <div class="lds-ellipsis">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+    <!-- Preloader End -->
+
+    <!-- Document Wrapper   
+=============================== -->
+    <div id="main-wrapper">
+      <!-- Header
+  ============================ -->
+      <header id="header" class="sticky-top">
+        <!-- Navbar -->
+        <nav class="primary-menu navbar navbar-expand-lg navbar-dropdown-dark">
+          <div class="container-fluid">
+            <!-- Sidebar Toggler -->
+            <button
+              id="sidebarCollapse"
+              class="navbar-toggler d-block d-md-none"
+              type="button"
+            >
+              <span></span><span class="w-75"></span><span class="w-50"></span>
+            </button>
+
+            <!-- Logo -->
+            <a class="logo ml-md-3" href="index.html" title="iDocs Template">
+              <img src="assets/images/logo50.png" alt="lingoose" />
+            </a>
+            <span class="text-10 ml-4"><strong>LinGoose</strong></span>
+            <!-- Logo End -->
+
+            <!-- Navbar Toggler -->
+            <button
+              class="navbar-toggler ml-auto"
+              type="button"
+              data-toggle="collapse"
+              data-target="#header-nav"
+            >
+              <span></span><span></span><span></span>
+            </button>
+
+            <div
+              id="header-nav"
+              class="collapse navbar-collapse justify-content-end"
+            >
+              <ul class="navbar-nav">
+                <li class="dropdown">
+                  <a class="dropdown-toggle" href="#">Dropdown</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Action</a></li>
+                    <li class="dropdown">
+                      <a class="dropdown-item dropdown-toggle" href="#"
+                        >Dropdown Action</a
+                      >
+                      <ul class="dropdown-menu">
+                        <li>
+                          <a class="dropdown-item" href="index.html">Action</a>
+                        </li>
+                        <li>
+                          <a
+                            class="dropdown-item"
+                            href="feature-header-dark.html"
+                            >Another Action</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            class="dropdown-item"
+                            href="feature-header-primary.html"
+                            >Something Else Here</a
+                          >
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="index-2.html"
+                            >Another Link</a
+                          >
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Another Action</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Something Else Here</a>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <a
+                    target="_blank"
+                    href="https://themeforest.net/user/harnishdesign/portfolio?ref=HarnishDesign"
+                    >Other Template</a
+                  >
+                </li>
+                <li>
+                  <a
+                    target="_blank"
+                    href="https://themeforest.net/user/harnishdesign/#contact?ref=HarnishDesign"
+                    >Support</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <ul class="social-icons social-icons-sm ml-lg-2 mr-2">
+              <li class="social-icons-twitter">
+                <a
+                  data-toggle="tooltip"
+                  href="http://www.twitter.com/harnishdesign/"
+                  target="_blank"
+                  title=""
+                  data-original-title="Twitter"
+                  ><i class="fab fa-twitter"></i
+                ></a>
+              </li>
+              <li class="social-icons-facebook">
+                <a
+                  data-toggle="tooltip"
+                  href="http://www.facebook.com/harnishdesign/"
+                  target="_blank"
+                  title=""
+                  data-original-title="Facebook"
+                  ><i class="fab fa-facebook-f"></i
+                ></a>
+              </li>
+              <li class="social-icons-dribbble">
+                <a
+                  data-toggle="tooltip"
+                  href="http://www.dribbble.com/harnishdesign/"
+                  target="_blank"
+                  title=""
+                  data-original-title="Dribbble"
+                  ><i class="fab fa-dribbble"></i
+                ></a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+        <!-- Navbar End -->
+      </header>
+      <!-- Header End -->
+
+      <!-- Content
+  ============================ -->
+      <div id="content" role="main">
+        <!-- Sidebar Navigation
+	============================ -->
+        <div class="idocs-navigation bg-light">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link active" href="#getting_started"
+                ><i class="fas fa-solid fa-book"></i> Getting Started</a
+              >
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a class="nav-link" href="#overview">Overview</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#installation">Installation</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#quick_start">Quick start</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#api"
+                ><i class="fas fa-solid fa-cubes"></i> API</a
+              >
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a class="nav-link" href="#prompt">Prompt</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#chat">Chat</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#decoder">Decoder</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#LLM">LLM</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#pipeline">Pipeline</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#memory">Memory</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#document">Document</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#loader">Loader</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#test_splitter">TextSplitter</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#embedder">Embedder</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#index">Index</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#idocs_faq">FAQ</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Docs Content
+	============================ -->
+        <div class="idocs-content">
+          <div class="container">
+            <!-- Getting Started
+		============================ -->
+            <section id="getting_started">
+              <h1>LinGoose Documentation</h1>
+              <hr />
+              <div class="row">
+                <div class="col-sm-6 col-lg-4">
+                  <ul class="list-unstyled">
+                    <li><strong>Version:</strong> 0.0.3</li>
+                    <li>
+                      <strong>Author:</strong>
+                      <a href="http://www.simonevellei.com" target="_blank"
+                        >Simone Vellei
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <ul class="list-unstyled">
+                    <li>
+                      <strong class="font-weight-700">Created:</strong> 27
+                      April, 2023
+                    </li>
+                    <li><strong>Update:</strong> 27 April, 2023</li>
+                  </ul>
+                </div>
+              </div>
+              <p class="alert alert-info">
+                If you have any questions that are beyond the scope of this help
+                file, please feel free to email me:
+                <a target="_blank" href="mailto:henomis@gmail.com"
+                  >henomis@gmail.com</a
+                >.
+              </p>
+            </section>
+
+            <hr class="divider" />
+
+            <!-- Installation
+		============================ -->
+            <section id="installation">
+              <h2>Installation</h2>
+              <p class="lead">
+                The first step to get started is to install lingoose.
+              </p>
+              <p>
+                If you want to add lingoose to your Go app, then run the
+                following command:
+              </p>
+              <pre><code class="shell">$ go get github.com/henomis/lingoose</code></pre>
+              <h3>From source</h3>
+              If you want to clone the repository, then run the following
+              command:
+              <pre><code class="shell">$ git clone https://github.com/henomis/lingoose.git</code></pre>
+            </section>
+
+            <hr class="divider" />
+
+            <!-- Installation
+		============================ -->
+            <section id="quick_start">
+              <h2>Quick start</h2>
+              <p class="lead">
+                You really should read the whole documentation, but if you are
+                in a hurry, here is a quick start guide.
+              </p>
+              <p>
+                This is a very (very!) simple example of how to use lingoose. It
+                will create a new OpenAI LLM and execute it using a prompt.
+                That's it.
+              </p>
+
+              <pre>
+                <code class="go">
+package main
+
+import (
+  &quot;fmt&quot;
+
+  &quot;github.com/henomis/lingoose/llm/openai&quot;
+)
+
+func main() {
+
+  llmOpenAI, err := openai.New(
+    openai.GPT3TextDavinci003, 
+    openai.DefaultOpenAITemperature, 
+    openai.DefaultOpenAIMaxTokens, 
+    true,
+  )
+  if err != nil {
+    panic(err)
+  }
+
+  response, err := llmOpenAI.Completion(context.Background(), &quot;Hello AI. How are you?&quot;)
+  if err != nil {
+    panic(err)
+  }
+
+  fmt.Println(response)
+}
+                </code>
+              </pre>
+              <strong>Did I mention that this is a very simple example?</strong>
+              You can do a lot more with LinGoose! I suggest you to read the
+              whole documentation to learn more.
+            </section>
+
+            <hr class="divider" />
+
+            <section id="api">
+              <h1>API</h1>
+              <p class="lead">
+                LinGoose provides various components, use them to create your
+                own AI app.
+              </p>
+            </section>
+
+            <!-- Installation
+		============================ -->
+            <section id="prompt">
+              <h2>Prompt</h2>
+              <p class="lead">A Prompt is a text. Simply.</p>
+              <p>
+                LLMs (Language Learning Model) are a powerful tools, they can
+                generate a text from an input. The input is called Prompt.
+              </p>
+              <blockquote>"Write a short joke about geese"</blockquote>
+              <p>
+                This is a prompt. And, if your LLM is smart enough, it will
+                complete your input generating a joke about geese. Let's see how
+                to create a prompt in LinGoose.
+              </p>
+              <pre><code class="go">
+jokePrompt := prompt.New("Write a short joke about geese")
+
+fmt.Println(jokePrompt.Prompt())
+              </code></pre>
+              Running this code will print the following output:
+              <pre><code class="shell">
+Write a short joke about geese
+              </code></pre>
+              <p>
+                Simple, isn't it? Now you can use this prompt to generate funny
+                jokes.
+              </p>
+
+              <h3>Prompt Templates</h3>
+              <p>
+                Hey but wait a minute! What if I want to generate a joke about a
+                cat? And what if the animal is a variable? Well, you can use a
+                prompt template. LinGoose prompt templates use the powerful Go
+                <code>text/template</code> package. If you don't know how to use
+                it, I suggest you to read the
+                <a href="https://golang.org/pkg/text/template/" target="_blank"
+                  >official documentation</a
+                >. However, here is a simple example:
+              </p>
+              <pre><code class="go">
+jokePromptTemplate, err := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}",
+  types.M{"animal": "geese"},
+)
+if err != nil {
+  panic(err)
+}
+
+fmt.Println(jokePromptTemplate.Prompt())
+                  </code></pre>
+              The previous code will format the prompt using the passed
+              variable. There is another way to format a prompt template. You
+              can use the
+              <code>Format()</code> method:
+              <pre><code class="go">
+jokePromptTemplate, err := prompt.NewPromptTemplate(
+  "Write a short {{.type}} about {{.animal}}",
+  types.M{"animal": "geese"},
+)
+if err != nil {
+  panic(err)
+}
+
+jokePromptTemplate.Format(types.M{"type": "joke"})
+                </code></pre>
+              <h3>AudioPrompt <span class="badge badge-danger">Beta</span></h3>
+              <p>
+                Using openAI whisper API a prompt can be extracted from an audio
+                file. Consider this API as
+                <span class="badge badge-danger">Beta</span>
+              </p>
+              <pre><code class="go">
+promptFromAudio, err := prompt.NewPromptFromAudioFile(
+  context.Background(),
+  "./audio/joke.mp3",
+)
+if err != nil {
+  panic(err)
+}
+
+fmt.Println(promptFromAudio.Prompt())
+                </code></pre>
+            </section>
+
+            <hr class="divider" />
+
+            <section id="chat">
+              <h2>Chat</h2>
+              <p class="lead">
+                A Chat is a conversation between a human and an AI.
+              </p>
+              <p>
+                LinGoose provides a chat implementation that can be used to
+                create a sequence of messages. Message types are the following:
+
+                <ul>
+                  <li><code>MessageTypeSystem</code></li>
+                  <li><code>MessageTypeUser</code></li>
+                  <li><code>MessageTypeAssistant</code></li>
+                </ul>
+                Each message of a <code>Chat</code> contains a <code>Prompt</code>, this means
+                that you can embedd prompt templates into a chat.
+                <pre><code class="go">
+jokePromptTemplate, err := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}",
+  types.M{"animal": "geese"},
+)
+if err != nil {
+  panic(err)
+}
+
+jokeChat := chat.New(
+  chat.PromptMessage{
+    Type:   chat.MessageTypeSystem,
+    Prompt: prompt.New("You are a professional joke writer."),
+  },
+  chat.PromptMessage{
+    Type:   chat.MessageTypeUser,
+    Prompt: jokePromptTemplate,
+  },
+)
+
+fmt.Println(jokeChat.ToMessages())
+                </code></pre>
+                The method <code>ToMessage()</code> returns a slice of prompt-formatted messages.
+              </p>
+            </section>
+          </div>
+        </div>
+      </div>
+      <!-- Content end -->
+
+      <!-- Footer
+  ============================ -->
+      <footer id="footer" class="section bg-dark footer-text-light">
+        <div class="container">
+          <ul
+            class="social-icons social-icons-lg social-icons-muted justify-content-center mb-3"
+          >
+            <li>
+              <a
+                data-toggle="tooltip"
+                href="https://twitter.com/harnishdesign/"
+                target="_blank"
+                title=""
+                data-original-title="Twitter"
+                ><i class="fab fa-twitter"></i
+              ></a>
+            </li>
+            <li>
+              <a
+                data-toggle="tooltip"
+                href="http://www.facebook.com/harnishdesign/"
+                target="_blank"
+                title=""
+                data-original-title="Facebook"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+            </li>
+            <li>
+              <a
+                data-toggle="tooltip"
+                href="http://www.dribbble.com/harnishdesign/"
+                target="_blank"
+                title=""
+                data-original-title="Dribbble"
+                ><i class="fab fa-dribbble"></i
+              ></a>
+            </li>
+            <li>
+              <a
+                data-toggle="tooltip"
+                href="http://www.github.com/"
+                target="_blank"
+                title=""
+                data-original-title="GitHub"
+                ><i class="fab fa-github"></i
+              ></a>
+            </li>
+          </ul>
+          <p class="text-center">
+            Copyright &copy; 2020
+            <a
+              href="http://www.harnishdesign.net/idocs-one-page-documentation-html-template/"
+              >iDocs</a
+            >. All Rights Reserved.
+          </p>
+          <p class="text-2 text-center mb-0">
+            Design &amp; Develop by
+            <a
+              class="btn-link"
+              target="_blank"
+              href="http://www.harnishdesign.net/"
+              >HarnishDesign</a
+            >.
+          </p>
+        </div>
+      </footer>
+      <!-- Footer end -->
+    </div>
+    <!-- Document Wrapper end -->
+
+    <!-- Back To Top -->
+    <a
+      id="back-to-top"
+      data-toggle="tooltip"
+      title="Back to Top"
+      href="javascript:void(0)"
+      ><i class="fa fa-chevron-up"></i
+    ></a>
+
+    <!-- JavaScript
+============================ -->
+    <script src="assets/vendor/jquery/jquery.min.js"></script>
+    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Highlight JS -->
+    <script src="assets/vendor/highlight.js/highlight.min.js"></script>
+    <!-- Easing -->
+    <script src="assets/vendor/jquery.easing/jquery.easing.min.js"></script>
+    <!-- Magnific Popup -->
+    <script src="assets/vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <!-- Custom Script -->
+    <script src="assets/js/theme.js"></script>
+  </body>
+</html>
