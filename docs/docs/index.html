@@ -186,7 +186,7 @@
                   <a class="nav-link" href="#decoder">Decoder</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#LLM">LLM</a>
+                  <a class="nav-link" href="#llm">LLM</a>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="#pipeline">Pipeline</a>
@@ -470,6 +470,105 @@ fmt.Println(jokeChat.ToMessages())
                 The method <code>ToMessage()</code> returns a slice of prompt-formatted messages.
               </p>
             </section>
+
+            <hr class="divider" />
+            <section id="decoder">
+              <h2>Decoder</h2>
+              <p class="lead">A decoder is a text converter.</p>
+              <p>
+                An LLM can generate a text, but to extract information from it
+                you need to decode it. LinGoose provides 3 decoders:
+                <ul>
+                  <li><code>defaultDecoder</code> for internal use</li>
+                  <li><code>JSONDecoder</code> to decode a JSON string</li>
+                  <li><code>RegExDecoder</code> to decode a string using a regular expression</li>
+                </ul>
+
+                To see how to use a decoder, please refer to the <a href="#pipeline">Pipeline</a> section.
+              </p>
+            </section>
+
+            <hr class="divider" />
+            <section id="llm">
+              <h2>LLM</h2>
+              <p class="lead">                
+                LLM is an interface to a generic language model using text as input and output.
+              </p>
+              <p>
+                There are a lot of language models out there, LinGoose
+                provides a simple interface to use them. Lingoose currently
+                supports <a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i> LMMs.                
+              </p>
+              <h3>Completion</h3>
+              <p>LMM implements the method <code>Completion()</code> if the underlying model supports it. Here is an example:</p>
+              <pre><code class="go">
+llmOpenAI, err := openai.New(
+  openai.GPT3TextDavinci002,
+  openai.DefaultOpenAITemperature,
+  openai.DefaultOpenAIMaxTokens,
+  true,
+)
+...
+output, err = lmmOpenAI.Completion(
+  context.Background(),
+  "Write a short joke about geese",
+)
+              </code></pre>
+
+              Completion input is a string, so it can be formatted using, for example, a prompt template:
+              <pre><code class="go">
+jokePromptTemplate, err := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}",
+  types.M{"animal": "geese"},
+)
+...
+llmOpenAI, err := openai.New(
+  openai.GPT3TextDavinci002,
+  openai.DefaultOpenAITemperature,
+  openai.DefaultOpenAIMaxTokens,
+  true,
+)
+...
+output, err = lmmOpenAI.Completion(
+  context.Background(),
+  jokePromptTemplate.Prompt(),
+)
+                </code></pre>    
+                
+                <h3>Chat</h3>
+                <p>LMM implements the method <code>Completion()</code> if the underlying model supports it. Here is an example:</p>
+              <pre><code class="go">
+jokeChat := chat.New(
+  chat.PromptMessage{
+    Type:   chat.MessageTypeSystem,
+    Prompt: prompt.New("You are a professional joke writer."),
+  },
+  chat.PromptMessage{
+    Type:   chat.MessageTypeUser,
+    Prompt: prompt.New("Write a short joke about geese"),
+  },
+)
+...
+llmOpenAI, err := openai.New(
+  openai.GPT3Dot5Turbo, 
+  openai.DefaultOpenAITemperature, 
+  openai.DefaultOpenAIMaxTokens, 
+  true,
+)
+...
+response, err := llmOpenAI.Chat(context.Background(), chat)
+                </code></pre>
+            </section>
+            <hr class="divider" />
+            <section id="pipeline">
+              <h2>Pipeline</h2>
+              <p class="lead">A pipeline is a sequence of steps to process a text.
+            </section>
+
+            <hr class="divider" />
+
+            <h2>🚧 Work in progress... </h2>
+
           </div>
         </div>
       </div>
