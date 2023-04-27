@@ -11,6 +11,7 @@ import (
 	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func main() {
@@ -74,19 +75,17 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt3,
 	}
-	joke := struct {
-		Joke string `json:"joke"`
-	}{}
+
 	pipeStep2 := pipeline.NewStep(
 		"step2",
 		llm2,
-		decoder.NewJSONDecoder(&joke),
+		decoder.NewJSONDecoder(),
 		cache,
 	)
 
 	pipe := pipeline.New(pipeStep1, pipeStep2)
 
-	values := map[string]string{
+	values := types.M{
 		"role":   "joke writer",
 		"animal": "goose",
 	}

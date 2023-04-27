@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/henomis/lingoose/decoder"
 	llmmock "github.com/henomis/lingoose/llm/mock"
@@ -23,15 +22,15 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt1,
 	}
-	pipe1 := pipeline.NewStep("step1", llm1, decoder.NewDefaultDecoder(), cache)
+	pipe1 := pipeline.NewStep("step1", llm1, nil, cache)
 
-	myout := &struct {
-		First  string
-		Second string
-	}{}
+	// myout := &struct {
+	// 	First  string
+	// 	Second string
+	// }{}
 	prompt2, _ := prompt.NewPromptTemplate(
-		`It seems you are a random word generator. Your message '{{.output}}' is nonsense. 
-		Anyway I'm fine {{.value}}!`,
+		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. "+
+			"Anyway I'm fine {{.value}}!",
 		map[string]string{
 			"value": "thanks",
 		},
@@ -41,13 +40,13 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt2,
 	}
-	pipe2 := pipeline.NewStep("step2", llm2, decoder.NewJSONDecoder(myout), cache)
+	pipe2 := pipeline.NewStep("step2", llm2, decoder.NewJSONDecoder(), cache)
 
 	regexDecoder := decoder.NewRegExDecoder(`(\w+)\s(\w+)\s(.*)`)
 	prompt3, _ := prompt.NewPromptTemplate(
-		`Oh! It seems you are a random JSON word generator. You generated two strings, 
-		first:'{{.First}}' and second:'{{.Second}}'. {{.value}}\n\tHowever your first 
-		message was: '{{.step1.output}}'`,
+		"Oh! It seems you are a random JSON word generator. You generated two strings, "+
+			"first:'{{.step2.output.first}}' and second:'{{.step2.output.second}}'. {{.value}}\n\nHowever your first "+
+			"message was: '{{.step1.output}}'",
 		map[string]string{
 			"value": "Bye!",
 		},
@@ -55,18 +54,24 @@ func main() {
 	llm1.Prompt = prompt3
 	pipe3 := pipeline.NewStep("step3", llm1, regexDecoder, cache)
 
+	prompt4, _ := prompt.NewPromptTemplate("Well here is your answer: "+
+		"{{ range  $value := .step3.output }}[{{$value}}] {{end}}", nil)
+	llm1.Prompt = prompt4
+	pipe4 := pipeline.NewStep("step4", llm1, nil, cache)
+
 	pipelineSteps := pipeline.New(
 		pipe1,
 		pipe2,
 		pipe3,
+		pipe4,
 	)
 
-	response, err := pipelineSteps.Run(context.TODO(), nil)
+	response, err := pipelineSteps.Run(context.Background(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Final output: %s\n", strings.Join(response.([]string), ", "))
+	fmt.Printf("Final output: %#v\n", response)
 	fmt.Println("---Memory---")
 	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
 	fmt.Printf("%s\n", string(dump))
