@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
@@ -56,20 +55,19 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	for i, embedding := range embeddings {
 
 		metadata := make(map[string]interface{})
-		source, ok := documents[i].Metadata["source"]
-		if ok {
-			metadata["source"] = source
+		for key, value := range documents[i].Metadata {
+			metadata[key] = value
 		}
-		metadata["index"] = fmt.Sprintf("%d", embedding.Index)
-		metadata["content"] = documents[i].Content
 
-		vectorID := uuid.New()
+		vectorID := uuid.New().String()
 
 		vectors = append(vectors, pineconerequest.Vector{
-			ID:       vectorID.String(),
+			ID:       vectorID,
 			Values:   embedding.Embedding,
 			Metadata: metadata,
 		})
+
+		documents[i].Metadata[defaultKeyID] = vectorID
 	}
 
 	req := &pineconerequest.VectorUpsert{
@@ -144,24 +142,14 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 
 	for i, match := range res.Matches {
 
-		documentContent, ok := match.Metadata["content"].(string)
-		if !ok {
-			documentContent = ""
+		metadata := make(map[string]interface{})
+		for k, v := range match.Metadata {
+			metadata[k] = v
 		}
 
-		documentIndex := match.Metadata["index"].(string)
-		if !ok {
-			documentIndex = "0"
-		}
-
-		documentIndexAsInt, err := strconv.Atoi(documentIndex)
-		if err != nil {
-			return nil, err
-		}
-
-		documentSource := match.Metadata["source"].(string)
-		if !ok {
-			documentSource = ""
+		id := ""
+		if match.ID != nil {
+			id = *match.ID
 		}
 
 		score := float32(0)
@@ -169,17 +157,12 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 			score = *match.Score
 		}
 
-		document := document.Document{
-			Content: documentContent,
-			Metadata: map[string]interface{}{
-				"source": documentSource,
-			},
-		}
-
 		searchResponses[i] = SearchResponse{
-			Document: document,
-			Score:    score,
-			Index:    documentIndexAsInt,
+			ID: id,
+			Document: document.Document{
+				Metadata: metadata,
+			},
+			Score: score,
 		}
 	}
 

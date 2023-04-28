@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/henomis/lingoose/document"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/llm/openai"
@@ -81,7 +83,14 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		jsonDocuments, _ := json.MarshalIndent(documentChunks, "", "  ")
+		os.WriteFile("documents.json", jsonDocuments, 0644)
 	}
+
+	documents := []document.Document{}
+	jsonDocuments, _ := os.ReadFile("documents.json")
+	json.Unmarshal(jsonDocuments, &documents)
 
 	query := "What is the purpose of the NATO Alliance?"
 	topk := 3
@@ -95,8 +104,16 @@ func main() {
 	}
 
 	for _, similarity := range similarities {
+
+		doc := document.Document{}
+		for _, document := range documents {
+			if similarity.ID == document.Metadata["id"] {
+				doc = document
+			}
+		}
+
 		fmt.Printf("Similarity: %f\n", similarity.Score)
-		fmt.Printf("Document: %s\n", similarity.Document.Content)
+		fmt.Printf("Document: %s\n", doc.Content)
 		fmt.Println("Metadata: ", similarity.Document.Metadata)
 		fmt.Println("----------")
 	}
@@ -106,11 +123,18 @@ func main() {
 		panic(err)
 	}
 
+	var doc = document.Document{}
+	for _, document := range documents {
+		if similarities[0].ID == document.Metadata["id"] {
+			doc = document
+		}
+	}
+
 	prompt1, err := prompt.NewPromptTemplate(
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
 		map[string]string{
 			"query":   query,
-			"context": similarities[0].Document.Content,
+			"context": doc.Content,
 		},
 	)
 	if err != nil {
