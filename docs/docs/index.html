@@ -54,7 +54,7 @@
           <a class="logo ml-md-3" href="index.html" title="LinGoose documentation">
             <img src="assets/images/logo50.png" alt="lingoose" />
           </a>
-          <span class="text-10 ml-4"><strong>LinGoose 🪿</strong></span>
+          <span class="text-10 ml-4"><strong></strong></span>
           <!-- Logo End -->
 
           <!-- Navbar Toggler -->
@@ -65,7 +65,7 @@
           <div id="header-nav" class="collapse navbar-collapse justify-content-end">
             <ul class="navbar-nav">
               <li>
-                <a target="_blank" href="https://lingoose.io">Home page</a>
+                <a target="_blank" href="https://lingoose.io"><strong>LinGoose.io</strong></a>
               </li>
               <li>
                 <a target="_blank" href="https://themeforest.net/user/harnishdesign/#contact?ref=HarnishDesign"><span
@@ -148,7 +148,7 @@
                 <a class="nav-link" href="#llm">LLM</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#pipeline">Pipeline</a>
+                <a class="nav-link" href="#pipeline">Pipeline</a>      
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#memory">Memory</a>
@@ -160,7 +160,7 @@
                 <a class="nav-link" href="#loader">Loader</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#test_splitter">TextSplitter</a>
+                <a class="nav-link" href="#text_splitter">TextSplitter</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#embedder">Embedder</a>
@@ -171,7 +171,10 @@
             </ul>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#faq">FAQ</a>
+            <a class="nav-link" href="#goreference"><i class="fas fa-solid fa-cube"></i> Go reference</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#faq"><i class="fas fa-solid fa-info"></i> FAQ</a>
           </li>
         </ul>
       </div>
@@ -182,6 +185,7 @@
         <div class="container">
           <!-- Getting Started
 		============================ -->
+          <img class="masthead-avatar mb-5" src="../assets/img/lingoose-small.png" alt="..." />
           <section id="getting_started">
             <h1>🪿 LinGoose Documentation</h1>
             <p><a href="https://github.com/henomis/lingoose/actions/workflows/checks.yml"><img
@@ -246,10 +250,6 @@
             <pre><code class="shell">$ git clone https://github.com/henomis/lingoose.git</code></pre>
           </section>
 
-          <hr class="divider" />
-
-          <!-- Installation
-		============================ -->
           <section id="quick_start">
             <h2>Quick start</h2>
             <p class="lead">
@@ -352,26 +352,24 @@ jokePromptTemplate, err := prompt.NewPromptTemplate(
   "Write a short joke about {{.animal}}",
   types.M{"animal": "geese"},
 )
-if err != nil {
-  panic(err)
-}
-
+...
+err = jokePromptTemplate.Format(nil)
+...
 fmt.Println(jokePromptTemplate.Prompt())
                   </code></pre>
             The previous code will format the prompt using the passed
             variable. There is another way to format a prompt template. You
-            can use the
+            can inject partial variables directly to the
             <code>Format()</code> method:
             <pre><code class="go">
 jokePromptTemplate, err := prompt.NewPromptTemplate(
   "Write a short {{.type}} about {{.animal}}",
   types.M{"animal": "geese"},
 )
-if err != nil {
-  panic(err)
-}
-
-jokePromptTemplate.Format(types.M{"type": "joke"})
+...
+err = jokePromptTemplate.Format(types.M{"type": "joke"})
+...
+fmt.Println(jokePromptTemplate.Prompt())
                 </code></pre>
             <h3>AudioPrompt <span class="badge badge-danger">Beta</span></h3>
             <p>
@@ -391,6 +389,10 @@ if err != nil {
 fmt.Println(promptFromAudio.Prompt())
                 </code></pre>
           </section>
+
+          <p class="alert alert-info">
+            You can extend <code>Prompt</code> component using the interface <code>pipeline.Prompt</code>.
+          </p>
 
           <hr class="divider" />
 
@@ -451,6 +453,7 @@ fmt.Println(jokeChat.ToMessages())
 
             To see how to use a decoder, please refer to the <a href="#pipeline">Pipeline</a> section.
             </p>
+            You can extend <code>Decoder</code> component using the interface <code>pipeline.Decoder</code>.
           </section>
 
           <hr class="divider" />
@@ -462,10 +465,10 @@ fmt.Println(jokeChat.ToMessages())
             <p>
               There are a lot of language models out there, LinGoose
               provides a simple interface to use them. Lingoose currently
-              supports <a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i> LMMs.
+              supports <a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i> LLMs.
             </p>
             <h3>Completion</h3>
-            <p>LMM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
+            <p>LLM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
               example:</p>
             <pre><code class="go">
 llmOpenAI, err := openai.New(
@@ -475,7 +478,7 @@ llmOpenAI, err := openai.New(
   true,
 )
 ...
-output, err = lmmOpenAI.Completion(
+output, err := llmOpenAI.Completion(
   context.Background(),
   "Write a short joke about geese",
 )
@@ -487,6 +490,8 @@ jokePromptTemplate, err := prompt.NewPromptTemplate(
   "Write a short joke about {{.animal}}",
   types.M{"animal": "geese"},
 )
+
+err = jokePromptTemplate.Format(nil)
 ...
 llmOpenAI, err := openai.New(
   openai.GPT3TextDavinci002,
@@ -495,14 +500,14 @@ llmOpenAI, err := openai.New(
   true,
 )
 ...
-output, err = lmmOpenAI.Completion(
+output, err = llmOpenAI.Completion(
   context.Background(),
   jokePromptTemplate.Prompt(),
 )
                 </code></pre>
 
             <h3>Chat</h3>
-            <p>LMM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
+            <p>LLM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
               example:</p>
             <pre><code class="go">
 jokeChat := chat.New(
@@ -523,7 +528,7 @@ llmOpenAI, err := openai.New(
   true,
 )
 ...
-response, err := llmOpenAI.Chat(context.Background(), chat)
+response, err := llmOpenAI.Chat(context.Background(), jokeChat)
                 </code></pre>
           </section>
           <hr class="divider" />
@@ -564,7 +569,8 @@ output, err := tube1.Run(context.Background(), nil)
             </pre>
             <p>The <code>output</code> variable will be filled with the result of the LLM execution as follows
               <code>types.M{"output","A goose fills its car with goose-line"}</code>. The key <code>output</code> is the
-              default one.</p>
+              default one.
+            </p>
 
             <h3>JSON Output</h3>
             <pre>
@@ -596,12 +602,17 @@ tube1 := pipeline.NewTube(
 output, err := tube1.Run(context.Background(), nil)
               </code></pre>
             <p>The <code>output</code> variable will be filled with the result of the LLM execution as follows
-              <code>types.M{"output": {"joke": "A goose fills its car with goose-line"} }</code>. The key
-              <code>output</code> is the default one.</p>
-          <h2>With inputs</h2>
-          A <code>Tube</code> is an object that can be linked with others of the same type to create a <code>Pipeline</code>. In a pipeline
-          each step grabs the output of the previous as its input. However you can pass additional inputs to a Tube.
-          <pre>
+              <code>types.M{"output":types.M{"joke":"What do you call a goose with no feathers? A naked neck."}}</code>.
+              The key
+              <code>output</code> is the default one.
+            </p>
+            <h3>With inputs</h3>
+            A <code>Tube</code> is an object that can be linked with others of the same type to create a
+            <code>Pipeline</code>. Prompts injected
+            into a <code>pipeline.Llm</code> and passed to the <code>Tube</code> are automatically formatted. In a
+            pipeline
+            each step grabs the output of the previous as its input. However you can pass additional inputs to a Tube.
+            <pre>
 <code class="go">
 jokePromptTemplate, err := prompt.NewPromptTemplate("Write a short joke about {{.animal}}", nil)
 ...
@@ -622,11 +633,26 @@ output, err := tube1.Run(context.Background(), types.M{"animal": "geese"})
 </code>
           </pre>
 
-          <h3>One Pipeline to rule them all</h3>
-          <p>A <code>Pipeline</code> connects <code>Tube</code>s sequentially. Running a pipeline you can fill the first step input,
-            and the observe the final output.
+            <h3>One Pipeline to rule them all</h3>
+            <p>A <code>Pipeline</code> connects <code>Tube</code>s sequentially. Running a pipeline you can fill the
+              first step input,
+              and the observe the final output.</p>
             <pre>
               <code class="go">
+llmOpenAI, err := openai.New(
+  openai.GPT3TextDavinci002,
+  openai.DefaultOpenAITemperature,
+  openai.DefaultOpenAIMaxTokens,
+  true,
+)
+
+llmChatOpenAI, err := openai.New(
+  openai.GPT3Dot5Turbo,
+  openai.DefaultOpenAITemperature,
+  openai.DefaultOpenAIMaxTokens,
+  true,
+)
+
 prompt1, _ := prompt.NewPromptTemplate(
   "You are a {{.mode}} {{.role}}",
   types.M{
@@ -683,7 +709,7 @@ tube2 := pipeline.NewTube(
   "step2",
   llm2,
   decoder.NewJSONDecoder(),
-  cache,
+  nil,
 )
 
 pipe := pipeline.New(tube1, tube2)
@@ -693,15 +719,306 @@ values := types.M{
   "animal": "goose",
 }
 
-response, err := pipe.Run(context.Background(), values)            
+response, err := pipe.Run(context.Background(), values)         
                 </code>
             </pre>
-          </p>
+            <p>Running this example will produce the following output:</p>
+            <pre>
+              <code class="shell">
+---SYSTEM---
+You are a professional joke writer
+---USER---
+Write a short joke about a goose.
+---AI---
+Why did the goose go to the doctor? Because it had a case of honkasitis!
+---USER---
+Considering the following joke.
+
+joke:
+Why did the goose go to the doctor? Because it had a case of honkasitis!
+
+Put the joke in a JSON object with only one field called 'joke'. Do not add other json fields. Do not add other information.
+---AI---
+{"joke":"Why did the goose go to the doctor? Because it had a case of honkasitis!"}              
+                </code>
+            </pre>
+            <h3>Pipeline splitter</h3>
+            <p>It is possible to split a <code>Pipeline</code> into two or more <code>Tube</code>s. This is useful when you want to run
+              different pipelines in parallel. Here is an example:
+             </p>
+<pre>
+  <code class="go">
+llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+...
+llm := pipeline.Llm{
+  LlmEngine: llmOpenAI,
+  LlmMode:   pipeline.LlmModeCompletion,
+  Prompt:    prompt.New("Hello how are you?"),
+}
+tube1 := pipeline.NewTube("step1", llm, nil, nil)
+
+prompt2, _ := prompt.NewPromptTemplate(
+  "Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
+    "Translate it in {{.language}}!",
+  nil,
+)
+
+llm.Prompt = prompt2
+tube2 := pipeline.NewSplitter(
+  "step2",
+  llm,
+  nil,
+  nil,
+  func(input types.M) ([]types.M, error) {
+    return []types.M{
+      mergeMaps(input, types.M{
+        "language": "italian",
+      }),
+      mergeMaps(input, types.M{
+        "language": "spanish",
+      }),
+      mergeMaps(input, types.M{
+        "language": "finnish",
+      }),
+      mergeMaps(input, types.M{
+        "language": "french",
+      }),
+      mergeMaps(input, types.M{
+        "language": "german",
+      }),
+    }, nil
+  },
+)
+
+prompt3, _ := prompt.NewPromptTemplate(
+  "For each of the following sentences, detect the language.\n\nSentences:\n"+
+    "{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
+  nil,
+)
+llm.Prompt = prompt3
+tube3 := pipeline.NewTube(
+  "step3",
+  llm,
+  nil,
+  nil,
+)
+
+pipeLine := pipeline.New(
+  tube1,
+  tube2,
+  tube3,
+)
+
+response, err := pipeLine.Run(context.Background(), nil)    
+  </code>
+</pre>             
+              
+            You can extend <code>Llm</code> component using the interface <code>pipeline.LlmEngine</code>.
+          </section>
+
+          <hr class="divider" />
+          <section id="memory">
+            <h2>Memory</h2>
+            <p class="lead">Memory is a storage component that preserves LLM outputs.</p>
+            <p>
+              Sometime you need to retreive the output of an LLM step (not the previous one) and use it as input for the
+              next. Memory
+              is a generic interface to store and retrieve data. Here is an example of a memory implementation
+              <code>Ram</code>:
+            </p>
+            <pre>
+  <code class="go">
+llmOpenAI, _ := openai.New(
+  openai.GPT3TextDavinci002,
+  openai.DefaultOpenAITemperature,
+  openai.DefaultOpenAIMaxTokens,
+  true,
+)
+
+cache := ram.New()
+
+prompt1, _ := prompt.NewPromptTemplate(
+  "Write a joke about goose.\n\n{{.command}}",
+  types.M{
+    "command": "Put the joke in a JSON object with only one field called 'joke'. " +
+      "Do not add other json fields. Do not add other information.",
+  },
+)
+llm1 := pipeline.Llm{
+  LlmEngine: llmOpenAI,
+  LlmMode:   pipeline.LlmModeCompletion,
+  Prompt:    prompt1,
+}
+tube1 := pipeline.NewTube("step1", llm1, decoder.NewJSONDecoder(), cache)
+
+prompt2, _ := prompt.NewPromptTemplate(
+  "Consider the following joke.\n\njoke: {{.output.joke}}\n\ntranslate the joke in italian.",
+  nil,
+)
+llm2 := pipeline.Llm{
+  LlmEngine: llmOpenAI,
+  LlmMode:   pipeline.LlmModeCompletion,
+  Prompt:    prompt2,
+}
+tube2 := pipeline.NewTube("step2", llm2, nil, cache)
+
+prompt3, _ := prompt.NewPromptTemplate(
+  "Consider the following joke.\n\njoke: {{.step1.output.joke}}\n\ntranslate the joke in spanish.",
+  nil,
+)
+llm1.Prompt = prompt3
+tube3 := pipeline.NewTube("step3", llm1, nil, cache)
+
+pipelineTubes := pipeline.New(
+  tube1,
+  tube2,
+  tube3,
+)
+
+response, err := pipelineTubes.Run(context.Background(), nil)
+  </code>
+</pre>
+            You can extend <code>Memory</code> component using the interface <code>pipeline.Memory</code>.
+          </section>
+          <hr class="divider" />
+          <section id="document">
+            <h2>Document</h2>
+            <p class="lead">Document is a component that contains text extracted by a Loader.</p>
+            <p>
+              Prompts can be very complex and sometime you need to extract them from a large content,
+              for example a file. Document is a container for a large chunk of text. Go to the section
+              <a href="#loader">Loader</a> to see how to extract text from a file.
+            </p>
+          </section>
+
+          <hr class="divider" />
+          <section id="loader">
+            <h2>Loader</h2>
+            <p class="lead">Loader is the component responsible to extract text from a source.</p>
+            <p>
+              A <code>Loader</code> extract text from one or more files and creates one or more
+              <code>Document</code>. There are two loader types currently available:
+            <ul>
+              <li>TextLoader</li>
+              <li>DirectoryLoader</li>
+            </ul>
+            </p>
+            <pre>
+  <code class="go">
+textLoader, err := loader.NewTextLoader("test.txt", nil)
+documents, err := textLoader.Load()
+...
+directoryLoader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+documents, err := directoryLoader.Load()
+  </code>
+            </pre>
+            unsing the <code>DirectoryLoader</code> each <code>Document</code> metadata will be filled with
+            <code>"source": "/path/of/the/file"</code>
           </section>
 
           <hr class="divider" />
 
-          <h2>🚧 Work in progress... </h2>
+          <section id="text_splitter">
+            <h2>TextSplitter</h2>
+            <p class="lead">A TextSplitter is a component that divide text in chunks.</p>
+            <p>
+              Sometime prompts are very long and you need to split them in chunks. There
+              is only one TextSplitter currently available: <code>RecursiveCharacterTextSplitter</code>.
+              Here is an example:
+            </p>
+            <pre>
+  <code class="go">
+loader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+...
+documents, err := loader.Load()
+...
+textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+documentChunks := textSplitter.SplitDocuments(documents)
+
+  </code>
+            </pre>
+            The returned chunks are <code>Document</code> as well and they inherit the metadata from the original.
+          </section>
+
+          <hr class="divider" />
+          <section id="embedder">
+            <h2>Embedder</h2>
+            <p class="lead">Embedder is a component that embeds text in a vector of floats.</p>
+            <p>
+              LLM engines provide a way to embed text in a vector of floats. This is useful to compare
+              two texts only using vectors. There are only one embedder currently available:
+              <code>OpenAIEmbedder</code>.
+            </p>
+            <pre>
+  <code class="go">
+import openaiembedder "github.com/henomis/lingoose/embedder/openai"
+...
+openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+...
+embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
+  </code>
+</pre>
+            <p class="alert alert-info">
+              You can extend <code>Embedder</code> component using the interface <code>index.Embedder</code>.
+            </p>
+          </section>
+
+          <hr class="divider" />
+          <section id="index">
+            <h2>Index</h2>
+            <p class="lead">Index is a component that stores and search vectors for similarity.</p>
+            <p>
+              Vectors need to be stored to be retreived later. There are two index types currently available:
+            <ul>
+              <li><code>SimpleVectorIndex</code> - local storage</li>
+              <li><code>Pinecone</code> - remote storage at <a href="https://pinecone.io">Pinecone.io</a></li>
+            </ul>
+            Here is an example of <code>SimpleVectorIndex</code>:
+            </p>
+            <pre>
+  <code class="go">
+openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+...
+docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+...
+loader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+...
+documents, err := loader.Load()
+...
+textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+documentChunks := textSplitter.SplitDocuments(documents)
+...
+docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+...
+query := "What is the purpose of the NATO Alliance?"
+topk := 3
+similarities, err := docsVectorIndex.SimilaritySearch(
+  context.Background(),
+  query,
+  &topk,
+)
+    </code>
+</pre>
+Similarity response (<code>index.SearchResponse</code>) will contain Documents and relative similarity score. Indexes are responsible to call an <code>Embedder</code>
+to store and search vectors.
+          </section>
+          <hr class="divider" />
+
+          <section id="goreference">
+            <h2>Go reference</h2>
+            <p class="lead">Please refer to the Go pkg documentation at: <a href="https://godoc.org/github.com/henomis/lingoose">https://godoc.org/github.com/henomis/lingoose</a>.</p>            
+          </section>
+          <hr class="divider" />
+
+          <section id="faq">
+            <h2>FAQ</h2>
+            <p class="lead">no FAQ until now.</p>
+            <p class="alert alert-info">
+              If you have any questions that are beyond the scope of this help
+              file, please feel free to email me:
+              <a target="_blank" href="mailto:henomis@gmail.com">henomis@gmail.com</a>.
+            </p>
+          </section>
 
         </div>
       </div>
