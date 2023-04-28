@@ -51,7 +51,10 @@ func main() {
 
 		}
 
-		docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+		err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
@@ -96,6 +99,9 @@ func main() {
 		panic(err)
 	}
 
-	llmOpenAI.Completion(context.Background(), prompt1.Prompt())
+	_, err = llmOpenAI.Completion(context.Background(), prompt1.Prompt())
 
+	if err != nil {
+		panic(err)
+	}
 }
