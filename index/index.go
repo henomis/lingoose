@@ -9,9 +9,9 @@ import (
 )
 
 type SearchResponse struct {
+	ID       string
 	Document document.Document
 	Score    float32
-	Index    int
 }
 
 type Embedder interface {

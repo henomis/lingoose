@@ -109,7 +109,7 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 		searchResponses[i] = SearchResponse{
 			Document: s.Data[i].Document,
 			Score:    score,
-			Index:    i,
+			// Index:    i,
 		}
 	}
 

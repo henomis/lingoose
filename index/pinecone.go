@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
@@ -22,9 +21,10 @@ type Pinecone struct {
 	indexName      string
 	projectID      string
 	embedder       Embedder
+	includeContent bool
 }
 
-func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, error) {
+func NewPinecone(indexName, projectID string, embedder Embedder, includeCondent bool) (*Pinecone, error) {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	if apiKey == "" {
@@ -42,6 +42,7 @@ func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, err
 		indexName:      indexName,
 		projectID:      projectID,
 		embedder:       embedder,
+		includeContent: includeCondent,
 	}, nil
 }
 
@@ -60,16 +61,20 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 		if ok {
 			metadata["source"] = source
 		}
-		metadata["index"] = fmt.Sprintf("%d", embedding.Index)
-		metadata["content"] = documents[i].Content
 
-		vectorID := uuid.New()
+		if s.includeContent {
+			metadata["content"] = documents[i].Content
+		}
+
+		vectorID := uuid.New().String()
 
 		vectors = append(vectors, pineconerequest.Vector{
-			ID:       vectorID.String(),
+			ID:       vectorID,
 			Values:   embedding.Embedding,
 			Metadata: metadata,
 		})
+
+		documents[i].Metadata["id"] = vectorID
 	}
 
 	req := &pineconerequest.VectorUpsert{
@@ -145,21 +150,16 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 	for i, match := range res.Matches {
 
 		documentContent, ok := match.Metadata["content"].(string)
-		if !ok {
+		if !ok || !s.includeContent {
 			documentContent = ""
 		}
 
-		documentIndex := match.Metadata["index"].(string)
-		if !ok {
-			documentIndex = "0"
+		id := ""
+		if match.ID != nil {
+			id = *match.ID
 		}
 
-		documentIndexAsInt, err := strconv.Atoi(documentIndex)
-		if err != nil {
-			return nil, err
-		}
-
-		documentSource := match.Metadata["source"].(string)
+		documentSource, ok := match.Metadata["source"].(string)
 		if !ok {
 			documentSource = ""
 		}
@@ -177,9 +177,9 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 		}
 
 		searchResponses[i] = SearchResponse{
+			ID:       id,
 			Document: document,
 			Score:    score,
-			Index:    documentIndexAsInt,
 		}
 	}
 
