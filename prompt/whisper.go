@@ -9,30 +9,30 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type WhisperPrompt struct {
+type whisperPrompt struct {
 	openAIClient *openai.Client
 	filePath     string
 	ctx          context.Context
 }
 
-func NewPromptFromAudioFile(ctx context.Context, filePath string) (*WhisperPrompt, error) {
+func NewPromptFromAudioFile(ctx context.Context, filePath string) (*whisperPrompt, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	return &WhisperPrompt{
+	return &whisperPrompt{
 		openAIClient: openai.NewClient(openAIKey),
 		filePath:     filePath,
 		ctx:          ctx,
 	}, nil
 }
 
-func (p *WhisperPrompt) Format(input types.M) error {
+func (p *whisperPrompt) Format(input types.M) error {
 	return nil
 }
 
-func (p *WhisperPrompt) Prompt() string {
+func (p *whisperPrompt) Prompt() string {
 	req := openai.AudioRequest{
 		Model:    openai.Whisper1,
 		FilePath: p.filePath,

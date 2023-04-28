@@ -34,12 +34,12 @@ type Pipe interface {
 	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
-type Pipeline struct {
+type pipeline struct {
 	pipes []Pipe
 }
 
-func New(pipes ...Pipe) Pipeline {
-	return Pipeline{
+func New(pipes ...Pipe) pipeline {
+	return pipeline{
 		pipes: pipes,
 	}
 }
@@ -128,7 +128,7 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 
 func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error) {
 
-	for _, promptMessage := range s.llm.Chat.PromptMessages {
+	for _, promptMessage := range s.llm.Chat.PromptMessages() {
 		err := promptMessage.Prompt.Format(input)
 		if err != nil {
 			return "", err
@@ -144,7 +144,7 @@ func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
-func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
+func (p pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
 	var output types.M
 	for i, pipeline := range p.pipes {
