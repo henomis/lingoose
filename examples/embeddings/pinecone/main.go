@@ -123,11 +123,18 @@ func main() {
 		panic(err)
 	}
 
+	var doc = document.Document{}
+	for _, document := range documents {
+		if similarities[0].ID == document.Metadata["id"] {
+			doc = document
+		}
+	}
+
 	prompt1, err := prompt.NewPromptTemplate(
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
 		map[string]string{
 			"query":   query,
-			"context": similarities[0].Document.Content,
+			"context": doc.Content,
 		},
 	)
 	if err != nil {
