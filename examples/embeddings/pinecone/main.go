@@ -45,17 +45,17 @@ func main() {
 		panic(err)
 	}
 
-	pineconeIndex, err := index.NewPinecone("test", whoamiResp.ProjectID, openaiEmbedder)
+	pineconeIndex, err := index.NewPinecone("test", whoamiResp.ProjectID, "test-namespace", openaiEmbedder, true)
 	if err != nil {
 		panic(err)
 	}
 
-	indexSize, err := pineconeIndex.Size()
+	indexIsEmpty, err := pineconeIndex.IsEmpty(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
-	if indexSize == 0 {
+	if indexIsEmpty {
 		loader, err := loader.NewDirectoryLoader(".", ".txt")
 		if err != nil {
 			panic(err)

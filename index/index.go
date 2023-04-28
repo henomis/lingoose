@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultKeyID = "id"
+	defaultKeyID      = "id"
+	defaultKeyContent = "content"
 )
 
 type SearchResponse struct {

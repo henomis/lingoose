@@ -7,23 +7,27 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/embedder"
 	pineconego "github.com/henomis/pinecone-go"
 	pineconerequest "github.com/henomis/pinecone-go/request"
 	pineconeresponse "github.com/henomis/pinecone-go/response"
 )
 
 const (
-	defaultPineconeTopK = 10
+	defaultPineconeTopK    = 10
+	defaultBatchUpsertSize = 32
 )
 
 type pinecone struct {
 	pineconeClient *pineconego.PineconeGo
 	indexName      string
 	projectID      string
+	namespace      string
 	embedder       Embedder
+	includeContent bool
 }
 
-func NewPinecone(indexName, projectID string, embedder Embedder) (*pinecone, error) {
+func NewPinecone(indexName, projectID, namespace string, embedder Embedder, includeContent bool) (*pinecone, error) {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	if apiKey == "" {
@@ -41,43 +45,120 @@ func NewPinecone(indexName, projectID string, embedder Embedder) (*pinecone, err
 		indexName:      indexName,
 		projectID:      projectID,
 		embedder:       embedder,
+		namespace:      namespace,
+		includeContent: includeContent,
 	}, nil
 }
 
 func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+	return s.batchUpsert(ctx, documents)
+}
 
-	embeddings, err := s.embedder.Embed(ctx, documents)
-	if err != nil {
-		return err
+func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
+
+	req := &pineconerequest.VectorDescribeIndexStats{
+		IndexName: p.indexName,
+		ProjectID: p.projectID,
 	}
-	var vectors []pineconerequest.Vector
+	res := &pineconeresponse.VectorDescribeIndexStats{}
 
-	for i, embedding := range embeddings {
+	err := p.pineconeClient.VectorDescribeIndexStats(ctx, req, res)
+	if err != nil {
+		return false, err
+	}
 
-		metadata := make(map[string]interface{})
-		for key, value := range documents[i].Metadata {
-			metadata[key] = value
+	if res.TotalVectorCount == nil {
+		return false, fmt.Errorf("failed to get total index size")
+	}
+
+	return *res.TotalVectorCount == 0, nil
+
+}
+
+func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+
+	matches, err := p.similaritySearch(ctx, topK, query)
+	if err != nil {
+		return nil, err
+	}
+
+	searchResponses := buildSearchReponsesFromMatches(matches)
+
+	return filterSearchResponses(searchResponses, topK), nil
+}
+
+func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string) ([]pineconeresponse.QueryMatch, error) {
+	pineconeTopK := defaultPineconeTopK
+	if topK != nil {
+		pineconeTopK = *topK
+	}
+
+	embeddings, err := p.embedder.Embed(ctx, []document.Document{{Content: query}})
+	if err != nil {
+		return nil, err
+	}
+
+	includeMetadata := true
+	res := &pineconeresponse.VectorQuery{}
+	err = p.pineconeClient.VectorQuery(
+		ctx,
+		&pineconerequest.VectorQuery{
+			IndexName:       p.indexName,
+			ProjectID:       p.projectID,
+			TopK:            int32(pineconeTopK),
+			Vector:          embeddings[0].Embedding,
+			IncludeMetadata: &includeMetadata,
+		},
+		res,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Matches, nil
+}
+
+func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
+
+	for i := 0; i < len(documents); i += defaultBatchUpsertSize {
+
+		batchEnd := i + defaultBatchUpsertSize
+		if batchEnd > len(documents) {
+			batchEnd = len(documents)
 		}
 
-		vectorID := uuid.New().String()
+		batchDocuments := documents[i:batchEnd]
 
-		vectors = append(vectors, pineconerequest.Vector{
-			ID:       vectorID,
-			Values:   embedding.Embedding,
-			Metadata: metadata,
-		})
+		embeddings, err := p.embedder.Embed(ctx, batchDocuments)
+		if err != nil {
+			return err
+		}
 
-		documents[i].Metadata[defaultKeyID] = vectorID
+		vectors, err := buildVectorsFromEmbeddingsAndDocuments(embeddings, batchDocuments, p.includeContent)
+		if err != nil {
+			return err
+		}
+
+		err = p.vectorUpsert(ctx, vectors)
+		if err != nil {
+			return err
+		}
 	}
 
+	return nil
+}
+
+func (p *pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
+
 	req := &pineconerequest.VectorUpsert{
-		IndexName: s.indexName,
-		ProjectID: s.projectID,
+		IndexName: p.indexName,
+		ProjectID: p.projectID,
 		Vectors:   vectors,
+		Namespace: p.namespace,
 	}
 	res := &pineconeresponse.VectorUpsert{}
 
-	err = s.pineconeClient.VectorUpsert(ctx, req, res)
+	err := p.pineconeClient.VectorUpsert(ctx, req, res)
 	if err != nil {
 		return err
 	}
@@ -89,63 +170,53 @@ func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	return nil
 }
 
-func (s *pinecone) Size() (int64, error) {
-
-	req := &pineconerequest.VectorDescribeIndexStats{
-		IndexName: s.indexName,
-		ProjectID: s.projectID,
+func deepCopyMetadata(metadata map[string]interface{}) map[string]interface{} {
+	metadataCopy := make(map[string]interface{})
+	for k, v := range metadata {
+		metadataCopy[k] = v
 	}
-	res := &pineconeresponse.VectorDescribeIndexStats{}
-
-	err := s.pineconeClient.VectorDescribeIndexStats(context.Background(), req, res)
-	if err != nil {
-		return 0, err
-	}
-
-	if res.TotalVectorCount == nil {
-		return 0, fmt.Errorf("failed to get total index size")
-	}
-
-	return *res.TotalVectorCount, nil
+	return metadataCopy
 }
 
-func (s *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func buildVectorsFromEmbeddingsAndDocuments(
+	embeddings []embedder.Embedding,
+	documents []document.Document,
+	includeContent bool,
+) ([]pineconerequest.Vector, error) {
 
-	pineconeTopK := defaultPineconeTopK
-	if topK != nil {
-		pineconeTopK = *topK
-	}
+	var vectors []pineconerequest.Vector
 
-	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
-	if err != nil {
-		return nil, err
-	}
+	for i, embedding := range embeddings {
 
-	includeMetadata := true
-	res := &pineconeresponse.VectorQuery{}
-	err = s.pineconeClient.VectorQuery(
-		ctx,
-		&pineconerequest.VectorQuery{
-			IndexName:       s.indexName,
-			ProjectID:       s.projectID,
-			TopK:            int32(pineconeTopK),
-			Vector:          embeddings[0].Embedding,
-			IncludeMetadata: &includeMetadata,
-		},
-		res,
-	)
-	if err != nil {
-		return nil, err
-	}
+		metadata := deepCopyMetadata(documents[i].Metadata)
 
-	searchResponses := make([]SearchResponse, len(res.Matches))
-
-	for i, match := range res.Matches {
-
-		metadata := make(map[string]interface{})
-		for k, v := range match.Metadata {
-			metadata[k] = v
+		if includeContent {
+			metadata[defaultKeyContent] = documents[i].Content
 		}
+
+		vectorID, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
+
+		vectors = append(vectors, pineconerequest.Vector{
+			ID:       vectorID.String(),
+			Values:   embedding.Embedding,
+			Metadata: metadata,
+		})
+
+		documents[i].Metadata[defaultKeyID] = vectorID
+	}
+
+	return vectors, nil
+}
+
+func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch) []SearchResponse {
+	searchResponses := make([]SearchResponse, len(matches))
+
+	for i, match := range matches {
+
+		metadata := deepCopyMetadata(match.Metadata)
 
 		id := ""
 		if match.ID != nil {
@@ -166,5 +237,5 @@ func (s *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 		}
 	}
 
-	return filterSearchResponses(searchResponses, topK), nil
+	return searchResponses
 }
