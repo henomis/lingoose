@@ -21,10 +21,9 @@ type Pinecone struct {
 	indexName      string
 	projectID      string
 	embedder       Embedder
-	includeContent bool
 }
 
-func NewPinecone(indexName, projectID string, embedder Embedder, includeCondent bool) (*Pinecone, error) {
+func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, error) {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	if apiKey == "" {
@@ -42,7 +41,6 @@ func NewPinecone(indexName, projectID string, embedder Embedder, includeCondent 
 		indexName:      indexName,
 		projectID:      projectID,
 		embedder:       embedder,
-		includeContent: includeCondent,
 	}, nil
 }
 
@@ -57,13 +55,8 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	for i, embedding := range embeddings {
 
 		metadata := make(map[string]interface{})
-		source, ok := documents[i].Metadata["source"]
-		if ok {
-			metadata["source"] = source
-		}
-
-		if s.includeContent {
-			metadata["content"] = documents[i].Content
+		for key, value := range documents[i].Metadata {
+			metadata[key] = value
 		}
 
 		vectorID := uuid.New().String()
@@ -74,7 +67,7 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 			Metadata: metadata,
 		})
 
-		documents[i].Metadata["id"] = vectorID
+		documents[i].Metadata[defaultKeyID] = vectorID
 	}
 
 	req := &pineconerequest.VectorUpsert{
@@ -149,9 +142,9 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 
 	for i, match := range res.Matches {
 
-		documentContent, ok := match.Metadata["content"].(string)
-		if !ok || !s.includeContent {
-			documentContent = ""
+		metadata := make(map[string]interface{})
+		for k, v := range match.Metadata {
+			metadata[k] = v
 		}
 
 		id := ""
@@ -159,27 +152,17 @@ func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 			id = *match.ID
 		}
 
-		documentSource, ok := match.Metadata["source"].(string)
-		if !ok {
-			documentSource = ""
-		}
-
 		score := float32(0)
 		if match.Score != nil {
 			score = *match.Score
 		}
 
-		document := document.Document{
-			Content: documentContent,
-			Metadata: map[string]interface{}{
-				"source": documentSource,
-			},
-		}
-
 		searchResponses[i] = SearchResponse{
-			ID:       id,
-			Document: document,
-			Score:    score,
+			ID: id,
+			Document: document.Document{
+				Metadata: metadata,
+			},
+			Score: score,
 		}
 	}
 

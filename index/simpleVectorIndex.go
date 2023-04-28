@@ -3,6 +3,7 @@ package index
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"os"
 	"strings"
@@ -56,6 +57,8 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 			Document:  document,
 			Embedding: embeddings[i],
 		})
+
+		documents[i].Metadata[defaultKeyID] = fmt.Sprintf("%d", i)
 	}
 
 	err = s.save()
@@ -106,10 +109,13 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 	searchResponses := make([]SearchResponse, len(scores))
 
 	for i, score := range scores {
+
+		id := s.Data[i].Document.Metadata[defaultKeyID].(string)
+
 		searchResponses[i] = SearchResponse{
+			ID:       id,
 			Document: s.Data[i].Document,
 			Score:    score,
-			// Index:    i,
 		}
 	}
 

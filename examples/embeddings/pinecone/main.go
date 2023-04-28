@@ -45,7 +45,7 @@ func main() {
 		panic(err)
 	}
 
-	pineconeIndex, err := index.NewPinecone("test", whoamiResp.ProjectID, openaiEmbedder, false)
+	pineconeIndex, err := index.NewPinecone("test", whoamiResp.ProjectID, openaiEmbedder)
 	if err != nil {
 		panic(err)
 	}
@@ -84,7 +84,7 @@ func main() {
 			panic(err)
 		}
 
-		jsonDocuments, err := json.MarshalIndent(documentChunks, "", "  ")
+		jsonDocuments, _ := json.MarshalIndent(documentChunks, "", "  ")
 		os.WriteFile("documents.json", jsonDocuments, 0644)
 	}
 

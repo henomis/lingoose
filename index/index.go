@@ -8,6 +8,10 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
+const (
+	defaultKeyID = "id"
+)
+
 type SearchResponse struct {
 	ID       string
 	Document document.Document

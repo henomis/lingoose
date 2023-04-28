@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
@@ -65,9 +66,12 @@ func main() {
 	}
 
 	for _, similarity := range similarities {
+
+		id, _ := strconv.Atoi(similarity.ID)
+
 		fmt.Printf("Similarity: %f\n", similarity.Score)
-		fmt.Printf("Document: %s\n", docsVectorIndex.Data[similarity.Index].Document.Content)
-		fmt.Println("Metadata: ", docsVectorIndex.Data[similarity.Index].Document.Metadata)
+		fmt.Printf("Document: %s\n", docsVectorIndex.Data[id].Document.Content)
+		fmt.Println("Metadata: ", docsVectorIndex.Data[id].Document.Metadata)
 		fmt.Println("----------")
 	}
 
