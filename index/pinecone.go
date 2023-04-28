@@ -82,7 +82,7 @@ func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 		return nil, err
 	}
 
-	searchResponses := buildSearchReponsesFromMatches(matches)
+	searchResponses := buildSearchReponsesFromMatches(matches, p.includeContent)
 
 	return filterSearchResponses(searchResponses, topK), nil
 }
@@ -108,6 +108,7 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 			TopK:            int32(pineconeTopK),
 			Vector:          embeddings[0].Embedding,
 			IncludeMetadata: &includeMetadata,
+			Namespace:       &p.namespace,
 		},
 		res,
 	)
@@ -127,14 +128,12 @@ func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Documen
 			batchEnd = len(documents)
 		}
 
-		batchDocuments := documents[i:batchEnd]
-
-		embeddings, err := p.embedder.Embed(ctx, batchDocuments)
+		embeddings, err := p.embedder.Embed(ctx, documents[i:batchEnd])
 		if err != nil {
 			return err
 		}
 
-		vectors, err := buildVectorsFromEmbeddingsAndDocuments(embeddings, batchDocuments, p.includeContent)
+		vectors, err := buildVectorsFromEmbeddingsAndDocuments(embeddings, documents, i, p.includeContent)
 		if err != nil {
 			return err
 		}
@@ -181,6 +180,7 @@ func deepCopyMetadata(metadata map[string]interface{}) map[string]interface{} {
 func buildVectorsFromEmbeddingsAndDocuments(
 	embeddings []embedder.Embedding,
 	documents []document.Document,
+	startIndex int,
 	includeContent bool,
 ) ([]pineconerequest.Vector, error) {
 
@@ -188,10 +188,11 @@ func buildVectorsFromEmbeddingsAndDocuments(
 
 	for i, embedding := range embeddings {
 
-		metadata := deepCopyMetadata(documents[i].Metadata)
+		metadata := deepCopyMetadata(documents[startIndex+i].Metadata)
 
+		// inject document content into vector metadata
 		if includeContent {
-			metadata[defaultKeyContent] = documents[i].Content
+			metadata[defaultKeyContent] = documents[startIndex+i].Content
 		}
 
 		vectorID, err := uuid.NewUUID()
@@ -205,18 +206,26 @@ func buildVectorsFromEmbeddingsAndDocuments(
 			Metadata: metadata,
 		})
 
-		documents[i].Metadata[defaultKeyID] = vectorID
+		// inject vector ID into document metadata
+		documents[startIndex+i].Metadata[defaultKeyID] = vectorID.String()
 	}
 
 	return vectors, nil
 }
 
-func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch) []SearchResponse {
+func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) []SearchResponse {
 	searchResponses := make([]SearchResponse, len(matches))
 
 	for i, match := range matches {
 
 		metadata := deepCopyMetadata(match.Metadata)
+
+		content := ""
+		// extract document content from vector metadata
+		if includeContent {
+			content = metadata[defaultKeyContent].(string)
+			delete(metadata, defaultKeyContent)
+		}
 
 		id := ""
 		if match.ID != nil {
@@ -232,6 +241,7 @@ func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch) []Sea
 			ID: id,
 			Document: document.Document{
 				Metadata: metadata,
+				Content:  content,
 			},
 			Score: score,
 		}
