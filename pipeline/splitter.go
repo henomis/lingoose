@@ -8,7 +8,7 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type Splitter struct {
+type splitter struct {
 	name       string
 	llm        Llm
 	decoder    Decoder
@@ -24,8 +24,8 @@ func NewSplitter(
 	outputDecoder Decoder,
 	memory Memory,
 	splitterFn SplitterFn,
-) *Splitter {
-	return &Splitter{
+) *splitter {
+	return &splitter{
 		name:       name,
 		llm:        llm,
 		decoder:    outputDecoder,
@@ -34,7 +34,7 @@ func NewSplitter(
 	}
 }
 
-func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
+func (s *splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {

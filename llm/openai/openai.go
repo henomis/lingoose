@@ -35,7 +35,7 @@ const (
 	GPT3Babbage        Model = openai.GPT3Babbage
 )
 
-type OpenAI struct {
+type openAI struct {
 	openAIClient *openai.Client
 	model        Model
 	temperature  float32
@@ -43,14 +43,14 @@ type OpenAI struct {
 	verbose      bool
 }
 
-func New(model Model, temperature float32, maxTokens int, verbose bool) (*OpenAI, error) {
+func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI, error) {
 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	return &OpenAI{
+	return &openAI{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
 		temperature:  temperature,
@@ -59,7 +59,7 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) (*OpenAI
 	}, nil
 }
 
-func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
+func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) {
 
 	response, err := o.openAIClient.CreateCompletion(
 		ctx,
@@ -90,7 +90,7 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 	return output, nil
 }
 
-func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	var messages []openai.ChatCompletionMessage
 	promptMessages, err := prompt.ToMessages()

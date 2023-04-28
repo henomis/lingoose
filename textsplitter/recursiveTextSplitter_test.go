@@ -134,7 +134,7 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &RecursiveCharacterTextSplitter{
+			r := &recursiveCharacterTextSplitter{
 				textSplitter: tt.fields.textSplitter,
 				separators:   tt.fields.separators,
 			}

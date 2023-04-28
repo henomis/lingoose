@@ -11,12 +11,12 @@ const (
 	SourceMetadataKey = "source"
 )
 
-type TextLoader struct {
+type textLoader struct {
 	filename string
 	metadata map[string]interface{}
 }
 
-func NewTextLoader(filename string, metadata map[string]interface{}) (*TextLoader, error) {
+func NewTextLoader(filename string, metadata map[string]interface{}) (*textLoader, error) {
 
 	if metadata == nil {
 		metadata = make(map[string]interface{})
@@ -38,13 +38,13 @@ func NewTextLoader(filename string, metadata map[string]interface{}) (*TextLoade
 		return nil, os.ErrNotExist
 	}
 
-	return &TextLoader{
+	return &textLoader{
 		filename: filename,
 		metadata: metadata,
 	}, nil
 }
 
-func (t *TextLoader) Load() ([]document.Document, error) {
+func (t *textLoader) Load() ([]document.Document, error) {
 	text, err := os.ReadFile(t.filename)
 	if err != nil {
 		return nil, err

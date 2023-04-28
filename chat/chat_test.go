@@ -59,7 +59,7 @@ func TestChat_ToMessages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Chat{
-				PromptMessages: tt.fields.PromptMessages,
+				promptMessages: tt.fields.PromptMessages,
 			}
 			got, err := p.ToMessages()
 			if (err != nil) != tt.wantErr {

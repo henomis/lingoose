@@ -2,17 +2,14 @@ package prompt
 
 import (
 	"testing"
-	texttemplate "text/template"
 
 	"github.com/henomis/lingoose/types"
 )
 
 func TestPromptTemplate_Format(t *testing.T) {
 	type fields struct {
-		input          interface{}
-		template       string
-		value          string
-		templateEngine *texttemplate.Template
+		input    interface{}
+		template string
 	}
 	type args struct {
 		input types.M
@@ -52,12 +49,12 @@ func TestPromptTemplate_Format(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Template{
-				input:          tt.fields.input,
-				template:       tt.fields.template,
-				value:          tt.fields.value,
-				templateEngine: tt.fields.templateEngine,
+			p, err := NewPromptTemplate(tt.fields.template, tt.fields.input)
+			if err != nil {
+				t.Errorf("PromptTemplate.Format() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+
 			if err := p.Format(tt.args.input); (err != nil) != tt.wantErr {
 				t.Errorf("PromptTemplate.Format() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -67,11 +64,9 @@ func TestPromptTemplate_Format(t *testing.T) {
 
 func TestPromptTemplate_Prompt(t *testing.T) {
 	type fields struct {
-		input          interface{}
-		template       string
-		value          string
-		templateEngine *texttemplate.Template
-		external       types.M
+		input    interface{}
+		template string
+		external types.M
 	}
 	tests := []struct {
 		name   string
@@ -103,11 +98,10 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Template{
-				input:          tt.fields.input,
-				template:       tt.fields.template,
-				value:          tt.fields.value,
-				templateEngine: tt.fields.templateEngine,
+			p, err := NewPromptTemplate(tt.fields.template, tt.fields.input)
+			if err != nil {
+				t.Errorf("NewPromptTemplate error = %v", err)
+				return
 			}
 
 			if tt.fields.external != nil {

@@ -33,24 +33,24 @@ const (
 	AdaEmbeddingV2
 )
 
-type OpenAIEmbedder struct {
+type openAIEmbedder struct {
 	openAIClient *openai.Client
 	model        Model
 }
 
-func New(model Model) (*OpenAIEmbedder, error) {
+func New(model Model) (*openAIEmbedder, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	return &OpenAIEmbedder{
+	return &openAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
 	}, nil
 }
 
-func (t *OpenAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error) {
+func (t *openAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error) {
 
 	input := []string{}
 	for _, doc := range docs {

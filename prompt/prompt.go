@@ -14,20 +14,20 @@ var (
 	ErrTemplateEngine = errors.New("template engine error")
 )
 
-type Prompt struct {
+type prompt struct {
 	prompt string
 }
 
-func New(prompt string) *Prompt {
-	return &Prompt{
-		prompt: prompt,
+func New(text string) *prompt {
+	return &prompt{
+		prompt: text,
 	}
 }
 
-func (p *Prompt) Format(input types.M) error {
+func (p *prompt) Format(input types.M) error {
 	return nil
 }
 
-func (p *Prompt) Prompt() string {
+func (p *prompt) Prompt() string {
 	return p.prompt
 }

@@ -16,14 +16,14 @@ const (
 	defaultPineconeTopK = 10
 )
 
-type Pinecone struct {
+type pinecone struct {
 	pineconeClient *pineconego.PineconeGo
 	indexName      string
 	projectID      string
 	embedder       Embedder
 }
 
-func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, error) {
+func NewPinecone(indexName, projectID string, embedder Embedder) (*pinecone, error) {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	if apiKey == "" {
@@ -36,7 +36,7 @@ func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, err
 	}
 
 	pineconeClient := pineconego.New(environment, apiKey)
-	return &Pinecone{
+	return &pinecone{
 		pineconeClient: pineconeClient,
 		indexName:      indexName,
 		projectID:      projectID,
@@ -44,7 +44,7 @@ func NewPinecone(indexName, projectID string, embedder Embedder) (*Pinecone, err
 	}, nil
 }
 
-func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
 	embeddings, err := s.embedder.Embed(ctx, documents)
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	return nil
 }
 
-func (s *Pinecone) Size() (int64, error) {
+func (s *pinecone) Size() (int64, error) {
 
 	req := &pineconerequest.VectorDescribeIndexStats{
 		IndexName: s.indexName,
@@ -109,7 +109,7 @@ func (s *Pinecone) Size() (int64, error) {
 	return *res.TotalVectorCount, nil
 }
 
-func (s *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (s *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
 
 	pineconeTopK := defaultPineconeTopK
 	if topK != nil {

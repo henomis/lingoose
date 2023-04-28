@@ -12,21 +12,21 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
-type SimpleVectorIndexData struct {
+type simpleVectorIndexData struct {
 	Document  document.Document  `json:"document"`
 	Embedding embedder.Embedding `json:"embedding"`
 }
 
-type SimpleVectorIndex struct {
-	Data       []SimpleVectorIndexData `json:"data"`
-	outputPath string                  `json:"-"`
-	name       string                  `json:"-"`
-	embedder   Embedder                `json:"-"`
+type simpleVectorIndex struct {
+	data       []simpleVectorIndexData
+	outputPath string
+	name       string
+	embedder   Embedder
 }
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*SimpleVectorIndex, error) {
-	simpleVectorIndex := &SimpleVectorIndex{
-		Data:       []SimpleVectorIndexData{},
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*simpleVectorIndex, error) {
+	simpleVectorIndex := &simpleVectorIndex{
+		data:       []simpleVectorIndexData{},
 		outputPath: outputPath,
 		name:       name,
 		embedder:   embedder,
@@ -43,17 +43,17 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*S
 	return simpleVectorIndex, nil
 }
 
-func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
 	embeddings, err := s.embedder.Embed(ctx, documents)
 	if err != nil {
 		return err
 	}
 
-	s.Data = []SimpleVectorIndexData{}
+	s.data = []simpleVectorIndexData{}
 
 	for i, document := range documents {
-		s.Data = append(s.Data, SimpleVectorIndexData{
+		s.data = append(s.data, simpleVectorIndexData{
 			Document:  document,
 			Embedding: embeddings[i],
 		})
@@ -69,9 +69,9 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 	return nil
 }
 
-func (s SimpleVectorIndex) save() error {
+func (s simpleVectorIndex) save() error {
 
-	jsonContent, err := json.Marshal(s)
+	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
 		return err
 	}
@@ -79,25 +79,25 @@ func (s SimpleVectorIndex) save() error {
 	return os.WriteFile(s.database(), jsonContent, 0644)
 }
 
-func (s *SimpleVectorIndex) load() error {
+func (s *simpleVectorIndex) load() error {
 
 	content, err := os.ReadFile(s.database())
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(content, &s)
+	return json.Unmarshal(content, &s.data)
 }
 
-func (s *SimpleVectorIndex) database() string {
+func (s *simpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *SimpleVectorIndex) Size() (int64, error) {
-	return int64(len(s.Data)), nil
+func (s *simpleVectorIndex) Size() (int64, error) {
+	return int64(len(s.data)), nil
 }
 
-func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
 
 	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
 	if err != nil {
@@ -110,11 +110,11 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 
 	for i, score := range scores {
 
-		id := s.Data[i].Document.Metadata[defaultKeyID].(string)
+		id := s.data[i].Document.Metadata[defaultKeyID].(string)
 
 		searchResponses[i] = SearchResponse{
 			ID:       id,
-			Document: s.Data[i].Document,
+			Document: s.data[i].Document,
 			Score:    score,
 		}
 	}
@@ -122,7 +122,7 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 	return filterSearchResponses(searchResponses, topK), nil
 }
 
-func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float32 {
+func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float32 {
 	dotProduct := float32(0.0)
 	normA := float32(0.0)
 	normB := float32(0.0)
@@ -140,12 +140,12 @@ func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Em
 	return dotProduct / (float32(math.Sqrt(float64(normA))) * float32(math.Sqrt(float64(normB))))
 }
 
-func (s *SimpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float32 {
+func (s *simpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float32 {
 
-	scores := make([]float32, len(s.Data))
+	scores := make([]float32, len(s.data))
 
-	for i := range s.Data {
-		scores[i] = s.cosineSimilarity(a, s.Data[i].Embedding)
+	for i := range s.data {
+		scores[i] = s.cosineSimilarity(a, s.data[i].Embedding)
 	}
 
 	return scores

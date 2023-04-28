@@ -9,14 +9,14 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Template struct {
+type template struct {
 	input          interface{}
 	template       string
 	value          string
 	templateEngine *texttemplate.Template
 }
 
-func NewPromptTemplate(template string, input interface{}) (*Template, error) {
+func NewPromptTemplate(text string, input interface{}) (*template, error) {
 
 	if input == nil {
 		input = types.M{}
@@ -29,9 +29,9 @@ func NewPromptTemplate(template string, input interface{}) (*Template, error) {
 	}
 	input = genericMap
 
-	promptTemplate := &Template{
+	promptTemplate := &template{
 		input:    input,
-		template: template,
+		template: text,
 	}
 
 	err = promptTemplate.initTemplateEngine()
@@ -43,18 +43,7 @@ func NewPromptTemplate(template string, input interface{}) (*Template, error) {
 }
 
 // Format formats the prompt using the template engine and the provided inputs.
-func (p *Template) Format(input types.M) error {
-
-	if p.templateEngine == nil {
-		err := p.initTemplateEngine()
-		if err != nil {
-			return ErrTemplateEngine
-		}
-	}
-
-	if input == nil {
-		input = types.M{}
-	}
+func (p *template) Format(input types.M) error {
 
 	input, err := structToMap(input)
 	if err != nil {
@@ -74,11 +63,11 @@ func (p *Template) Format(input types.M) error {
 	return nil
 }
 
-func (p *Template) Prompt() string {
+func (p *template) Prompt() string {
 	return p.value
 }
 
-func (p *Template) initTemplateEngine() error {
+func (p *template) initTemplateEngine() error {
 
 	if p.templateEngine != nil {
 		return nil
