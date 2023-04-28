@@ -42,10 +42,16 @@ func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Doc
 
 	for i, doc := range documents {
 		for _, chunk := range r.SplitText(doc.Content) {
+
+			metadata := make(map[string]interface{})
+			for k, v := range documents[i].Metadata {
+				metadata[k] = v
+			}
+
 			docs = append(docs,
 				document.Document{
 					Content:  chunk,
-					Metadata: documents[i].Metadata,
+					Metadata: metadata,
 				},
 			)
 		}
