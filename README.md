@@ -31,7 +31,7 @@
 
 # Usage
 
-Please refer to the documentation at [lingoose.io](https://lingoose.io) to understand how to use LinGoose. If you prefer the [examples directory](examples/) contains a lot of examples.
+Please refer to the documentation at [lingoose.io](https://lingoose.io/docs/) to understand how to use LinGoose. If you prefer the [examples directory](examples/) contains a lot of examples.
 However, here is a _simple_ example of what **LinGoose** is capable of:
 
 _Talk is cheap. Show me the [code](examples/)._ - Linus Torvalds
