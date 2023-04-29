@@ -12,6 +12,10 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
+const (
+	defaultBatchSize = 32
+)
+
 type simpleVectorIndexData struct {
 	Document  document.Document  `json:"document"`
 	Embedding embedder.Embedding `json:"embedding"`
@@ -45,23 +49,34 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*s
 
 func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
-	embeddings, err := s.embedder.Embed(ctx, documents)
-	if err != nil {
-		return err
-	}
-
 	s.data = []simpleVectorIndexData{}
 
-	for i, document := range documents {
-		s.data = append(s.data, simpleVectorIndexData{
-			Document:  document,
-			Embedding: embeddings[i],
-		})
+	documentIndex := 0
+	for i := 0; i < len(documents); i += defaultBatchSize {
 
-		documents[i].Metadata[defaultKeyID] = fmt.Sprintf("%d", i)
+		end := i + defaultBatchSize
+		if end > len(documents) {
+			end = len(documents)
+		}
+
+		embeddings, err := s.embedder.Embed(ctx, documents[i:end])
+		if err != nil {
+			return err
+		}
+
+		for j, document := range documents[i:end] {
+			s.data = append(s.data, simpleVectorIndexData{
+				Document:  document,
+				Embedding: embeddings[j],
+			})
+
+			documents[documentIndex].Metadata[defaultKeyID] = fmt.Sprintf("%d", documentIndex)
+			documentIndex++
+		}
+
 	}
 
-	err = s.save()
+	err := s.save()
 	if err != nil {
 		return err
 	}
@@ -93,11 +108,16 @@ func (s *simpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *simpleVectorIndex) Size() (int64, error) {
-	return int64(len(s.data)), nil
+func (s *simpleVectorIndex) IsEmpty() (bool, error) {
+	return len(s.data) == 0, nil
 }
 
 func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+
+	err := s.load()
+	if err != nil {
+		return nil, err
+	}
 
 	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
 	if err != nil {
