@@ -93,11 +93,16 @@ func (s *simpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *simpleVectorIndex) Size() (int64, error) {
-	return int64(len(s.data)), nil
+func (s *simpleVectorIndex) IsEmpty() (bool, error) {
+	return len(s.data) == 0, nil
 }
 
 func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+
+	err := s.load()
+	if err != nil {
+		return nil, err
+	}
 
 	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
 	if err != nil {

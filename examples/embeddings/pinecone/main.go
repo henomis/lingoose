@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -16,6 +15,8 @@ import (
 	pineconerequest "github.com/henomis/pinecone-go/request"
 	pineconeresponse "github.com/henomis/pinecone-go/response"
 )
+
+var pineconeClient *pineconego.PineconeGo
 
 func main() {
 
@@ -34,20 +35,17 @@ func main() {
 		panic("PINECONE_ENVIRONMENT is not set")
 	}
 
-	pineconeClient := pineconego.New(pineconeEnvironment, pineconeApiKey)
+	pineconeClient = pineconego.New(pineconeEnvironment, pineconeApiKey)
 
-	whoamiReq := &pineconerequest.Whoami{}
-	whoamiResp := &pineconeresponse.Whoami{}
-
-	err = pineconeClient.Whoami(context.Background(), whoamiReq, whoamiResp)
+	projectID, err := getProjectID(pineconeEnvironment, pineconeApiKey)
 	if err != nil {
 		panic(err)
 	}
 
 	pineconeIndex, err := index.NewPinecone(
 		index.PineconeOptions{
-			IndexName:      "test-index",
-			ProjectID:      whoamiResp.ProjectID,
+			IndexName:      "test",
+			ProjectID:      projectID,
 			Namespace:      "test-namespace",
 			IncludeContent: true,
 		},
@@ -63,36 +61,10 @@ func main() {
 	}
 
 	if indexIsEmpty {
-		loader, err := loader.NewDirectoryLoader(".", ".txt")
+		err = ingestData(projectID, openaiEmbedder)
 		if err != nil {
 			panic(err)
 		}
-
-		documents, err := loader.Load()
-		if err != nil {
-			panic(err)
-		}
-
-		textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
-
-		documentChunks := textSplitter.SplitDocuments(documents)
-
-		for _, doc := range documentChunks {
-			fmt.Println(doc.Content)
-			fmt.Println("----------")
-			fmt.Println(doc.Metadata)
-			fmt.Println("----------")
-			fmt.Println()
-
-		}
-
-		err = pineconeIndex.LoadFromDocuments(context.Background(), documentChunks)
-		if err != nil {
-			panic(err)
-		}
-
-		jsonDocuments, _ := json.MarshalIndent(documentChunks, "", "  ")
-		os.WriteFile("documents.json", jsonDocuments, 0644)
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
@@ -107,14 +79,6 @@ func main() {
 	}
 
 	for _, similarity := range similarities {
-
-		// doc := document.Document{}
-		// for _, document := range documents {
-		// 	if similarity.ID == document.Metadata["id"] {
-		// 		doc = document
-		// 	}
-		// }
-
 		fmt.Printf("Similarity: %f\n", similarity.Score)
 		fmt.Printf("Document: %s\n", similarity.Document.Content)
 		fmt.Println("Metadata: ", similarity.Document.Metadata)
@@ -147,5 +111,61 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+}
+
+func getProjectID(pineconeEnvironment, pineconeApiKey string) (string, error) {
+	pineconeClient = pineconego.New(pineconeEnvironment, pineconeApiKey)
+
+	whoamiReq := &pineconerequest.Whoami{}
+	whoamiResp := &pineconeresponse.Whoami{}
+
+	err := pineconeClient.Whoami(context.Background(), whoamiReq, whoamiResp)
+	if err != nil {
+		return "", err
+	}
+
+	return whoamiResp.ProjectID, nil
+}
+
+func ingestData(projectID string, openaiEmbedder index.Embedder) error {
+
+	pineconeIndex, err := index.NewPinecone(
+		index.PineconeOptions{
+			IndexName:      "test",
+			ProjectID:      projectID,
+			Namespace:      "test-namespace",
+			IncludeContent: true,
+		},
+		openaiEmbedder,
+	)
+	if err != nil {
+		return err
+	}
+
+	loader, err := loader.NewDirectoryLoader(".", ".txt")
+	if err != nil {
+		return err
+	}
+
+	documents, err := loader.Load()
+	if err != nil {
+		return err
+	}
+
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+
+	documentChunks := textSplitter.SplitDocuments(documents)
+
+	for _, doc := range documentChunks {
+		fmt.Println(doc.Content)
+		fmt.Println("----------")
+		fmt.Println(doc.Metadata)
+		fmt.Println("----------")
+		fmt.Println()
+
+	}
+
+	return pineconeIndex.LoadFromDocuments(context.Background(), documentChunks)
 
 }

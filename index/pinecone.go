@@ -83,11 +83,16 @@ func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	if res.TotalVectorCount == nil {
+	namespace, ok := res.Namespaces[p.namespace]
+	if !ok {
+		return true, nil
+	}
+
+	if namespace.VectorCount == nil {
 		return false, fmt.Errorf("failed to get total index size")
 	}
 
-	return *res.TotalVectorCount == 0, nil
+	return *namespace.VectorCount == 0, nil
 
 }
 

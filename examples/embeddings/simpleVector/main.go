@@ -24,36 +24,10 @@ func main() {
 		panic(err)
 	}
 
-	indexSize, _ := docsVectorIndex.Size()
+	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
-	if indexSize == 0 {
-		loader, err := loader.NewDirectoryLoader(".", ".txt")
-		if err != nil {
-			panic(err)
-		}
-
-		documents, err := loader.Load()
-		if err != nil {
-			panic(err)
-		}
-
-		textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
-
-		documentChunks := textSplitter.SplitDocuments(documents)
-
-		for _, doc := range documentChunks {
-			fmt.Println(doc.Content)
-			fmt.Println("----------")
-			fmt.Println(doc.Metadata)
-			fmt.Println("----------")
-			fmt.Println()
-
-		}
-
-		err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
-		if err != nil {
-			panic(err)
-		}
+	if indexIsEmpty {
+		ingestData(openaiEmbedder)
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
@@ -68,9 +42,6 @@ func main() {
 	}
 
 	for _, similarity := range similarities {
-
-		// id, _ := strconv.Atoi(similarity.ID)
-
 		fmt.Printf("Similarity: %f\n", similarity.Score)
 		fmt.Printf("Document: %s\n", similarity.Document.Content)
 		fmt.Println("Metadata: ", similarity.Document.Metadata)
@@ -103,4 +74,41 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func ingestData(openaiEmbedder index.Embedder) error {
+	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+	if err != nil {
+		return err
+	}
+
+	loader, err := loader.NewDirectoryLoader(".", ".txt")
+	if err != nil {
+		return err
+	}
+
+	documents, err := loader.Load()
+	if err != nil {
+		return err
+	}
+
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+
+	documentChunks := textSplitter.SplitDocuments(documents)
+
+	for _, doc := range documentChunks {
+		fmt.Println(doc.Content)
+		fmt.Println("----------")
+		fmt.Println(doc.Metadata)
+		fmt.Println("----------")
+		fmt.Println()
+
+	}
+
+	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
