@@ -2,7 +2,16 @@
 // Sometimes you need to define a chat prompt, this package provides a way to do that.
 package chat
 
-import "github.com/henomis/lingoose/types"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/henomis/lingoose/types"
+)
+
+var (
+	ErrChatMessages = errors.New("unable to convert chat messages")
+)
 
 type Chat struct {
 	promptMessages PromptMessages
@@ -61,7 +70,7 @@ func (p *Chat) ToMessages() (Messages, error) {
 			if len(messagePromptTemplate.Prompt.Prompt()) == 0 {
 				err = messagePromptTemplate.Prompt.Format(types.M{})
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("%s: %w", ErrChatMessages, err)
 				}
 			}
 			message.Content = messagePromptTemplate.Prompt.Prompt()

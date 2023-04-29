@@ -8,6 +8,10 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+var (
+	ErrSplitFunction = fmt.Errorf("split function error")
+)
+
 type splitter struct {
 	name       string
 	llm        Llm
@@ -38,7 +42,7 @@ func (s *splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrSplitFunction, err)
 	}
 
 	var wg sync.WaitGroup

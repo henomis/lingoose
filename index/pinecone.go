@@ -67,7 +67,11 @@ func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) 
 }
 
 func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
-	return s.batchUpsert(ctx, documents)
+	err := s.batchUpsert(ctx, documents)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+	return nil
 }
 
 func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
@@ -80,7 +84,7 @@ func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
 
 	err := p.pineconeClient.VectorDescribeIndexStats(ctx, req, res)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	namespace, ok := res.Namespaces[p.namespace]
@@ -89,7 +93,7 @@ func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
 	}
 
 	if namespace.VectorCount == nil {
-		return false, fmt.Errorf("failed to get total index size")
+		return false, fmt.Errorf("%s: failed to get total index size", ErrInternal)
 	}
 
 	return *namespace.VectorCount == 0, nil
@@ -100,7 +104,7 @@ func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 
 	matches, err := p.similaritySearch(ctx, topK, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	searchResponses := buildSearchReponsesFromMatches(matches, p.includeContent)

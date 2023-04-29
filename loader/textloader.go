@@ -7,6 +7,10 @@ import (
 	"github.com/henomis/lingoose/document"
 )
 
+var (
+	ErrorInternal = fmt.Errorf("internal error")
+)
+
 const (
 	SourceMetadataKey = "source"
 )
@@ -23,7 +27,7 @@ func NewTextLoader(filename string, metadata map[string]interface{}) (*textLoade
 	} else {
 		_, ok := metadata[SourceMetadataKey]
 		if ok {
-			return nil, fmt.Errorf("metadata key %s is reserved", SourceMetadataKey)
+			return nil, fmt.Errorf("%s: metadata key %s is reserved", ErrorInternal, SourceMetadataKey)
 		}
 	}
 
@@ -31,11 +35,11 @@ func NewTextLoader(filename string, metadata map[string]interface{}) (*textLoade
 
 	fileStat, err := os.Stat(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
 	if fileStat.IsDir() {
-		return nil, os.ErrNotExist
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
 	}
 
 	return &textLoader{
@@ -47,7 +51,7 @@ func NewTextLoader(filename string, metadata map[string]interface{}) (*textLoade
 func (t *textLoader) Load() ([]document.Document, error) {
 	text, err := os.ReadFile(t.filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
 	return []document.Document{

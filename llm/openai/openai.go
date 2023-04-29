@@ -11,6 +11,11 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+var (
+	ErrOpenAICompletion = fmt.Errorf("openai completion error")
+	ErrOpenAIChat       = fmt.Errorf("openai chat error")
+)
+
 const (
 	DefaultOpenAIMaxTokens   = 256
 	DefaultOpenAITemperature = 0.7
@@ -74,11 +79,11 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("openai: %w", err)
+		return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
 	}
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("no choices returned")
+		return "", fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
 	}
 
 	output := strings.TrimSpace(response.Choices[0].Text)
@@ -95,7 +100,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	var messages []openai.ChatCompletionMessage
 	promptMessages, err := prompt.ToMessages()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
 	for _, message := range promptMessages {
@@ -130,11 +135,11 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("openai: %w", err)
+		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("no choices returned")
+		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
 	}
 
 	content := response.Choices[0].Message.Content
