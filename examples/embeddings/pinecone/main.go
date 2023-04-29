@@ -44,7 +44,15 @@ func main() {
 		panic(err)
 	}
 
-	pineconeIndex, err := index.NewPinecone("test", whoamiResp.ProjectID, "test-namespace", openaiEmbedder, true)
+	pineconeIndex, err := index.NewPinecone(
+		index.PineconeOptions{
+			IndexName:      "test-index",
+			ProjectID:      whoamiResp.ProjectID,
+			Namespace:      "test-namespace",
+			IncludeContent: true,
+		},
+		openaiEmbedder,
+	)
 	if err != nil {
 		panic(err)
 	}

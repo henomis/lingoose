@@ -19,15 +19,24 @@ const (
 )
 
 type pinecone struct {
-	pineconeClient *pineconego.PineconeGo
-	indexName      string
-	projectID      string
-	namespace      string
-	embedder       Embedder
-	includeContent bool
+	pineconeClient  *pineconego.PineconeGo
+	indexName       string
+	projectID       string
+	namespace       string
+	embedder        Embedder
+	includeContent  bool
+	batchUpsertSize int
 }
 
-func NewPinecone(indexName, projectID, namespace string, embedder Embedder, includeContent bool) (*pinecone, error) {
+type PineconeOptions struct {
+	IndexName       string
+	ProjectID       string
+	Namespace       string
+	IncludeContent  bool
+	BatchUpsertSize *int
+}
+
+func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	if apiKey == "" {
@@ -40,13 +49,20 @@ func NewPinecone(indexName, projectID, namespace string, embedder Embedder, incl
 	}
 
 	pineconeClient := pineconego.New(environment, apiKey)
+
+	batchUpsertSize := defaultBatchUpsertSize
+	if options.BatchUpsertSize != nil {
+		batchUpsertSize = *options.BatchUpsertSize
+	}
+
 	return &pinecone{
-		pineconeClient: pineconeClient,
-		indexName:      indexName,
-		projectID:      projectID,
-		embedder:       embedder,
-		namespace:      namespace,
-		includeContent: includeContent,
+		pineconeClient:  pineconeClient,
+		indexName:       options.IndexName,
+		projectID:       options.ProjectID,
+		embedder:        embedder,
+		namespace:       options.Namespace,
+		includeContent:  options.IncludeContent,
+		batchUpsertSize: batchUpsertSize,
 	}, nil
 }
 
