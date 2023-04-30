@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/types"
 )
 
 var (
@@ -17,13 +18,13 @@ const (
 
 type textLoader struct {
 	filename string
-	metadata map[string]interface{}
+	metadata types.Meta
 }
 
-func NewTextLoader(filename string, metadata map[string]interface{}) (*textLoader, error) {
+func NewTextLoader(filename string, metadata types.Meta) (*textLoader, error) {
 
 	if metadata == nil {
-		metadata = make(map[string]interface{})
+		metadata = make(types.Meta)
 	} else {
 		_, ok := metadata[SourceMetadataKey]
 		if ok {

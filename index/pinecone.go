@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
+	"github.com/henomis/lingoose/types"
 	pineconego "github.com/henomis/pinecone-go"
 	pineconerequest "github.com/henomis/pinecone-go/request"
 	pineconeresponse "github.com/henomis/pinecone-go/response"
@@ -194,8 +195,8 @@ func (p *pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.V
 	return nil
 }
 
-func deepCopyMetadata(metadata map[string]interface{}) map[string]interface{} {
-	metadataCopy := make(map[string]interface{})
+func deepCopyMetadata(metadata types.Meta) types.Meta {
+	metadataCopy := make(types.Meta)
 	for k, v := range metadata {
 		metadataCopy[k] = v
 	}
