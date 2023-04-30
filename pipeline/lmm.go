@@ -22,7 +22,7 @@ const (
 )
 
 type Prompt interface {
-	Prompt() string
+	String() string
 	Format(input types.M) error
 }
 

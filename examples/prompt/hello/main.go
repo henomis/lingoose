@@ -29,6 +29,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(promptTemplate.Prompt())
+	fmt.Println(promptTemplate)
 
 }

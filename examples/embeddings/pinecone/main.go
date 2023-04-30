@@ -107,7 +107,7 @@ func main() {
 		panic(err)
 	}
 
-	_, err = llmOpenAI.Completion(context.Background(), prompt1.Prompt())
+	_, err = llmOpenAI.Completion(context.Background(), prompt1.String())
 	if err != nil {
 		panic(err)
 	}

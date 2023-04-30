@@ -111,7 +111,7 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 				}
 			}
 
-			if got := p.Prompt(); got != tt.want {
+			if got := p.String(); got != tt.want {
 				t.Errorf("PromptTemplate.Prompt() = %v, want %v", got, tt.want)
 			}
 		})

@@ -9,6 +9,6 @@ import (
 func main() {
 
 	prompt1 := prompt.New("Hello World")
-	fmt.Println(prompt1.Prompt())
+	fmt.Println(prompt1.String())
 
 }
