@@ -201,11 +201,12 @@
             <p>
             <blockquote><strong>Did you know?</strong> A goose 🪿 fills its car 🚗 with goose-line ⛽!</blockquote>
             </p>
+            <blockquote>Help support this project by giving it a github star! ⭐ 🪿</blockquote>
             <hr />
             <div class="row">
               <div class="col-sm-6 col-lg-4">
                 <ul class="list-unstyled">
-                  <li><strong>Version:</strong> 0.0.3</li>
+                  <li><strong>Version:</strong> 0.0.4</li>
                   <li>
                     <strong>Author:</strong>
                     <a href="http://www.simonevellei.com" target="_blank">Simone Vellei
@@ -219,7 +220,7 @@
                     <strong class="font-weight-700">Created:</strong> 27
                     April, 2023
                   </li>
-                  <li><strong>Update:</strong> 27 April, 2023</li>
+                  <li><strong>Update:</strong> 30 April, 2023</li>
                 </ul>
               </div>
             </div>
@@ -326,7 +327,7 @@ func main() {
             <pre><code class="go">
 jokePrompt := prompt.New("Write a short joke about geese")
 
-fmt.Println(jokePrompt.Prompt())
+fmt.Println(jokePrompt.String())
               </code></pre>
             Running this code will print the following output:
             <pre><code class="shell">
@@ -355,7 +356,7 @@ jokePromptTemplate, err := prompt.NewPromptTemplate(
 ...
 err = jokePromptTemplate.Format(nil)
 ...
-fmt.Println(jokePromptTemplate.Prompt())
+fmt.Println(jokePromptTemplate.String())
                   </code></pre>
             The previous code will format the prompt using the passed
             variable. There is another way to format a prompt template. You
@@ -369,7 +370,7 @@ jokePromptTemplate, err := prompt.NewPromptTemplate(
 ...
 err = jokePromptTemplate.Format(types.M{"type": "joke"})
 ...
-fmt.Println(jokePromptTemplate.Prompt())
+fmt.Println(jokePromptTemplate.String())
                 </code></pre>
             <h3>AudioPrompt <span class="badge badge-danger">Beta</span></h3>
             <p>
@@ -386,12 +387,12 @@ if err != nil {
   panic(err)
 }
 
-fmt.Println(promptFromAudio.Prompt())
+fmt.Println(promptFromAudio.String())
                 </code></pre>
           </section>
 
           <p class="alert alert-info">
-            You can extend <code>Prompt</code> component using the interface <code>pipeline.Prompt</code>.
+            You can extend <code>prompt</code> component using the interface <code>pipeline.Prompt</code>.
           </p>
 
           <hr class="divider" />
@@ -410,7 +411,7 @@ fmt.Println(promptFromAudio.Prompt())
               <li><code>MessageTypeUser</code></li>
               <li><code>MessageTypeAssistant</code></li>
             </ul>
-            Each message of a <code>Chat</code> contains a <code>Prompt</code>, this means
+            Each message of a <code>Chat</code> contains a <code>prompt</code>, this means
             that you can embedd prompt templates into a chat.
             <pre><code class="go">
 jokePromptTemplate, err := prompt.NewPromptTemplate(
@@ -447,8 +448,8 @@ fmt.Println(jokeChat.ToMessages())
               you need to decode it. LinGoose provides 3 decoders:
             <ul>
               <li><code>defaultDecoder</code> for internal use</li>
-              <li><code>JSONDecoder</code> to decode a JSON string</li>
-              <li><code>RegExDecoder</code> to decode a string using a regular expression</li>
+              <li><code>jsonDecoder</code> to decode a JSON string</li>
+              <li><code>regExDecoder</code> to decode a string using a regular expression</li>
             </ul>
 
             To see how to use a decoder, please refer to the <a href="#pipeline">Pipeline</a> section.
@@ -502,7 +503,7 @@ llmOpenAI, err := openai.New(
 ...
 output, err = llmOpenAI.Completion(
   context.Background(),
-  jokePromptTemplate.Prompt(),
+  jokePromptTemplate.String(),
 )
                 </code></pre>
 
@@ -537,7 +538,7 @@ response, err := llmOpenAI.Chat(context.Background(), jokeChat)
             <p class="lead">A pipeline is a sequence of steps to process a text.</p>
             <p>
               Sometime you want to link together a sequence of steps to process a text, and maybe you want to
-              extract some information to reuse it later. A <code>Pipeline</code> is an LLM executor that uses a decoder
+              extract some information to reuse it later. A <code>pipeline</code> is an LLM executor that uses a decoder
               to
               decoder the output and a memory to store decoded information. Each step is called <code>Tube</code>.
             </p>
@@ -608,7 +609,7 @@ output, err := tube1.Run(context.Background(), nil)
             </p>
             <h3>With inputs</h3>
             A <code>Tube</code> is an object that can be linked with others of the same type to create a
-            <code>Pipeline</code>. Prompts injected
+            <code>pipeline</code>. Prompts injected
             into a <code>pipeline.Llm</code> and passed to the <code>Tube</code> are automatically formatted. In a
             pipeline
             each step grabs the output of the previous as its input. However you can pass additional inputs to a Tube.
@@ -633,8 +634,8 @@ output, err := tube1.Run(context.Background(), types.M{"animal": "geese"})
 </code>
           </pre>
 
-            <h3>One Pipeline to rule them all</h3>
-            <p>A <code>Pipeline</code> connects <code>Tube</code>s sequentially. Running a pipeline you can fill the
+            <h3>One pipeline to rule them all</h3>
+            <p>A <code>pipeline</code> connects <code>Tube</code>s sequentially. Running a pipeline you can fill the
               first step input,
               and the observe the final output.</p>
             <pre>
@@ -743,7 +744,7 @@ Put the joke in a JSON object with only one field called 'joke'. Do not add othe
                 </code>
             </pre>
             <h3>Pipeline splitter</h3>
-            <p>It is possible to split a <code>Pipeline</code> into two or more <code>Tube</code>s. This is useful when you want to run
+            <p>It is possible to split a <code>pipeline</code> into two or more <code>tube</code>s. This is useful when you want to run
               different pipelines in parallel. Here is an example:
              </p>
 <pre>
@@ -824,7 +825,7 @@ response, err := pipeLine.Run(context.Background(), nil)
               Sometime you need to retreive the output of an LLM step (not the previous one) and use it as input for the
               next. Memory
               is a generic interface to store and retrieve data. Here is an example of a memory implementation
-              <code>Ram</code>:
+              <code>ram</code>:
             </p>
             <pre>
   <code class="go">
@@ -899,8 +900,8 @@ response, err := pipelineTubes.Run(context.Background(), nil)
               A <code>Loader</code> extract text from one or more files and creates one or more
               <code>Document</code>. There are two loader types currently available:
             <ul>
-              <li>TextLoader</li>
-              <li>DirectoryLoader</li>
+              <li>textLoader</li>
+              <li>directoryLoader</li>
             </ul>
             </p>
             <pre>
@@ -923,7 +924,7 @@ documents, err := directoryLoader.Load()
             <p class="lead">A TextSplitter is a component that divide text in chunks.</p>
             <p>
               Sometime prompts are very long and you need to split them in chunks. There
-              is only one TextSplitter currently available: <code>RecursiveCharacterTextSplitter</code>.
+              is only one TextSplitter currently available: <code>recursiveCharacterTextSplitter</code>.
               Here is an example:
             </p>
             <pre>
@@ -947,7 +948,7 @@ documentChunks := textSplitter.SplitDocuments(documents)
             <p>
               LLM engines provide a way to embed text in a vector of floats. This is useful to compare
               two texts only using vectors. There are only one embedder currently available:
-              <code>OpenAIEmbedder</code>.
+              <code>openAIEmbedder</code>.
             </p>
             <pre>
   <code class="go">
@@ -970,8 +971,8 @@ embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
             <p>
               Vectors need to be stored to be retreived later. There are two index types currently available:
             <ul>
-              <li><code>SimpleVectorIndex</code> - local storage</li>
-              <li><code>Pinecone</code> - remote storage at <a href="https://pinecone.io">Pinecone.io</a></li>
+              <li><code>simpleVectorIndex</code> - local storage</li>
+              <li><code>pinecone</code> - remote storage at <a href="https://pinecone.io">Pinecone.io</a></li>
             </ul>
             Here is an example of <code>SimpleVectorIndex</code>:
             </p>
