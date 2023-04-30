@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/types"
 )
 
 type recursiveCharacterTextSplitter struct {
@@ -43,7 +44,7 @@ func (r *recursiveCharacterTextSplitter) SplitDocuments(documents []document.Doc
 	for i, doc := range documents {
 		for _, chunk := range r.SplitText(doc.Content) {
 
-			metadata := make(map[string]interface{})
+			metadata := make(types.Meta)
 			for k, v := range documents[i].Metadata {
 				metadata[k] = v
 			}

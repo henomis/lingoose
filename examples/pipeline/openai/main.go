@@ -9,6 +9,7 @@ import (
 	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 		panic(err)
 	}
 
-	llmOpenAI.SetCallback(func(response map[string]interface{}) {
+	llmOpenAI.SetCallback(func(response types.Meta) {
 		fmt.Printf("USAGE: %#v\n", response)
 	})
 

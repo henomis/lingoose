@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
@@ -41,7 +42,7 @@ const (
 	GPT3Babbage        Model = openai.GPT3Babbage
 )
 
-type OpenAICallback func(map[string]interface{})
+type OpenAICallback func(types.Meta)
 
 type openAI struct {
 	openAIClient *openai.Client
@@ -178,7 +179,7 @@ func (o *openAI) SetCallback(callback OpenAICallback) {
 
 func (o *openAI) setMetadata(usage openai.Usage) {
 
-	callbackMetadata := make(map[string]interface{})
+	callbackMetadata := make(types.Meta)
 
 	err := mapstructure.Decode(usage, &callbackMetadata)
 	if err != nil {

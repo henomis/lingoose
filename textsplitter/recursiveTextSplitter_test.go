@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/types"
 )
 
 func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
@@ -37,18 +38,18 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 				documents: []document.Document{
 					{
 						Content:  "This is a test",
-						Metadata: map[string]interface{}{},
+						Metadata: types.Meta{},
 					},
 				},
 			},
 			want: []document.Document{
 				{
 					Content:  "This is a",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 				{
 					Content:  "test",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 			},
 		},
@@ -68,7 +69,7 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 				documents: []document.Document{
 					{
 						Content: "This is a test",
-						Metadata: map[string]interface{}{
+						Metadata: types.Meta{
 							"test":  "test",
 							"test2": "test2",
 						},
@@ -78,14 +79,14 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 			want: []document.Document{
 				{
 					Content: "This is a",
-					Metadata: map[string]interface{}{
+					Metadata: types.Meta{
 						"test":  "test",
 						"test2": "test2",
 					},
 				},
 				{
 					Content: "test",
-					Metadata: map[string]interface{}{
+					Metadata: types.Meta{
 						"test":  "test",
 						"test2": "test2",
 					},
@@ -108,26 +109,26 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 				documents: []document.Document{
 					{
 						Content:  "Lorem ipsum dolor sit amet,\n\nconsectetur adipisci elit",
-						Metadata: map[string]interface{}{},
+						Metadata: types.Meta{},
 					},
 				},
 			},
 			want: []document.Document{
 				{
 					Content:  "Lorem ipsum dolor",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 				{
 					Content:  "dolor sit amet,",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 				{
 					Content:  "consectetur adipisci",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 				{
 					Content:  "elit",
-					Metadata: map[string]interface{}{},
+					Metadata: types.Meta{},
 				},
 			},
 		},
