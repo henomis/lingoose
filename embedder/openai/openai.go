@@ -65,7 +65,7 @@ func (t *openAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 	}
 
 	var embeddings []embedder.Embedding

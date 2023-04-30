@@ -13,6 +13,7 @@ import (
 var (
 	ErrDecoding       = errors.New("decoding input error")
 	ErrInvalidLmmMode = errors.New("invalid LLM mode")
+	ErrLLMExecution   = errors.New("llm execution error")
 )
 
 type Memory interface {
@@ -83,7 +84,7 @@ func (s *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	response, err := s.executeLLM(ctx, input)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrLLMExecution, err)
 	}
 
 	decodedOutput, err := s.decoder.Decode(response)
@@ -181,7 +182,7 @@ func structToMap(obj interface{}) (types.M, error) {
 	genericMap := types.M{}
 	err := mapstructure.Decode(obj, &genericMap)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
 	return genericMap, nil

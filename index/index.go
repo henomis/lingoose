@@ -8,6 +8,10 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
+var (
+	ErrInternal = "internal index error"
+)
+
 const (
 	defaultKeyID      = "id"
 	defaultKeyContent = "content"

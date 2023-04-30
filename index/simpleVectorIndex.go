@@ -40,7 +40,7 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*s
 	if err == nil {
 		err = simpleVectorIndex.load()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 		}
 	}
 
@@ -61,7 +61,7 @@ func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 
 		embeddings, err := s.embedder.Embed(ctx, documents[i:end])
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", ErrInternal, err)
 		}
 
 		for j, document := range documents[i:end] {
@@ -78,7 +78,7 @@ func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 
 	err := s.save()
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	return nil
@@ -116,12 +116,12 @@ func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 
 	err := s.load()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	scores := s.cosineSimilarityBatch(embeddings[0])
