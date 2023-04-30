@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/chat"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -40,12 +41,15 @@ const (
 	GPT3Babbage        Model = openai.GPT3Babbage
 )
 
+type OpenAICallback func(map[string]interface{})
+
 type openAI struct {
 	openAIClient *openai.Client
 	model        Model
 	temperature  float32
 	maxTokens    int
 	verbose      bool
+	callback     OpenAICallback
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI, error) {
@@ -80,6 +84,10 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+	}
+
+	if o.callback != nil {
+		o.setMetadata(response.Usage)
 	}
 
 	if len(response.Choices) == 0 {
@@ -138,6 +146,10 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
+	if o.callback != nil {
+		o.setMetadata(response.Usage)
+	}
+
 	if len(response.Choices) == 0 {
 		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
 	}
@@ -158,4 +170,20 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	return content, nil
+}
+
+func (o *openAI) SetCallback(callback OpenAICallback) {
+	o.callback = callback
+}
+
+func (o *openAI) setMetadata(usage openai.Usage) {
+
+	callbackMetadata := make(map[string]interface{})
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.callback(callbackMetadata)
 }

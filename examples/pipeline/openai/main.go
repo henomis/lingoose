@@ -20,6 +20,10 @@ func main() {
 		panic(err)
 	}
 
+	llmOpenAI.SetCallback(func(response map[string]interface{}) {
+		fmt.Printf("USAGE: %#v\n", response)
+	})
+
 	llm := pipeline.Llm{
 		LlmEngine: llmOpenAI,
 		LlmMode:   pipeline.LlmModeCompletion,
