@@ -13,7 +13,7 @@ func main() {
 
 	llm := llmmock.LlmMock{}
 
-	output, err := llm.Completion(context.Background(), prompt.Prompt())
+	output, err := llm.Completion(context.Background(), prompt.String())
 	if err != nil {
 		panic(err)
 	}

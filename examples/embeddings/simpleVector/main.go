@@ -27,7 +27,10 @@ func main() {
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		ingestData(openaiEmbedder)
+		err = ingestData(openaiEmbedder)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
@@ -69,7 +72,7 @@ func main() {
 		panic(err)
 	}
 
-	_, err = llmOpenAI.Completion(context.Background(), prompt1.Prompt())
+	_, err = llmOpenAI.Completion(context.Background(), prompt1.String())
 
 	if err != nil {
 		panic(err)

@@ -32,7 +32,7 @@ func (p *whisperPrompt) Format(input types.M) error {
 	return nil
 }
 
-func (p *whisperPrompt) Prompt() string {
+func (p *whisperPrompt) String() string {
 	req := openai.AudioRequest{
 		Model:    openai.Whisper1,
 		FilePath: p.filePath,

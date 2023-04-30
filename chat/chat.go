@@ -18,7 +18,7 @@ type Chat struct {
 }
 
 type Prompt interface {
-	Prompt() string
+	String() string
 	Format(input types.M) error
 }
 
@@ -67,13 +67,13 @@ func (p *Chat) ToMessages() (Messages, error) {
 		message.Type = messagePromptTemplate.Type
 
 		if messagePromptTemplate.Prompt != nil {
-			if len(messagePromptTemplate.Prompt.Prompt()) == 0 {
+			if len(messagePromptTemplate.Prompt.String()) == 0 {
 				err = messagePromptTemplate.Prompt.Format(types.M{})
 				if err != nil {
 					return nil, fmt.Errorf("%s: %w", ErrChatMessages, err)
 				}
 			}
-			message.Content = messagePromptTemplate.Prompt.Prompt()
+			message.Content = messagePromptTemplate.Prompt.String()
 		}
 
 		messages = append(messages, message)

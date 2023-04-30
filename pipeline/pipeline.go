@@ -119,7 +119,7 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 		return "", err
 	}
 
-	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.Prompt())
+	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.String())
 	if err != nil {
 		return "", err
 	}

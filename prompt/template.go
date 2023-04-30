@@ -63,7 +63,7 @@ func (p *template) Format(input types.M) error {
 	return nil
 }
 
-func (p *template) Prompt() string {
+func (p *template) String() string {
 	return p.value
 }
 

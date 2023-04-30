@@ -17,6 +17,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(prompt.Prompt())
+	fmt.Println(prompt)
 
 }

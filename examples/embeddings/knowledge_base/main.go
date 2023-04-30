@@ -35,7 +35,10 @@ func main() {
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		ingestData(openaiEmbedder)
+		err = ingestData(openaiEmbedder)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	llmOpenAI, err := openai.New(

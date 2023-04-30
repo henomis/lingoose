@@ -28,6 +28,6 @@ func (p *prompt) Format(input types.M) error {
 	return nil
 }
 
-func (p *prompt) Prompt() string {
+func (p *prompt) String() string {
 	return p.prompt
 }
