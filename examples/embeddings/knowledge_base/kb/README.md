@@ -1,7 +1,7 @@
 # Knowledge base chatbot 🤖
 
 Place here, in `kb` folder, your knowledge base files. Each file should be a
-`.txt`. Then execute:
+`.pdf`. Then execute:
 
 ```shell
 $ go run main.go
