@@ -125,7 +125,7 @@ func ingestData(openaiEmbedder index.Embedder) error {
 		return err
 	}
 
-	loader, err := loader.NewDirectoryLoader("./kb/", ".txt")
+	loader, err := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
 	if err != nil {
 		return err
 	}
