@@ -24,7 +24,7 @@ type SearchResponse struct {
 }
 
 type Embedder interface {
-	Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error)
+	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
 func filterSearchResponses(searchResponses []SearchResponse, topK *int) []SearchResponse {

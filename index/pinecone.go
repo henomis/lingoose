@@ -119,7 +119,7 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 		pineconeTopK = *topK
 	}
 
-	embeddings, err := p.embedder.Embed(ctx, []document.Document{{Content: query}})
+	embeddings, err := p.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,12 @@ func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Documen
 			batchEnd = len(documents)
 		}
 
-		embeddings, err := p.embedder.Embed(ctx, documents[i:batchEnd])
+		texts := []string{}
+		for _, document := range documents[i:batchEnd] {
+			texts = append(texts, document.Content)
+		}
+
+		embeddings, err := p.embedder.Embed(ctx, texts)
 		if err != nil {
 			return err
 		}
