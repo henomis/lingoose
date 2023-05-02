@@ -20,7 +20,7 @@ const (
 type SearchResponse struct {
 	ID       string
 	Document document.Document
-	Score    float32
+	Score    float64
 }
 
 type Embedder interface {

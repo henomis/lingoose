@@ -132,7 +132,7 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 			IndexName:       p.indexName,
 			ProjectID:       p.projectID,
 			TopK:            int32(pineconeTopK),
-			Vector:          embeddings[0].Embedding,
+			Vector:          embeddings[0],
 			IncludeMetadata: &includeMetadata,
 			Namespace:       &p.namespace,
 		},
@@ -228,7 +228,7 @@ func buildVectorsFromEmbeddingsAndDocuments(
 
 		vectors = append(vectors, pineconerequest.Vector{
 			ID:       vectorID.String(),
-			Values:   embedding.Embedding,
+			Values:   embedding,
 			Metadata: metadata,
 		})
 
@@ -258,7 +258,7 @@ func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, inclu
 			id = *match.ID
 		}
 
-		score := float32(0)
+		score := float64(0)
 		if match.Score != nil {
 			score = *match.Score
 		}

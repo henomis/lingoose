@@ -71,11 +71,16 @@ func (t *openAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([
 	var embeddings []embedder.Embedding
 
 	for _, obj := range resp.Data {
-		embeddings = append(embeddings, embedder.Embedding{
-			Embedding: obj.Embedding,
-			Index:     obj.Index,
-		})
+		embeddings = append(embeddings, float32ToFloat64(obj.Embedding))
 	}
 
 	return embeddings, nil
+}
+
+func float32ToFloat64(slice []float32) []float64 {
+	newSlice := make([]float64, len(slice))
+	for i, v := range slice {
+		newSlice[i] = float64(v)
+	}
+	return newSlice
 }
