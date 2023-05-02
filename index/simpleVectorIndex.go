@@ -59,7 +59,12 @@ func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 			end = len(documents)
 		}
 
-		embeddings, err := s.embedder.Embed(ctx, documents[i:end])
+		texts := []string{}
+		for _, document := range documents[i:end] {
+			texts = append(texts, document.Content)
+		}
+
+		embeddings, err := s.embedder.Embed(ctx, texts)
 		if err != nil {
 			return fmt.Errorf("%s: %w", ErrInternal, err)
 		}
@@ -119,7 +124,7 @@ func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
-	embeddings, err := s.embedder.Embed(ctx, []document.Document{{Content: query}})
+	embeddings, err := s.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}

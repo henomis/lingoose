@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
 	"github.com/sashabaranov/go-openai"
 )
@@ -50,17 +49,12 @@ func New(model Model) (*openAIEmbedder, error) {
 	}, nil
 }
 
-func (t *openAIEmbedder) Embed(ctx context.Context, docs []document.Document) ([]embedder.Embedding, error) {
-
-	input := []string{}
-	for _, doc := range docs {
-		input = append(input, doc.Content)
-	}
+func (t *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 
 	resp, err := t.openAIClient.CreateEmbeddings(
 		ctx,
 		openai.EmbeddingRequest{
-			Input: input,
+			Input: texts,
 			Model: openai.EmbeddingModel(t.model),
 		},
 	)
