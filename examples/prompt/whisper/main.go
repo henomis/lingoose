@@ -12,6 +12,7 @@ func main() {
 	prompt, err := prompt.NewPromptFromAudioFile(
 		context.Background(),
 		"hello.mp3",
+		prompt.AudioResponseFormatVTT,
 	)
 	if err != nil {
 		panic(err)
