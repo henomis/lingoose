@@ -142,27 +142,27 @@ func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 	return filterSearchResponses(searchResponses, topK), nil
 }
 
-func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float32 {
-	dotProduct := float32(0.0)
-	normA := float32(0.0)
-	normB := float32(0.0)
+func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
+	dotProduct := float64(0.0)
+	normA := float64(0.0)
+	normB := float64(0.0)
 
-	for i := 0; i < len(a.Embedding); i++ {
-		dotProduct += a.Embedding[i] * b.Embedding[i]
-		normA += a.Embedding[i] * a.Embedding[i]
-		normB += b.Embedding[i] * b.Embedding[i]
+	for i := 0; i < len(a); i++ {
+		dotProduct += a[i] * b[i]
+		normA += a[i] * a[i]
+		normB += b[i] * b[i]
 	}
 
 	if normA == 0 || normB == 0 {
-		return float32(0.0)
+		return float64(0.0)
 	}
 
-	return dotProduct / (float32(math.Sqrt(float64(normA))) * float32(math.Sqrt(float64(normB))))
+	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-func (s *simpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float32 {
+func (s *simpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
 
-	scores := make([]float32, len(s.data))
+	scores := make([]float64, len(s.data))
 
 	for i := range s.data {
 		scores[i] = s.cosineSimilarity(a, s.data[i].Embedding)
