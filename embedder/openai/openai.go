@@ -82,7 +82,7 @@ func New(model Model) (*openAIEmbedder, error) {
 	}, nil
 }
 
-func (t *openAIEmbedder) embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 
 	resp, err := t.openAIClient.CreateEmbeddings(
 		ctx,
@@ -118,25 +118,9 @@ func (o *openAIEmbedder) safeEmbed(ctx context.Context, texts []string, maxToken
 			formattedText = strings.ReplaceAll(text, "\n", " ")
 		}
 
-		tokens, err := o.textToTokens(formattedText)
+		chunkedText, err := o.splitText(formattedText, maxTokens)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
-		}
-
-		var chunkedText []string
-		if len(tokens) > maxTokens {
-
-			splittedText, err := o.splitText(tokens, maxTokens)
-			if err != nil {
-				return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
-			}
-
-			chunkedText = splittedText
-
-		} else {
-
-			chunkedText = []string{formattedText}
-
 		}
 
 		chunkEmbeddings, chunkLens, err := o.getEmebeddingsForChunks(ctx, chunkedText)
@@ -151,10 +135,14 @@ func (o *openAIEmbedder) safeEmbed(ctx context.Context, texts []string, maxToken
 	return embeddings, nil
 }
 
-func (o *openAIEmbedder) splitText(tokens []int, maxTokens int) ([]string, error) {
+func (o *openAIEmbedder) splitText(text string, maxTokens int) ([]string, error) {
 
-	chunkedText := []string{}
+	tokens, err := o.textToTokens(text)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+	}
 
+	var chunkedText []string
 	for i := 0; i < len(tokens); i += maxTokens {
 		end := i + maxTokens
 		if end > len(tokens) {
@@ -176,7 +164,7 @@ func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 
 	chunkLens := []float64{}
 
-	chunkEmbeddings, err := o.embed(ctx, chunks)
+	chunkEmbeddings, err := o.openAICreateEmebeddings(ctx, chunks)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 	}
