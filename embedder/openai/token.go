@@ -5,7 +5,12 @@ import (
 )
 
 func (o *openAIEmbedder) textToTokens(text string) ([]int, error) {
-	return o.tiktoken.Encode(text, nil, nil), nil
+	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenizer.Encode(text, nil, nil), nil
 }
 
 func (o *openAIEmbedder) getMaxTokens() int {
@@ -18,5 +23,10 @@ func (o *openAIEmbedder) getMaxTokens() int {
 }
 
 func (o *openAIEmbedder) tokensToText(tokens []int) (string, error) {
-	return o.tiktoken.Decode(tokens), nil
+	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
+	if err != nil {
+		return "", err
+	}
+
+	return tokenizer.Decode(tokens), nil
 }

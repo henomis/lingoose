@@ -6,7 +6,7 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
-func normalizeEmbeddings(embeddings []embedder.Embedding, lens []float64) []float64 {
+func normalizeEmbeddings(embeddings []embedder.Embedding, lens []float64) embedder.Embedding {
 
 	chunkAvgEmbeddings := average(embeddings, lens)
 	norm := norm(chunkAvgEmbeddings)
@@ -18,8 +18,8 @@ func normalizeEmbeddings(embeddings []embedder.Embedding, lens []float64) []floa
 	return chunkAvgEmbeddings
 }
 
-func average(embeddings []embedder.Embedding, lens []float64) []float64 {
-	average := make([]float64, len(embeddings[0]))
+func average(embeddings []embedder.Embedding, lens []float64) embedder.Embedding {
+	average := make(embedder.Embedding, len(embeddings[0]))
 	totalWeight := 0.0
 
 	for i, embedding := range embeddings {
@@ -37,7 +37,7 @@ func average(embeddings []embedder.Embedding, lens []float64) []float64 {
 	return average
 }
 
-func norm(a []float64) float64 {
+func norm(a embedder.Embedding) float64 {
 	var sum float64
 	for _, v := range a {
 		sum += math.Pow(v, 2)

@@ -4,21 +4,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/pkoukk/tiktoken-go"
 	"github.com/sashabaranov/go-openai"
 )
 
 func Test_openAIEmbedder_splitText(t *testing.T) {
 
-	tokenizer, err := tiktoken.EncodingForModel(AdaEmbeddingV2.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	type fields struct {
 		openAIClient *openai.Client
 		model        Model
-		tiktoken     *tiktoken.Tiktoken
 	}
 	type args struct {
 		text      string
@@ -36,7 +29,6 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 			fields: fields{
 				openAIClient: nil,
 				model:        AdaEmbeddingV2,
-				tiktoken:     tokenizer,
 			},
 			args: args{
 				text:      "Hello, my name is John",
@@ -50,7 +42,6 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 			fields: fields{
 				openAIClient: nil,
 				model:        AdaEmbeddingV2,
-				tiktoken:     tokenizer,
 			},
 			args: args{
 				text:      "Hello, my name is John",
@@ -64,7 +55,6 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 			fields: fields{
 				openAIClient: nil,
 				model:        AdaEmbeddingV2,
-				tiktoken:     tokenizer,
 			},
 			args: args{
 				text: "Lorem ipsum dolor sit amet, consectetur adipisci elit, sed do eiusmod tempor incidunt" +
@@ -95,7 +85,6 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 			o := &openAIEmbedder{
 				openAIClient: tt.fields.openAIClient,
 				model:        tt.fields.model,
-				tiktoken:     tt.fields.tiktoken,
 			}
 			got, err := o.splitText(tt.args.text, tt.args.maxTokens)
 			if (err != nil) != tt.wantErr {

@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 
-	query := "What is the purpose of the NATO Alliance?"
+	query := "Describe within a paragraph what is the purpose of the NATO Alliance."
 	topk := 3
 	similarities, err := docsVectorIndex.SimilaritySearch(
 		context.Background(),
@@ -51,6 +51,11 @@ func main() {
 		fmt.Println("----------")
 	}
 
+	documentContext := ""
+	for _, similarity := range similarities {
+		documentContext += similarity.Document.Content + "\n\n"
+	}
+
 	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 	if err != nil {
 		panic(err)
@@ -60,7 +65,7 @@ func main() {
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
 		map[string]string{
 			"query":   query,
-			"context": similarities[0].Document.Content,
+			"context": documentContext,
 		},
 	)
 	if err != nil {
@@ -80,6 +85,9 @@ func main() {
 }
 
 func ingestData(openaiEmbedder index.Embedder) error {
+
+	fmt.Printf("Ingesting data...")
+
 	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 	if err != nil {
 		return err
@@ -95,23 +103,16 @@ func ingestData(openaiEmbedder index.Embedder) error {
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100, nil, nil)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
-
-	for _, doc := range documentChunks {
-		fmt.Println(doc.Content)
-		fmt.Println("----------")
-		fmt.Println(doc.Metadata)
-		fmt.Println("----------")
-		fmt.Println()
-
-	}
 
 	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Done!\n")
 
 	return nil
 }

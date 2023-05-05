@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/embedder"
-	"github.com/pkoukk/tiktoken-go"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -61,7 +60,6 @@ var modelToString = map[Model]string{
 type openAIEmbedder struct {
 	openAIClient *openai.Client
 	model        Model
-	tiktoken     *tiktoken.Tiktoken
 }
 
 func New(model Model) (*openAIEmbedder, error) {
@@ -70,15 +68,9 @@ func New(model Model) (*openAIEmbedder, error) {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	tiktoken, err := tiktoken.EncodingForModel(model.String())
-	if err != nil {
-		return nil, err
-	}
-
 	return &openAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
-		tiktoken:     tiktoken,
 	}, nil
 }
 
@@ -105,10 +97,12 @@ func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []st
 }
 
 func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return o.safeEmbed(ctx, texts, o.getMaxTokens())
+	return o.safeEmbed(ctx, texts)
 }
 
-func (o *openAIEmbedder) safeEmbed(ctx context.Context, texts []string, maxTokens int) ([]embedder.Embedding, error) {
+func (o *openAIEmbedder) safeEmbed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+
+	maxTokens := o.getMaxTokens()
 
 	var embeddings []embedder.Embedding
 	for _, text := range texts {
@@ -142,22 +136,22 @@ func (o *openAIEmbedder) splitText(text string, maxTokens int) ([]string, error)
 		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 	}
 
-	var chunkedText []string
+	var textChunks []string
 	for i := 0; i < len(tokens); i += maxTokens {
 		end := i + maxTokens
 		if end > len(tokens) {
 			end = len(tokens)
 		}
 
-		text, err := o.tokensToText(tokens[i:end])
+		textChunk, err := o.tokensToText(tokens[i:end])
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 		}
 
-		chunkedText = append(chunkedText, text)
+		textChunks = append(textChunks, textChunk)
 	}
 
-	return chunkedText, nil
+	return textChunks, nil
 }
 
 func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []string) ([]embedder.Embedding, []float64, error) {
