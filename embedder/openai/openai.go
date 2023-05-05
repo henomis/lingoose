@@ -97,39 +97,43 @@ func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []st
 }
 
 func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return o.safeEmbed(ctx, texts)
-}
-
-func (o *openAIEmbedder) safeEmbed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-
 	maxTokens := o.getMaxTokens()
 
 	var embeddings []embedder.Embedding
 	for _, text := range texts {
-
-		formattedText := text
-		if strings.HasSuffix(o.model.String(), "001") {
-			formattedText = strings.ReplaceAll(text, "\n", " ")
-		}
-
-		chunkedText, err := o.splitText(formattedText, maxTokens)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
-		}
-
-		chunkEmbeddings, chunkLens, err := o.getEmebeddingsForChunks(ctx, chunkedText)
+		embedding, err := o.safeEmbed(ctx, text, maxTokens)
 		if err != nil {
 			return nil, err
 		}
 
-		embeddings = append(embeddings, normalizeEmbeddings(chunkEmbeddings, chunkLens))
-
+		embeddings = append(embeddings, embedding)
 	}
 
 	return embeddings, nil
 }
 
-func (o *openAIEmbedder) splitText(text string, maxTokens int) ([]string, error) {
+func (o *openAIEmbedder) safeEmbed(ctx context.Context, text string, maxTokens int) (embedder.Embedding, error) {
+
+	sanitizedText := text
+	if strings.HasSuffix(o.model.String(), "001") {
+		sanitizedText = strings.ReplaceAll(text, "\n", " ")
+	}
+
+	chunkedText, err := o.chunkText(sanitizedText, maxTokens)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+	}
+
+	embeddingsForChunks, chunkLens, err := o.getEmebeddingsForChunks(ctx, chunkedText)
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeEmbeddings(embeddingsForChunks, chunkLens), nil
+
+}
+
+func (o *openAIEmbedder) chunkText(text string, maxTokens int) ([]string, error) {
 
 	tokens, err := o.textToTokens(text)
 	if err != nil {
@@ -158,7 +162,7 @@ func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 
 	chunkLens := []float64{}
 
-	chunkEmbeddings, err := o.openAICreateEmebeddings(ctx, chunks)
+	embeddingsForChunks, err := o.openAICreateEmebeddings(ctx, chunks)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 	}
@@ -167,7 +171,7 @@ func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 		chunkLens = append(chunkLens, float64(len(chunk)))
 	}
 
-	return chunkEmbeddings, chunkLens, nil
+	return embeddingsForChunks, chunkLens, nil
 
 }
 

@@ -48,7 +48,7 @@ func Test_average(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []float64
+		want embedder.Embedding
 	}{
 		{
 			name: "average 1",
@@ -59,7 +59,7 @@ func Test_average(t *testing.T) {
 				},
 				lens: []float64{1, 1},
 			},
-			want: []float64{2.5, 3.5, 4.5},
+			want: embedder.Embedding{2.5, 3.5, 4.5},
 		},
 		{
 			name: "average 2",
@@ -70,7 +70,7 @@ func Test_average(t *testing.T) {
 				},
 				lens: []float64{2, 1},
 			},
-			want: []float64{2, 3, 4},
+			want: embedder.Embedding{2, 3, 4},
 		},
 		{
 			name: "average 3",
@@ -81,7 +81,7 @@ func Test_average(t *testing.T) {
 				},
 				lens: []float64{1, 2},
 			},
-			want: []float64{3, 4, 5},
+			want: embedder.Embedding{3, 4, 5},
 		},
 	}
 	for _, tt := range tests {
@@ -101,7 +101,7 @@ func Test_normalizeEmbeddings(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []float64
+		want embedder.Embedding
 	}{
 		{
 			name: "normalize 1",
@@ -112,7 +112,7 @@ func Test_normalizeEmbeddings(t *testing.T) {
 				},
 				lens: []float64{1, 1},
 			},
-			want: []float64{0.4016096644512494, 0.5622535302317492, 0.722897396012249},
+			want: embedder.Embedding{0.4016096644512494, 0.5622535302317492, 0.722897396012249},
 		},
 	}
 	for _, tt := range tests {

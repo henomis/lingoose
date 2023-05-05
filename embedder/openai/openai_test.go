@@ -86,7 +86,7 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 				openAIClient: tt.fields.openAIClient,
 				model:        tt.fields.model,
 			}
-			got, err := o.splitText(tt.args.text, tt.args.maxTokens)
+			got, err := o.chunkText(tt.args.text, tt.args.maxTokens)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("openAIEmbedder.splitText() error = %v, wantErr %v", err, tt.wantErr)
 				return
