@@ -74,28 +74,6 @@ func New(model Model) (*openAIEmbedder, error) {
 	}, nil
 }
 
-func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-
-	resp, err := t.openAIClient.CreateEmbeddings(
-		ctx,
-		openai.EmbeddingRequest{
-			Input: texts,
-			Model: openai.EmbeddingModel(t.model),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var embeddings []embedder.Embedding
-
-	for _, obj := range resp.Data {
-		embeddings = append(embeddings, float32ToFloat64(obj.Embedding))
-	}
-
-	return embeddings, nil
-}
-
 func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	maxTokens := o.getMaxTokens()
 
@@ -173,6 +151,28 @@ func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 
 	return embeddingsForChunks, chunkLens, nil
 
+}
+
+func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+
+	resp, err := t.openAIClient.CreateEmbeddings(
+		ctx,
+		openai.EmbeddingRequest{
+			Input: texts,
+			Model: openai.EmbeddingModel(t.model),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var embeddings []embedder.Embedding
+
+	for _, obj := range resp.Data {
+		embeddings = append(embeddings, float32ToFloat64(obj.Embedding))
+	}
+
+	return embeddings, nil
 }
 
 func float32ToFloat64(slice []float32) []float64 {
