@@ -84,7 +84,7 @@ func (t *openAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []st
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+		return nil, err
 	}
 
 	var embeddings []embedder.Embedding
@@ -103,7 +103,7 @@ func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.
 	for _, text := range texts {
 		embedding, err := o.safeEmbed(ctx, text, maxTokens)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
 		}
 
 		embeddings = append(embeddings, embedding)
@@ -121,7 +121,7 @@ func (o *openAIEmbedder) safeEmbed(ctx context.Context, text string, maxTokens i
 
 	chunkedText, err := o.chunkText(sanitizedText, maxTokens)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+		return nil, err
 	}
 
 	embeddingsForChunks, chunkLens, err := o.getEmebeddingsForChunks(ctx, chunkedText)
@@ -137,7 +137,7 @@ func (o *openAIEmbedder) chunkText(text string, maxTokens int) ([]string, error)
 
 	tokens, err := o.textToTokens(text)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+		return nil, err
 	}
 
 	var textChunks []string
@@ -149,7 +149,7 @@ func (o *openAIEmbedder) chunkText(text string, maxTokens int) ([]string, error)
 
 		textChunk, err := o.tokensToText(tokens[i:end])
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+			return nil, err
 		}
 
 		textChunks = append(textChunks, textChunk)
@@ -164,7 +164,7 @@ func (o *openAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 
 	embeddingsForChunks, err := o.openAICreateEmebeddings(ctx, chunks)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
+		return nil, nil, err
 	}
 
 	for _, chunk := range chunks {
