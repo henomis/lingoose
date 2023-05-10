@@ -95,20 +95,18 @@ func NewChat() (*openAI, error) {
 
 func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) {
 
-	completionRequest := openai.CompletionRequest{
-		Model:       string(o.model),
-		Prompt:      prompt,
-		MaxTokens:   o.maxTokens,
-		Temperature: o.temperature,
-		N:           DefaultOpenAINumResults,
-		TopP:        DefaultOpenAITopP,
-	}
-
-	if len(o.stop) > 0 {
-		completionRequest.Stop = o.stop
-	}
-
-	response, err := o.openAIClient.CreateCompletion(ctx, completionRequest)
+	response, err := o.openAIClient.CreateCompletion(
+		ctx,
+		openai.CompletionRequest{
+			Model:       string(o.model),
+			Prompt:      prompt,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
 
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
@@ -137,20 +135,18 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
-	chatRequest := openai.ChatCompletionRequest{
-		Model:       string(o.model),
-		Messages:    messages,
-		MaxTokens:   o.maxTokens,
-		Temperature: o.temperature,
-		N:           DefaultOpenAINumResults,
-		TopP:        DefaultOpenAITopP,
-	}
-
-	if len(o.stop) > 0 {
-		chatRequest.Stop = o.stop
-	}
-
-	response, err := o.openAIClient.CreateChatCompletion(ctx, chatRequest)
+	response, err := o.openAIClient.CreateChatCompletion(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model:       string(o.model),
+			Messages:    messages,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
 
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
