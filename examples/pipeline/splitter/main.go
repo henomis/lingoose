@@ -13,7 +13,7 @@ import (
 
 func main() {
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+	llmOpenAI, err := openai.NewCompletion()
 	if err != nil {
 		panic(err)
 	}
