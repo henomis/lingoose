@@ -80,6 +80,7 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 			Temperature: o.temperature,
 			N:           DefaultOpenAINumResults,
 			TopP:        DefaultOpenAITopP,
+			Stop:        []string{"Observation:"},
 		},
 	)
 
