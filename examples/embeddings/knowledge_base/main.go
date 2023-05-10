@@ -28,7 +28,7 @@ func main() {
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err := ingestData(openaiEmbedder)
+		err := ingestData(docsVectorIndex)
 		if err != nil {
 			panic(err)
 		}
@@ -101,11 +101,9 @@ func main() {
 
 }
 
-func ingestData(openaiEmbedder index.Embedder) error {
+func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 
 	fmt.Printf("Learning Knowledge Base...")
-
-	docsVectorIndex := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
 
 	loader := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
 

@@ -17,7 +17,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	tube1 := pipeline.NewTube("step1", llm1, nil, nil)
+	tube1 := pipeline.NewTube(llm1)
 
 	prompt2, _ := prompt.NewPromptTemplate(
 		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!",
@@ -30,7 +30,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt2,
 	}
-	tube2 := pipeline.NewTube("step2", llm2, decoder.NewJSONDecoder(), nil)
+	tube2 := pipeline.NewTube(llm2).WithDecoder(decoder.NewJSONDecoder())
 
 	prompt3, _ := prompt.NewPromptTemplate(
 		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.First}}' and second:'{{.Second}}'. {{.value}}",
@@ -39,7 +39,7 @@ func main() {
 		},
 	)
 	llm1.Prompt = prompt3
-	tube3 := pipeline.NewTube("step3", llm1, decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`), nil)
+	tube3 := pipeline.NewTube(llm1).WithDecoder(decoder.NewRegExDecoder(`(\w+?)\s(\w+?)\s(.*)`))
 
 	pipelineTubes := pipeline.New(
 		tube1,

@@ -25,10 +25,10 @@ type Memory interface {
 }
 
 type Tube struct {
-	name    string
-	llm     Llm
-	decoder Decoder
-	memory  Memory
+	llm       Llm
+	decoder   Decoder
+	namespace string
+	memory    Memory
 }
 
 type Pipe interface {
@@ -46,22 +46,27 @@ func New(pipes ...Pipe) pipeline {
 }
 
 func NewTube(
-	name string,
 	llm Llm,
-	outputDecoder Decoder,
-	memory Memory,
 ) *Tube {
-
-	if outputDecoder == nil {
-		outputDecoder = &defaultDecoder{}
-	}
-
 	return &Tube{
-		name:    name,
 		llm:     llm,
-		decoder: outputDecoder,
-		memory:  memory,
+		decoder: &defaultDecoder{},
 	}
+}
+
+func (t *Tube) Namespace() string {
+	return t.namespace
+}
+
+func (t *Tube) WithMemory(namespace string, memory Memory) *Tube {
+	t.namespace = namespace
+	t.memory = memory
+	return t
+}
+
+func (t *Tube) WithDecoder(decoder Decoder) *Tube {
+	t.decoder = decoder
+	return t
 }
 
 // Run execute the step and return the output.
@@ -93,7 +98,7 @@ func (s *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 	}
 
 	if s.memory != nil {
-		err = s.memory.Set(s.name, decodedOutput)
+		err = s.memory.Set(s.namespace, decodedOutput)
 		if err != nil {
 			return nil, err
 		}

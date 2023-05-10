@@ -67,6 +67,26 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI 
 	}
 }
 
+func (o *openAI) WithModel(model Model) *openAI {
+	o.model = model
+	return o
+}
+
+func (o *openAI) WithTemperature(temperature float32) *openAI {
+	o.temperature = temperature
+	return o
+}
+
+func (o *openAI) WithMaxTokens(maxTokens int) *openAI {
+	o.maxTokens = maxTokens
+	return o
+}
+
+func (o *openAI) WithCallback(callback OpenAICallback) *openAI {
+	o.callback = callback
+	return o
+}
+
 func (o *openAI) WithStop(stop []string) *openAI {
 	o.stop = stop
 	return o
@@ -74,6 +94,11 @@ func (o *openAI) WithStop(stop []string) *openAI {
 
 func (o *openAI) WithAPIKey(apiKey string) *openAI {
 	o.openAIClient = openai.NewClient(apiKey)
+	return o
+}
+
+func (o *openAI) WithVerbose(verbose bool) *openAI {
+	o.verbose = verbose
 	return o
 }
 
@@ -169,10 +194,6 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	return content, nil
-}
-
-func (o *openAI) SetCallback(callback OpenAICallback) {
-	o.callback = callback
 }
 
 func (o *openAI) setMetadata(usage openai.Usage) {

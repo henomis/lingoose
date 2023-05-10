@@ -21,15 +21,15 @@ type simpleVectorIndexData struct {
 	Embedding embedder.Embedding `json:"embedding"`
 }
 
-type simpleVectorIndex struct {
+type SimpleVectorIndex struct {
 	data       []simpleVectorIndexData
 	outputPath string
 	name       string
 	embedder   Embedder
 }
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *simpleVectorIndex {
-	simpleVectorIndex := &simpleVectorIndex{
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
+	simpleVectorIndex := &SimpleVectorIndex{
 		data:       []simpleVectorIndexData{},
 		outputPath: outputPath,
 		name:       name,
@@ -39,7 +39,7 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *si
 	return simpleVectorIndex
 }
 
-func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
 	s.data = []simpleVectorIndexData{}
 
@@ -81,7 +81,7 @@ func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 	return nil
 }
 
-func (s simpleVectorIndex) save() error {
+func (s SimpleVectorIndex) save() error {
 
 	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s simpleVectorIndex) save() error {
 	return os.WriteFile(s.database(), jsonContent, 0644)
 }
 
-func (s *simpleVectorIndex) load() error {
+func (s *SimpleVectorIndex) load() error {
 
 	content, err := os.ReadFile(s.database())
 	if err != nil {
@@ -101,11 +101,11 @@ func (s *simpleVectorIndex) load() error {
 	return json.Unmarshal(content, &s.data)
 }
 
-func (s *simpleVectorIndex) database() string {
+func (s *SimpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *simpleVectorIndex) IsEmpty() (bool, error) {
+func (s *SimpleVectorIndex) IsEmpty() (bool, error) {
 
 	err := s.load()
 	if err != nil {
@@ -115,7 +115,7 @@ func (s *simpleVectorIndex) IsEmpty() (bool, error) {
 	return len(s.data) == 0, nil
 }
 
-func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
 
 	err := s.load()
 	if err != nil {
@@ -145,7 +145,7 @@ func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 	return filterSearchResponses(searchResponses, topK), nil
 }
 
-func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
+func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
 	dotProduct := float64(0.0)
 	normA := float64(0.0)
 	normB := float64(0.0)
@@ -163,7 +163,7 @@ func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Em
 	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-func (s *simpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
+func (s *SimpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
 
 	scores := make([]float64, len(s.data))
 

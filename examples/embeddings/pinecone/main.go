@@ -55,7 +55,7 @@ func main() {
 	}
 
 	if indexIsEmpty {
-		err = ingestData(projectID, openaiEmbedder)
+		err = ingestData(projectID, pineconeIndex)
 		if err != nil {
 			panic(err)
 		}
@@ -119,17 +119,7 @@ func getProjectID(pineconeEnvironment, pineconeApiKey string) (string, error) {
 	return whoamiResp.ProjectID, nil
 }
 
-func ingestData(projectID string, openaiEmbedder index.Embedder) error {
-
-	pineconeIndex := index.NewPinecone(
-		index.PineconeOptions{
-			IndexName:      "test",
-			ProjectID:      projectID,
-			Namespace:      "test-namespace",
-			IncludeContent: true,
-		},
-		openaiEmbedder,
-	)
+func ingestData(projectID string, pineconeIndex *index.Pinecone) error {
 
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
 	if err != nil {
