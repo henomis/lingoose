@@ -41,12 +41,7 @@ func main() {
 		}
 	}
 
-	llmOpenAI, err := openai.New(
-		openai.GPT3Dot5Turbo,
-		openai.DefaultOpenAITemperature,
-		openai.DefaultOpenAIMaxTokens,
-		false,
-	)
+	llmOpenAI, err := openai.NewChat()
 	if err != nil {
 		panic(err)
 	}
