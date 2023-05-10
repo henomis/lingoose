@@ -19,7 +19,7 @@ const (
 	defaultBatchUpsertSize = 32
 )
 
-type pinecone struct {
+type Pinecone struct {
 	pineconeClient  *pineconego.PineconeGo
 	indexName       string
 	projectID       string
@@ -37,7 +37,7 @@ type PineconeOptions struct {
 	BatchUpsertSize *int
 }
 
-func NewPinecone(options PineconeOptions, embedder Embedder) *pinecone {
+func NewPinecone(options PineconeOptions, embedder Embedder) *Pinecone {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	environment := os.Getenv("PINECONE_ENVIRONMENT")
@@ -49,7 +49,7 @@ func NewPinecone(options PineconeOptions, embedder Embedder) *pinecone {
 		batchUpsertSize = *options.BatchUpsertSize
 	}
 
-	return &pinecone{
+	return &Pinecone{
 		pineconeClient:  pineconeClient,
 		indexName:       options.IndexName,
 		projectID:       options.ProjectID,
@@ -60,12 +60,12 @@ func NewPinecone(options PineconeOptions, embedder Embedder) *pinecone {
 	}
 }
 
-func (p *pinecone) WithAPIKeyAndEnvironment(apiKey, environment string) *pinecone {
+func (p *Pinecone) WithAPIKeyAndEnvironment(apiKey, environment string) *Pinecone {
 	p.pineconeClient = pineconego.New(environment, apiKey)
 	return p
 }
 
-func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 	err := s.batchUpsert(ctx, documents)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrInternal, err)
@@ -73,7 +73,7 @@ func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.D
 	return nil
 }
 
-func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
+func (p *Pinecone) IsEmpty(ctx context.Context) (bool, error) {
 
 	req := &pineconerequest.VectorDescribeIndexStats{
 		IndexName: p.indexName,
@@ -99,7 +99,7 @@ func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
 
 	matches, err := p.similaritySearch(ctx, topK, query)
 	if err != nil {
@@ -111,7 +111,7 @@ func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int
 	return filterSearchResponses(searchResponses, topK), nil
 }
 
-func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string) ([]pineconeresponse.QueryMatch, error) {
+func (p *Pinecone) similaritySearch(ctx context.Context, topK *int, query string) ([]pineconeresponse.QueryMatch, error) {
 	pineconeTopK := defaultPineconeTopK
 	if topK != nil {
 		pineconeTopK = *topK
@@ -143,7 +143,7 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 	return res.Matches, nil
 }
 
-func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
+func (p *Pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
 
 	for i := 0; i < len(documents); i += defaultBatchUpsertSize {
 
@@ -176,7 +176,7 @@ func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Documen
 	return nil
 }
 
-func (p *pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
+func (p *Pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
 
 	req := &pineconerequest.VectorUpsert{
 		IndexName: p.indexName,

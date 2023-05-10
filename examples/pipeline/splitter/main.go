@@ -13,19 +13,14 @@ import (
 
 func main() {
 
-	llmOpenAI := openai.NewCompletion()
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	llm := pipeline.Llm{
 		LlmEngine: llmOpenAI,
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	tube1 := pipeline.NewTube(
-		"step1",
-		llm,
-		nil,
-		nil,
-	)
+	tube1 := pipeline.NewTube(llm)
 
 	prompt2, _ := prompt.NewPromptTemplate(
 		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
@@ -65,12 +60,7 @@ func main() {
 		nil,
 	)
 	llm.Prompt = prompt3
-	tube3 := pipeline.NewTube(
-		"step3",
-		llm,
-		nil,
-		nil,
-	)
+	tube3 := pipeline.NewTube(llm)
 
 	pipeLine := pipeline.New(
 		tube1,

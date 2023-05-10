@@ -18,7 +18,7 @@ func main() {
 
 	cache := ram.New()
 
-	llmChatOpenAI := openai.NewChat()
+	llmChatOpenAI := openai.NewChat().WithVerbose(true)
 	llmOpenAI := openai.NewCompletion()
 
 	prompt1, _ := prompt.NewPromptTemplate(
@@ -49,12 +49,7 @@ func main() {
 		LlmMode:   pipeline.LlmModeChat,
 		Chat:      chat,
 	}
-	tube1 := pipeline.NewTube(
-		"step1",
-		llm1,
-		nil,
-		cache,
-	)
+	tube1 := pipeline.NewTube(llm1).WithMemory("step1", cache)
 
 	prompt3, _ := prompt.NewPromptTemplate(
 		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
@@ -69,12 +64,7 @@ func main() {
 		Prompt:    prompt3,
 	}
 
-	tube2 := pipeline.NewTube(
-		"step2",
-		llm2,
-		decoder.NewJSONDecoder(),
-		cache,
-	)
+	tube2 := pipeline.NewTube(llm2).WithDecoder(decoder.NewJSONDecoder()).WithMemory("step2", cache)
 
 	pipe := pipeline.New(tube1, tube2)
 
