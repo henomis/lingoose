@@ -9,11 +9,11 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type TubeQa struct {
+type QATube struct {
 	tube *Tube
 }
 
-func NewQATube(llmEngine LlmEngine) *TubeQa {
+func NewQATube(llmEngine LlmEngine) *QATube {
 
 	systemPrompt := prompt.New("You are an helpful assistant. Answer to the questions using only " +
 		"the provided context. Don't add any information that is not in the context. " +
@@ -42,12 +42,12 @@ func NewQATube(llmEngine LlmEngine) *TubeQa {
 	}
 
 	tube := NewTube(llm)
-	return &TubeQa{
+	return &QATube{
 		tube: tube,
 	}
 }
 
-func (t *TubeQa) Run(ctx context.Context, query string, similarities []index.SearchResponse) (types.M, error) {
+func (t *QATube) Run(ctx context.Context, query string, similarities []index.SearchResponse) (types.M, error) {
 
 	content := ""
 	for _, similarity := range similarities {
