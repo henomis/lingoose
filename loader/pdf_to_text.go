@@ -16,24 +16,23 @@ var (
 )
 
 type pdfLoader struct {
-	pdftotext string
-	path      string
+	pdfToTextPath string
+	path          string
 }
 
-func NewPDFToTextLoader(pdfToTextPath, path string) (*pdfLoader, error) {
-
-	_, err := os.Stat(pdfToTextPath)
-	if err != nil {
-		return nil, ErrPdfToTextNotFound
-	}
-
+func NewPDFToTextLoader(pdfToTextPath, path string) *pdfLoader {
 	return &pdfLoader{
-		pdftotext: pdfToTextPath,
-		path:      path,
-	}, nil
+		pdfToTextPath: pdfToTextPath,
+		path:          path,
+	}
 }
 
 func (p *pdfLoader) Load() ([]document.Document, error) {
+
+	_, err := os.Stat(p.pdfToTextPath)
+	if err != nil {
+		return nil, ErrPdfToTextNotFound
+	}
 
 	fileInfo, err := os.Stat(p.path)
 	if err != nil {
@@ -48,7 +47,7 @@ func (p *pdfLoader) Load() ([]document.Document, error) {
 }
 
 func (p *pdfLoader) loadFile() ([]document.Document, error) {
-	out, err := exec.Command(p.pdftotext, p.path, "-").Output()
+	out, err := exec.Command(p.pdfToTextPath, p.path, "-").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +69,7 @@ func (p *pdfLoader) loadDir() ([]document.Document, error) {
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
 
-			l, err := NewPDFToTextLoader(p.pdftotext, path)
-			if err != nil {
-				return err
-			}
-
-			d, err := l.loadFile()
+			d, err := NewPDFToTextLoader(p.pdfToTextPath, path).loadFile()
 			if err != nil {
 				return err
 			}

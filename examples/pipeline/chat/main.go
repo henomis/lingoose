@@ -18,15 +18,8 @@ func main() {
 
 	cache := ram.New()
 
-	llmChatOpenAI, err := openai.NewChat()
-	if err != nil {
-		panic(err)
-	}
-
-	llmOpenAI, err := openai.NewCompletion()
-	if err != nil {
-		panic(err)
-	}
+	llmChatOpenAI := openai.NewChat()
+	llmOpenAI := openai.NewCompletion()
 
 	prompt1, _ := prompt.NewPromptTemplate(
 		"You are a {{.mode}} {{.role}}",

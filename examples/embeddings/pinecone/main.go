@@ -20,10 +20,7 @@ var pineconeClient *pineconego.PineconeGo
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
 	if pineconeApiKey == "" {
@@ -42,7 +39,7 @@ func main() {
 		panic(err)
 	}
 
-	pineconeIndex, err := index.NewPinecone(
+	pineconeIndex := index.NewPinecone(
 		index.PineconeOptions{
 			IndexName:      "test",
 			ProjectID:      projectID,
@@ -51,9 +48,6 @@ func main() {
 		},
 		openaiEmbedder,
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	indexIsEmpty, err := pineconeIndex.IsEmpty(context.Background())
 	if err != nil {
@@ -86,10 +80,7 @@ func main() {
 		fmt.Println("----------")
 	}
 
-	llmOpenAI, err := openai.NewCompletion()
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewCompletion()
 
 	prompt1, err := prompt.NewPromptTemplate(
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
@@ -130,7 +121,7 @@ func getProjectID(pineconeEnvironment, pineconeApiKey string) (string, error) {
 
 func ingestData(projectID string, openaiEmbedder index.Embedder) error {
 
-	pineconeIndex, err := index.NewPinecone(
+	pineconeIndex := index.NewPinecone(
 		index.PineconeOptions{
 			IndexName:      "test",
 			ProjectID:      projectID,
@@ -139,16 +130,8 @@ func ingestData(projectID string, openaiEmbedder index.Embedder) error {
 		},
 		openaiEmbedder,
 	)
-	if err != nil {
-		return err
-	}
 
-	loader, err := loader.NewDirectoryLoader(".", ".txt")
-	if err != nil {
-		return err
-	}
-
-	documents, err := loader.Load()
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
 	if err != nil {
 		return err
 	}
