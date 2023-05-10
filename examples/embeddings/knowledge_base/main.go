@@ -22,29 +22,19 @@ const (
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
-	if err != nil {
-		panic(err)
-	}
-
+	docsVectorIndex := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err = ingestData(openaiEmbedder)
+		err := ingestData(openaiEmbedder)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	llmOpenAI, err := openai.NewChat()
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewChat()
 
 	fmt.Println("Enter a query to search the knowledge base. Type 'quit' to exit.")
 	query := ""
@@ -115,15 +105,9 @@ func ingestData(openaiEmbedder index.Embedder) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
-	if err != nil {
-		return err
-	}
+	docsVectorIndex := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
 
-	loader, err := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
-	if err != nil {
-		return err
-	}
+	loader := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
 
 	documents, err := loader.Load()
 	if err != nil {

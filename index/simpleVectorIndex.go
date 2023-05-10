@@ -28,7 +28,7 @@ type simpleVectorIndex struct {
 	embedder   Embedder
 }
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*simpleVectorIndex, error) {
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *simpleVectorIndex {
 	simpleVectorIndex := &simpleVectorIndex{
 		data:       []simpleVectorIndexData{},
 		outputPath: outputPath,
@@ -36,15 +36,7 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*s
 		embedder:   embedder,
 	}
 
-	_, err := os.Stat(simpleVectorIndex.database())
-	if err == nil {
-		err = simpleVectorIndex.load()
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", ErrInternal, err)
-		}
-	}
-
-	return simpleVectorIndex, nil
+	return simpleVectorIndex
 }
 
 func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
@@ -114,6 +106,12 @@ func (s *simpleVectorIndex) database() string {
 }
 
 func (s *simpleVectorIndex) IsEmpty() (bool, error) {
+
+	err := s.load()
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
 	return len(s.data) == 0, nil
 }
 

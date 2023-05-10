@@ -62,16 +62,18 @@ type openAIEmbedder struct {
 	model        Model
 }
 
-func New(model Model) (*openAIEmbedder, error) {
+func New(model Model) *openAIEmbedder {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY not set")
-	}
 
 	return &openAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
-	}, nil
+	}
+}
+
+func (o *openAIEmbedder) WithAPIKey(apiKey string) *openAIEmbedder {
+	o.openAIClient = openai.NewClient(apiKey)
+	return o
 }
 
 func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {

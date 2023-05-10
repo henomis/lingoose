@@ -16,10 +16,7 @@ func main() {
 
 	cache := ram.New()
 
-	llmOpenAI, err := openai.NewCompletion()
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewCompletion()
 
 	llmOpenAI.SetCallback(func(response types.Meta) {
 		fmt.Printf("USAGE: %#v\n", response)

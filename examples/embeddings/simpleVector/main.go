@@ -14,20 +14,13 @@ import (
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
-	if err != nil {
-		panic(err)
-	}
-
+	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err = ingestData(openaiEmbedder)
+		err := ingestData(openaiEmbedder)
 		if err != nil {
 			panic(err)
 		}
@@ -56,11 +49,7 @@ func main() {
 		documentContext += similarity.Document.Content + "\n\n"
 	}
 
-	llmOpenAI, err := openai.NewCompletion()
-	if err != nil {
-		panic(err)
-	}
-
+	llmOpenAI := openai.NewCompletion()
 	prompt1, err := prompt.NewPromptTemplate(
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
 		map[string]string{
@@ -77,28 +66,19 @@ func main() {
 		panic(err)
 	}
 
-	_, err = llmOpenAI.Completion(context.Background(), prompt1.String())
-
+	output, err := llmOpenAI.Completion(context.Background(), prompt1.String())
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println(output)
 }
 
 func ingestData(openaiEmbedder index.Embedder) error {
 
 	fmt.Printf("Ingesting data...")
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
-	if err != nil {
-		return err
-	}
-
-	loader, err := loader.NewDirectoryLoader(".", ".txt")
-	if err != nil {
-		return err
-	}
-
-	documents, err := loader.Load()
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
 	if err != nil {
 		return err
 	}
@@ -107,7 +87,7 @@ func ingestData(openaiEmbedder index.Embedder) error {
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
-	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+	err = index.NewSimpleVectorIndex("docs", ".", openaiEmbedder).LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}

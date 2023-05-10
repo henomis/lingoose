@@ -22,10 +22,7 @@ func main() {
 		},
 	)
 
-	llmOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 
 	response, err := llmOpenAI.Chat(context.Background(), chat)
 	if err != nil {

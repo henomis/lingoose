@@ -9,36 +9,32 @@ import (
 )
 
 type directoryLoader struct {
-	dirname string
-	regExp  *regexp.Regexp
+	dirname        string
+	regExPathMatch string
 }
 
-func NewDirectoryLoader(dirname string, regExPathMatch string) (*directoryLoader, error) {
+func NewDirectoryLoader(dirname string, regExPathMatch string) *directoryLoader {
 
-	regExp, err := regexp.Compile(regExPathMatch)
+	return &directoryLoader{
+		dirname:        dirname,
+		regExPathMatch: regExPathMatch,
+	}
+
+}
+
+func (d *directoryLoader) Load() ([]document.Document, error) {
+
+	regExp, err := regexp.Compile(d.regExPathMatch)
 	if err != nil {
 		return nil, err
 	}
 
-	return &directoryLoader{
-		dirname: dirname,
-		regExp:  regExp,
-	}, nil
-
-}
-
-func (t *directoryLoader) Load() ([]document.Document, error) {
 	docs := []document.Document{}
 
-	err := filepath.Walk(t.dirname, func(path string, info os.FileInfo, err error) error {
-		if err == nil && t.regExp.MatchString(info.Name()) {
+	err = filepath.Walk(d.dirname, func(path string, info os.FileInfo, err error) error {
+		if err == nil && regExp.MatchString(info.Name()) {
 
-			l, err := NewTextLoader(path, nil)
-			if err != nil {
-				return err
-			}
-
-			d, err := l.Load()
+			d, err := NewTextLoader(path, nil).Load()
 			if err != nil {
 				return err
 			}

@@ -37,17 +37,10 @@ type PineconeOptions struct {
 	BatchUpsertSize *int
 }
 
-func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) {
+func NewPinecone(options PineconeOptions, embedder Embedder) *pinecone {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("PINECONE_API_KEY is not set")
-	}
-
 	environment := os.Getenv("PINECONE_ENVIRONMENT")
-	if environment == "" {
-		return nil, fmt.Errorf("PINECONE_ENVIRONMENT is not set")
-	}
 
 	pineconeClient := pineconego.New(environment, apiKey)
 
@@ -64,7 +57,12 @@ func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) 
 		namespace:       options.Namespace,
 		includeContent:  options.IncludeContent,
 		batchUpsertSize: batchUpsertSize,
-	}, nil
+	}
+}
+
+func (p *pinecone) WithAPIKeyAndEnvironment(apiKey, environment string) *pinecone {
+	p.pineconeClient = pineconego.New(environment, apiKey)
+	return p
 }
 
 func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {

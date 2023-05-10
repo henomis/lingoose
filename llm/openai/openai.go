@@ -54,12 +54,9 @@ type openAI struct {
 	callback     OpenAICallback
 }
 
-func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI, error) {
+func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY not set")
-	}
 
 	return &openAI{
 		openAIClient: openai.NewClient(openAIKey),
@@ -67,7 +64,7 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI
 		temperature:  temperature,
 		maxTokens:    maxTokens,
 		verbose:      verbose,
-	}, nil
+	}
 }
 
 func (o *openAI) WithStop(stop []string) *openAI {
@@ -75,7 +72,12 @@ func (o *openAI) WithStop(stop []string) *openAI {
 	return o
 }
 
-func NewCompletion() (*openAI, error) {
+func (o *openAI) WithAPIKey(apiKey string) *openAI {
+	o.openAIClient = openai.NewClient(apiKey)
+	return o
+}
+
+func NewCompletion() *openAI {
 	return New(
 		GPT3TextDavinci003,
 		DefaultOpenAITemperature,
@@ -84,7 +86,7 @@ func NewCompletion() (*openAI, error) {
 	)
 }
 
-func NewChat() (*openAI, error) {
+func NewChat() *openAI {
 	return New(
 		GPT3Dot5Turbo,
 		DefaultOpenAITemperature,

@@ -13,10 +13,7 @@ import (
 
 func main() {
 
-	llmOpenAI, err := openai.NewCompletion()
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewCompletion()
 
 	llm := pipeline.Llm{
 		LlmEngine: llmOpenAI,
