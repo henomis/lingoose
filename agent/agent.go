@@ -146,10 +146,16 @@ func (a *agent) Run(ctx context.Context, input types.M) (types.M, error) {
 }
 
 func (a *agent) rebuildPrompt(text string) error {
+
+	tools := make([]Tool, 0)
+	for _, tool := range a.tools {
+		tools = append(tools, tool)
+	}
+
 	prompt, err := prompt.NewPromptTemplate(
 		promptTemplate+text,
 		types.M{
-			"tools": a.tools,
+			"tools": tools,
 		},
 	)
 	if err != nil {
