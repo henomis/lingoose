@@ -206,7 +206,7 @@
             <div class="row">
               <div class="col-sm-6 col-lg-4">
                 <ul class="list-unstyled">
-                  <li><strong>Version:</strong> 0.0.4</li>
+                  <li><strong>Version:</strong> 0.0.5</li>
                   <li>
                     <strong>Author:</strong>
                     <a href="http://www.simonevellei.com" target="_blank">Simone Vellei
@@ -220,7 +220,7 @@
                     <strong class="font-weight-700">Created:</strong> 27
                     April, 2023
                   </li>
-                  <li><strong>Update:</strong> 30 April, 2023</li>
+                  <li><strong>Update:</strong> 11 May, 2023</li>
                 </ul>
               </div>
             </div>
@@ -275,15 +275,7 @@ import (
 
 func main() {
 
-  llmOpenAI, err := openai.New(
-    openai.GPT3TextDavinci003, 
-    openai.DefaultOpenAITemperature, 
-    openai.DefaultOpenAIMaxTokens, 
-    true,
-  )
-  if err != nil {
-    panic(err)
-  }
+  llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
   response, err := llmOpenAI.Completion(context.Background(), &quot;Hello AI. How are you?&quot;)
   if err != nil {
@@ -349,8 +341,8 @@ Write a short joke about geese
               is a simple example:
             </p>
             <pre><code class="go">
-jokePromptTemplate, err := prompt.NewPromptTemplate(
-  "Write a short joke about {{.animal}}",
+jokePromptTemplate  := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}").WithInputs(
   types.M{"animal": "geese"},
 )
 ...
@@ -363,8 +355,8 @@ fmt.Println(jokePromptTemplate.String())
             can inject partial variables directly to the
             <code>Format()</code> method:
             <pre><code class="go">
-jokePromptTemplate, err := prompt.NewPromptTemplate(
-  "Write a short {{.type}} about {{.animal}}",
+jokePromptTemplate := prompt.NewPromptTemplate(
+  "Write a short {{.type}} about {{.animal}}").WithInputs(
   types.M{"animal": "geese"},
 )
 ...
@@ -414,13 +406,10 @@ fmt.Println(promptFromAudio.String())
             Each message of a <code>Chat</code> contains a <code>prompt</code>, this means
             that you can embedd prompt templates into a chat.
             <pre><code class="go">
-jokePromptTemplate, err := prompt.NewPromptTemplate(
-  "Write a short joke about {{.animal}}",
+jokePromptTemplate := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}").WithInputs(
   types.M{"animal": "geese"},
 )
-if err != nil {
-  panic(err)
-}
 
 jokeChat := chat.New(
   chat.PromptMessage{
@@ -472,12 +461,7 @@ fmt.Println(jokeChat.ToMessages())
             <p>LLM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
               example:</p>
             <pre><code class="go">
-llmOpenAI, err := openai.New(
-  openai.GPT3TextDavinci002,
-  openai.DefaultOpenAITemperature,
-  openai.DefaultOpenAIMaxTokens,
-  true,
-)
+llmOpenAI := openai.NewCompletion().WithModel(openai.GPT3TextDavinci002).WithMaxTokens(256).WithTemperature(0.9).WithVerbose(true)
 ...
 output, err := llmOpenAI.Completion(
   context.Background(),
@@ -487,14 +471,14 @@ output, err := llmOpenAI.Completion(
 
             Completion input is a string, so it can be formatted using, for example, a prompt template:
             <pre><code class="go">
-jokePromptTemplate, err := prompt.NewPromptTemplate(
-  "Write a short joke about {{.animal}}",
+jokePromptTemplate := prompt.NewPromptTemplate(
+  "Write a short joke about {{.animal}}").WithInputs
   types.M{"animal": "geese"},
 )
 
 err = jokePromptTemplate.Format(nil)
 ...
-llmOpenAI, err := openai.New(
+llmOpenAI := openai.New(
   openai.GPT3TextDavinci002,
   openai.DefaultOpenAITemperature,
   openai.DefaultOpenAIMaxTokens,
@@ -508,7 +492,7 @@ output, err = llmOpenAI.Completion(
                 </code></pre>
 
             <h3>Chat</h3>
-            <p>LLM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
+            <p>LLM implements the method <code>Chat()</code> if the underlying model supports it. Here is an
               example:</p>
             <pre><code class="go">
 jokeChat := chat.New(
@@ -522,7 +506,7 @@ jokeChat := chat.New(
   },
 )
 ...
-llmOpenAI, err := openai.New(
+llmOpenAI := openai.New(
   openai.GPT3Dot5Turbo, 
   openai.DefaultOpenAITemperature, 
   openai.DefaultOpenAIMaxTokens, 
@@ -545,7 +529,7 @@ response, err := llmOpenAI.Chat(context.Background(), jokeChat)
             <h3>Simple Tube. No memory, no decoder.</h3>
             <pre>
 <code class="go">
-llmOpenAI, err := openai.New(
+llmOpenAI := openai.New(
   openai.GPT3TextDavinci002,
   openai.DefaultOpenAITemperature,
   openai.DefaultOpenAIMaxTokens,
@@ -558,12 +542,7 @@ llm := pipeline.Llm{
   Prompt:    prompt.New("Write a short joke about geese"),
 }
 
-tube1 := pipeline.NewTube(
-  "step1",
-  llm,
-  nil, // no decoder
-  nil, // no memory
-)
+tube1 := pipeline.NewTube(llm)
 ...
 output, err := tube1.Run(context.Background(), nil)
 </code>
@@ -576,7 +555,7 @@ output, err := tube1.Run(context.Background(), nil)
             <h3>JSON Output</h3>
             <pre>
             <code class="go">
-llmOpenAI, err := openai.New(
+llmOpenAI := openai.New(
   openai.GPT3TextDavinci002,
   openai.DefaultOpenAITemperature,
   openai.DefaultOpenAIMaxTokens,
@@ -593,12 +572,7 @@ llm := pipeline.Llm{
     ),
 }
 
-tube1 := pipeline.NewTube(
-  "step1",
-  llm,
-  decoder.NewJSONDecoder(),
-  nil, // no memory
-)
+tube1 := pipeline.NewTube(llm).WithDecoder(decoder.NewJSONDecoder())  
 ...
 output, err := tube1.Run(context.Background(), nil)
               </code></pre>
@@ -623,12 +597,7 @@ llm := pipeline.Llm{
   Prompt:    jokePromptTemplate,
 }
 
-tube1 := pipeline.NewTube(
-  "step1",
-  llm,
-  nil, // no decoder
-  nil, // no memory
-)
+tube1 := pipeline.NewTube(llm)
 ...
 output, err := tube1.Run(context.Background(), types.M{"animal": "geese"})
 </code>
@@ -640,29 +609,19 @@ output, err := tube1.Run(context.Background(), types.M{"animal": "geese"})
               and the observe the final output.</p>
             <pre>
               <code class="go">
-llmOpenAI, err := openai.New(
-  openai.GPT3TextDavinci002,
-  openai.DefaultOpenAITemperature,
-  openai.DefaultOpenAIMaxTokens,
-  true,
-)
+llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
-llmChatOpenAI, err := openai.New(
-  openai.GPT3Dot5Turbo,
-  openai.DefaultOpenAITemperature,
-  openai.DefaultOpenAIMaxTokens,
-  true,
-)
+llmChatOpenAI := openai.NewChat().WithVerbose(true)
 
-prompt1, _ := prompt.NewPromptTemplate(
-  "You are a {{.mode}} {{.role}}",
+prompt1 := prompt.NewPromptTemplate(
+  "You are a {{.mode}} {{.role}}").WithInputs(
   types.M{
     "mode": "professional",
   },
 )
 
-prompt2, _ := prompt.NewPromptTemplate(
-  "Write a {{.length}} joke about a {{.animal}}.",
+prompt2 := prompt.NewPromptTemplate(
+  "Write a {{.length}} joke about a {{.animal}}.").WitghInputs(
   types.M{
     "length": "short",
   },
@@ -685,15 +644,10 @@ llm1 := pipeline.Llm{
   Chat:      chat,
 }
 
-tube1 := pipeline.NewTube(
-  "step1",
-  llm1,
-  nil,
-  nil,
-)
+tube1 := pipeline.NewTube(lmm1)  
 
-prompt3, _ := prompt.NewPromptTemplate(
-  "Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
+prompt3 := prompt.NewPromptTemplate(
+  "Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}").WithInputs(
   types.M{
     "command": "Put the joke in a JSON object with only one field called 'joke'. " +
       "Do not add other json fields. Do not add other information.",
@@ -706,12 +660,7 @@ llm2 := pipeline.Llm{
   Prompt:    prompt3,
 }
 
-tube2 := pipeline.NewTube(
-  "step2",
-  llm2,
-  decoder.NewJSONDecoder(),
-  nil,
-)
+tube2 := pipeline.NewTube(llm2).WithDecoder(decoder.NewJSONDecoder())  
 
 pipe := pipeline.New(tube1, tube2)
 
@@ -749,19 +698,18 @@ Put the joke in a JSON object with only one field called 'joke'. Do not add othe
              </p>
 <pre>
   <code class="go">
-llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+llmOpenAI := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 ...
 llm := pipeline.Llm{
   LlmEngine: llmOpenAI,
   LlmMode:   pipeline.LlmModeCompletion,
   Prompt:    prompt.New("Hello how are you?"),
 }
-tube1 := pipeline.NewTube("step1", llm, nil, nil)
+tube1 := pipeline.NewTube(llm)
 
-prompt2, _ := prompt.NewPromptTemplate(
+prompt2 := prompt.NewPromptTemplate(
   "Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-    "Translate it in {{.language}}!",
-  nil,
+    "Translate it in {{.language}}!",  
 )
 
 llm.Prompt = prompt2
@@ -829,7 +777,7 @@ response, err := pipeLine.Run(context.Background(), nil)
             </p>
             <pre>
   <code class="go">
-llmOpenAI, _ := openai.New(
+llmOpenAI := openai.New(
   openai.GPT3TextDavinci002,
   openai.DefaultOpenAITemperature,
   openai.DefaultOpenAIMaxTokens,
