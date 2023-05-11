@@ -713,11 +713,8 @@ prompt2 := prompt.NewPromptTemplate(
 )
 
 llm.Prompt = prompt2
-tube2 := pipeline.NewSplitter(
-  "step2",
+tube2 := pipeline.NewSplitter( 
   llm,
-  nil,
-  nil,
   func(input types.M) ([]types.M, error) {
     return []types.M{
       mergeMaps(input, types.M{
@@ -739,18 +736,12 @@ tube2 := pipeline.NewSplitter(
   },
 )
 
-prompt3, _ := prompt.NewPromptTemplate(
+prompt3 := prompt.NewPromptTemplate(
   "For each of the following sentences, detect the language.\n\nSentences:\n"+
-    "{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
-  nil,
+    "{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",  
 )
 llm.Prompt = prompt3
-tube3 := pipeline.NewTube(
-  "step3",
-  llm,
-  nil,
-  nil,
-)
+tube3 := pipeline.NewTube(llm)  
 
 pipeLine := pipeline.New(
   tube1,
@@ -786,8 +777,8 @@ llmOpenAI := openai.New(
 
 cache := ram.New()
 
-prompt1, _ := prompt.NewPromptTemplate(
-  "Write a joke about goose.\n\n{{.command}}",
+prompt1 := prompt.NewPromptTemplate(
+  "Write a joke about goose.\n\n{{.command}}").WithInputs(
   types.M{
     "command": "Put the joke in a JSON object with only one field called 'joke'. " +
       "Do not add other json fields. Do not add other information.",
@@ -798,25 +789,23 @@ llm1 := pipeline.Llm{
   LlmMode:   pipeline.LlmModeCompletion,
   Prompt:    prompt1,
 }
-tube1 := pipeline.NewTube("step1", llm1, decoder.NewJSONDecoder(), cache)
+tube1 := pipeline.NewTube(llm1).WithDecoder(decoder.NewJSONDecoder()).WithMemory("step1", cache)
 
-prompt2, _ := prompt.NewPromptTemplate(
+prompt2 := prompt.NewPromptTemplate(
   "Consider the following joke.\n\njoke: {{.output.joke}}\n\ntranslate the joke in italian.",
-  nil,
 )
 llm2 := pipeline.Llm{
   LlmEngine: llmOpenAI,
   LlmMode:   pipeline.LlmModeCompletion,
   Prompt:    prompt2,
 }
-tube2 := pipeline.NewTube("step2", llm2, nil, cache)
+tube2 := pipeline.NewTube(llm2).WithMemory("step2", cache)
 
-prompt3, _ := prompt.NewPromptTemplate(
+prompt3 := prompt.NewPromptTemplate(
   "Consider the following joke.\n\njoke: {{.step1.output.joke}}\n\ntranslate the joke in spanish.",
-  nil,
 )
 llm1.Prompt = prompt3
-tube3 := pipeline.NewTube("step3", llm1, nil, cache)
+tube3 := pipeline.NewTube(llm1).WithMemory("step3", cache)
 
 pipelineTubes := pipeline.New(
   tube1,
@@ -854,10 +843,10 @@ response, err := pipelineTubes.Run(context.Background(), nil)
             </p>
             <pre>
   <code class="go">
-textLoader, err := loader.NewTextLoader("test.txt", nil)
+textLoader := loader.NewTextLoader("test.txt", nil)
 documents, err := textLoader.Load()
 ...
-directoryLoader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+directoryLoader := loader.NewDirectoryLoader("./documents/", ".txt")
 documents, err := directoryLoader.Load()
   </code>
             </pre>
@@ -877,16 +866,17 @@ documents, err := directoryLoader.Load()
             </p>
             <pre>
   <code class="go">
-loader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+loader := loader.NewDirectoryLoader("./documents/", ".txt")
 ...
 documents, err := loader.Load()
 ...
-textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 documentChunks := textSplitter.SplitDocuments(documents)
 
   </code>
             </pre>
             The returned chunks are <code>Document</code> as well and they inherit the metadata from the original.
+
           </section>
 
           <hr class="divider" />
@@ -902,7 +892,7 @@ documentChunks := textSplitter.SplitDocuments(documents)
   <code class="go">
 import openaiembedder "github.com/henomis/lingoose/embedder/openai"
 ...
-openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 ...
 embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
   </code>
@@ -926,25 +916,24 @@ embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
             </p>
             <pre>
   <code class="go">
-openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 ...
-docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 ...
-loader, err := loader.NewDirectoryLoader("./documents/", ".txt")
+loader := loader.NewDirectoryLoader("./documents/", ".txt")
 ...
 documents, err := loader.Load()
 ...
-textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 documentChunks := textSplitter.SplitDocuments(documents)
 ...
 docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
 ...
 query := "What is the purpose of the NATO Alliance?"
-topk := 3
+
 similarities, err := docsVectorIndex.SimilaritySearch(
   context.Background(),
-  query,
-  &topk,
+  query,  
 )
     </code>
 </pre>
