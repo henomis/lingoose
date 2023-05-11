@@ -102,32 +102,31 @@ func (o *openAIEmbedder) concurrentEmbed(ctx context.Context, texts []string, ma
 
 		go func(ctx context.Context, i int, text string, maxTokens int) {
 			embedding, err := o.safeEmbed(ctx, text, maxTokens)
-			if err != nil {
-				embeddingsChan <- indexedEmbeddings{
-					index:     i,
-					embedding: nil,
-					err:       err,
-				}
-			}
 
 			embeddingsChan <- indexedEmbeddings{
 				index:     i,
 				embedding: embedding,
-				err:       nil,
+				err:       err,
 			}
+
 		}(ctx, i, text, maxTokens)
 
 	}
 
+	var err error = nil
 	for i := 0; i < len(texts); i++ {
 		embedding := <-embeddingsChan
-		if embedding.embedding == nil {
-			return nil, embedding.err
+		if embedding.err != nil {
+			err = embedding.err
+			continue
 		}
 		embeddings = append(embeddings, embedding)
 	}
 
-	// sort slice by index
+	if err != nil {
+		return nil, err
+	}
+
 	sort.Slice(embeddings, func(i, j int) bool {
 		return embeddings[i].index < embeddings[j].index
 	})
