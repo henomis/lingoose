@@ -13,10 +13,9 @@ import (
 )
 
 func main() {
-	docs, _ := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb").Load()
-	chunks := textsplitter.NewRecursiveCharacterTextSplitter(2000, 200, nil, nil).SplitDocuments(docs)
+	docs, _ := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load()
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), chunks)
+	index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
 	query := "Who is Mario?"
 	topk := 3
 	similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, &topk)
