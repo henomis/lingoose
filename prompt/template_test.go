@@ -49,11 +49,7 @@ func TestPromptTemplate_Format(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := NewPromptTemplate(tt.fields.template, tt.fields.input)
-			if err != nil {
-				t.Errorf("PromptTemplate.Format() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			p := NewPromptTemplate(tt.fields.template).WithInputs(tt.fields.input)
 
 			if err := p.Format(tt.args.input); (err != nil) != tt.wantErr {
 				t.Errorf("PromptTemplate.Format() error = %v, wantErr %v", err, tt.wantErr)
@@ -98,11 +94,7 @@ func TestPromptTemplate_Prompt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p, err := NewPromptTemplate(tt.fields.template, tt.fields.input)
-			if err != nil {
-				t.Errorf("NewPromptTemplate error = %v", err)
-				return
-			}
+			p := NewPromptTemplate(tt.fields.template).WithInputs(tt.fields.input)
 
 			if tt.fields.external != nil {
 				err := p.Format(tt.fields.external)

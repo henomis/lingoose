@@ -19,16 +19,16 @@ func main() {
 	cache := ram.New()
 
 	llmChatOpenAI := openai.NewChat().WithVerbose(true)
-	llmOpenAI := openai.NewCompletion()
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
-	prompt1, _ := prompt.NewPromptTemplate(
-		"You are a {{.mode}} {{.role}}",
+	prompt1 := prompt.NewPromptTemplate(
+		"You are a {{.mode}} {{.role}}").WithInputs(
 		map[string]string{
 			"mode": "professional",
 		},
 	)
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Write a {{.length}} joke about a {{.animal}}.",
+	prompt2 := prompt.NewPromptTemplate(
+		"Write a {{.length}} joke about a {{.animal}}.").WithInputs(
 		map[string]string{
 			"length": "short",
 		},
@@ -51,8 +51,8 @@ func main() {
 	}
 	tube1 := pipeline.NewTube(llm1).WithMemory("step1", cache)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
+	prompt3 := prompt.NewPromptTemplate(
+		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}").WithInputs(
 		map[string]string{
 			"command": "Put the joke in a JSON object with only one field called 'joke'. " +
 				"Do not add other json fields. Do not add other information.",

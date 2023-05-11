@@ -19,8 +19,8 @@ func main() {
 	}
 	tube1 := pipeline.NewTube(llm1)
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!",
+	prompt2 := prompt.NewPromptTemplate(
+		"It seems you are a random word generator. Your message '{{.output}}' is nonsense. Anyway I'm fine {{.value}}!").WithInputs(
 		map[string]string{
 			"value": "thanks",
 		},
@@ -32,8 +32,8 @@ func main() {
 	}
 	tube2 := pipeline.NewTube(llm2).WithDecoder(decoder.NewJSONDecoder())
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.First}}' and second:'{{.Second}}'. {{.value}}",
+	prompt3 := prompt.NewPromptTemplate(
+		"Oh! It seems you are a random JSON word generator. You generated two strings, first:'{{.output.first}}' and second:'{{.output.second}}'. {{.value}}").WithInputs(
 		map[string]string{
 			"value": "Bye!",
 		},

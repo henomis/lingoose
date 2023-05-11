@@ -9,26 +9,20 @@ import (
 
 func main() {
 
-	prompt1, err := prompt.NewPromptTemplate(
-		"Translating from {{.input_language}} to {{.output_language}}",
+	prompt1 := prompt.NewPromptTemplate(
+		"Translating from {{.input_language}} to {{.output_language}}").WithInputs(
 		map[string]string{
 			"input_language":  "English",
 			"output_language": "French",
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
 
-	prompt2, err := prompt.NewPromptTemplate(
-		"{{.text}}",
+	prompt2 := prompt.NewPromptTemplate(
+		"{{.text}}").WithInputs(
 		map[string]string{
 			"text": "I love programming.",
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	chatTemplate := chat.New(
 		chat.PromptMessage{

@@ -49,16 +49,13 @@ func main() {
 	}
 
 	llmOpenAI := openai.NewCompletion()
-	prompt1, err := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+	prompt1 := prompt.NewPromptTemplate(
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
 			"query":   query,
 			"context": documentContext,
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	err = prompt1.Format(nil)
 	if err != nil {

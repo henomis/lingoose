@@ -24,7 +24,7 @@ type QATube struct {
 func NewQATube(llmEngine LlmEngine) *QATube {
 
 	systemPrompt := prompt.New(systemPromptTemplate)
-	userPrompt, _ := prompt.NewPromptTemplate(userPromptTemplate, nil)
+	userPrompt := prompt.NewPromptTemplate(userPromptTemplate)
 
 	chat := chat.New(
 		chat.PromptMessage{

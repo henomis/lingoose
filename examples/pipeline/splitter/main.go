@@ -22,11 +22,10 @@ func main() {
 	}
 	tube1 := pipeline.NewTube(llm)
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-			"Translate it in {{.language}}!",
-		nil,
-	)
+	prompt2 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n" +
+			"Translate it in {{.language}}!")
+
 	llm.Prompt = prompt2
 	tube2 := pipeline.NewSplitter(
 		"step2",
@@ -54,10 +53,9 @@ func main() {
 		},
 	)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"For each of the following sentences, detect the language.\n\nSentences:\n"+
+	prompt3 := prompt.NewPromptTemplate(
+		"For each of the following sentences, detect the language.\n\nSentences:\n" +
 			"{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
-		nil,
 	)
 	llm.Prompt = prompt3
 	tube3 := pipeline.NewTube(llm)
