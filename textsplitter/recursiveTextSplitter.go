@@ -28,12 +28,14 @@ func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int) *recursi
 	}
 }
 
-func (r *recursiveCharacterTextSplitter) WithSeparators(separators []string) {
+func (r *recursiveCharacterTextSplitter) WithSeparators(separators []string) *recursiveCharacterTextSplitter {
 	r.separators = separators
+	return r
 }
 
-func (r *recursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) {
+func (r *recursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) *recursiveCharacterTextSplitter {
 	r.lengthFunction = lengthFunction
+	return r
 }
 
 // AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
