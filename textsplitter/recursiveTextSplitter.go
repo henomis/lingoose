@@ -7,36 +7,36 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+var (
+	defaultSeparators     []string    = []string{"\n\n", "\n", " ", ""}
+	defaultLengthFunction LenFunction = func(s string) int { return len(s) }
+)
+
 type recursiveCharacterTextSplitter struct {
 	textSplitter
 	separators []string
 }
 
-func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int, separators []string, lengthFunction LenFunction) *recursiveCharacterTextSplitter {
-
-	if lengthFunction == nil {
-		lengthFunction = func(s string) int {
-			return len(s)
-		}
-	}
-
-	if len(separators) == 0 {
-		separators = []string{"\n\n", "\n", " ", ""}
-	}
-
+func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int) *recursiveCharacterTextSplitter {
 	return &recursiveCharacterTextSplitter{
 		textSplitter: textSplitter{
 			chunkSize:      chunkSize,
 			chunkOverlap:   chunkOverlap,
-			lengthFunction: lengthFunction,
+			lengthFunction: defaultLengthFunction,
 		},
-		separators: separators,
+		separators: defaultSeparators,
 	}
+}
 
+func (r *recursiveCharacterTextSplitter) WithSeparators(separators []string) {
+	r.separators = separators
+}
+
+func (r *recursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) {
+	r.lengthFunction = lengthFunction
 }
 
 // AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
-
 func (r *recursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
 
 	docs := make([]document.Document, 0)

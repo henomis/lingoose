@@ -96,7 +96,7 @@ func ingestData(pineconeIndex *index.Pinecone) error {
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 

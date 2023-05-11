@@ -83,7 +83,7 @@ func ingestData(openaiEmbedder index.Embedder) error {
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
