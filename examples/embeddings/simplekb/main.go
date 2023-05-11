@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
@@ -19,7 +18,5 @@ func main() {
 	query := "Who is Mario?"
 	topk := 3
 	similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, &topk)
-	qa := pipeline.NewQATube(openai.NewChat().WithVerbose(true))
-	resp, _ := qa.Run(context.Background(), query, similarities)
-	fmt.Println(resp)
+	pipeline.NewQATube(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities)
 }
