@@ -16,6 +16,8 @@ var (
 )
 
 type pdfLoader struct {
+	loader loader
+
 	pdfToTextPath string
 	path          string
 }
@@ -25,6 +27,11 @@ func NewPDFToTextLoader(pdfToTextPath, path string) *pdfLoader {
 		pdfToTextPath: pdfToTextPath,
 		path:          path,
 	}
+}
+
+func (p *pdfLoader) WithTextSplitter(textSplitter TextSplitter) *pdfLoader {
+	p.loader.textSplitter = textSplitter
+	return p
 }
 
 func (p *pdfLoader) Load() ([]document.Document, error) {
@@ -39,11 +46,21 @@ func (p *pdfLoader) Load() ([]document.Document, error) {
 		return nil, err
 	}
 
+	var documents []document.Document
 	if fileInfo.IsDir() {
-		return p.loadDir()
+		documents, err = p.loadDir()
+	} else {
+		documents, err = p.loadFile()
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return p.loadFile()
+	if p.loader.textSplitter != nil {
+		documents = p.loader.textSplitter.SplitDocuments(documents)
+	}
+
+	return documents, nil
 }
 
 func (p *pdfLoader) loadFile() ([]document.Document, error) {

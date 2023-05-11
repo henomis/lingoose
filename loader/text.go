@@ -17,6 +17,8 @@ const (
 )
 
 type textLoader struct {
+	loader loader
+
 	filename string
 	metadata types.Meta
 }
@@ -26,6 +28,11 @@ func NewTextLoader(filename string, metadata types.Meta) *textLoader {
 		filename: filename,
 		metadata: metadata,
 	}
+}
+
+func (t *textLoader) WithTextSplitter(textSplitter TextSplitter) *textLoader {
+	t.loader.textSplitter = textSplitter
+	return t
 }
 
 func (t *textLoader) Load() ([]document.Document, error) {
@@ -40,12 +47,18 @@ func (t *textLoader) Load() ([]document.Document, error) {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
-	return []document.Document{
+	documents := []document.Document{
 		{
 			Content:  string(text),
 			Metadata: t.metadata,
 		},
-	}, nil
+	}
+
+	if t.loader.textSplitter != nil {
+		documents = t.loader.textSplitter.SplitDocuments(documents)
+	}
+
+	return documents, nil
 }
 
 func (t *textLoader) validate() error {
