@@ -115,7 +115,7 @@ func (s *SimpleVectorIndex) IsEmpty() (bool, error) {
 	return len(s.data) == 0, nil
 }
 
-func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) (SearchResponses, error) {
 
 	err := s.load()
 	if err != nil {

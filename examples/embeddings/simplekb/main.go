@@ -18,5 +18,5 @@ func main() {
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 	index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
 	similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, &topk)
-	pipeline.NewQATube(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities)
+	pipeline.NewQATube(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities.ToDocuments())
 }
