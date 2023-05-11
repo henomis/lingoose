@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/llm/openai"
+	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
@@ -13,6 +14,7 @@ import (
 
 func main() {
 
+	cache := ram.New()
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	llm := pipeline.Llm{
@@ -28,10 +30,7 @@ func main() {
 
 	llm.Prompt = prompt2
 	tube2 := pipeline.NewSplitter(
-		"step2",
 		llm,
-		nil,
-		nil,
 		func(input types.M) ([]types.M, error) {
 			return []types.M{
 				mergeMaps(input, types.M{
@@ -51,7 +50,7 @@ func main() {
 				}),
 			}, nil
 		},
-	)
+	).WithMemory("splitter", cache)
 
 	prompt3 := prompt.NewPromptTemplate(
 		"For each of the following sentences, detect the language.\n\nSentences:\n" +
@@ -74,6 +73,9 @@ func main() {
 	data, _ := json.MarshalIndent(response, "", "  ")
 
 	fmt.Printf("Final output: %s\n", data)
+	fmt.Println("------------")
+	fmt.Println("Memory:")
+	fmt.Println(cache)
 
 }
 
