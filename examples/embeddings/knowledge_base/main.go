@@ -105,7 +105,7 @@ func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 
-	loader := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
+	loader := loader.NewPDFToTextLoader("./kb")
 
 	documents, err := loader.Load()
 	if err != nil {
