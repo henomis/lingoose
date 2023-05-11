@@ -112,7 +112,7 @@ func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 200, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 

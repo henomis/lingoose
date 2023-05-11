@@ -21,6 +21,8 @@ type pubMedDocument struct {
 }
 
 type pubMedLoader struct {
+	loader loader
+
 	pubMedIDs []string
 }
 
@@ -28,6 +30,11 @@ func NewPubmedLoader(pubMedIDs []string) *pubMedLoader {
 	return &pubMedLoader{
 		pubMedIDs: pubMedIDs,
 	}
+}
+
+func (p *pubMedLoader) WithTextSplitter(textSplitter TextSplitter) *pubMedLoader {
+	p.loader.textSplitter = textSplitter
+	return p
 }
 
 func (p *pubMedLoader) Load() ([]document.Document, error) {
@@ -42,6 +49,10 @@ func (p *pubMedLoader) Load() ([]document.Document, error) {
 		}
 
 		documens[i] = *doc
+	}
+
+	if p.loader.textSplitter != nil {
+		documens = p.loader.textSplitter.SplitDocuments(documens)
 	}
 
 	return documens, nil

@@ -9,6 +9,8 @@ import (
 )
 
 type directoryLoader struct {
+	loader loader
+
 	dirname        string
 	regExPathMatch string
 }
@@ -20,6 +22,11 @@ func NewDirectoryLoader(dirname string, regExPathMatch string) *directoryLoader 
 		regExPathMatch: regExPathMatch,
 	}
 
+}
+
+func (d *directoryLoader) WithTextSplitter(textSplitter TextSplitter) *directoryLoader {
+	d.loader.textSplitter = textSplitter
+	return d
 }
 
 func (d *directoryLoader) Load() ([]document.Document, error) {
@@ -45,6 +52,10 @@ func (d *directoryLoader) Load() ([]document.Document, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if d.loader.textSplitter != nil {
+		docs = d.loader.textSplitter.SplitDocuments(docs)
 	}
 
 	return docs, nil
