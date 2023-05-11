@@ -26,7 +26,7 @@
 |**Pipelines** | [pipeline](pipeline/)|Pipelines are used to chain multiple LLM steps together. |
 |**Memory** | [memory](memory/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. Supports memory in **Ram**|
 |**Document** | [document](document/)|Document is used to store a text |
-|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. Supports **TextLoader** and **DirectoryLoader**. |
+|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. Supports **TextLoader**, **DirectoryLoader**, **PDFToTextLoader** and **PubMedLoader** . |
 |**TextSplitters**| [textsplitter](textsplitter/)|TextSplitters are used to split text or Documents into multiple parts. Supports **RecursiveTextSplitter**.|
 |**Embedders** | [embedder](embedder/)|Embedders are used to embed text or Documents into embeddings. Supports **[OpenAI](https://openai.com)** |
 |**Indexes**| [index](index/)|Indexes are used to store embeddings and documents and to perform searches. Supports **SimpleVectorIndex** and **[Pinecone](https://pinecone.io)**|
@@ -34,7 +34,7 @@
 # Usage
 
 Please refer to the documentation at [lingoose.io](https://lingoose.io/docs/) to understand how to use LinGoose. If you prefer the [examples directory](examples/) contains a lot of examples.
-However, here is a _simple_ example of what **LinGoose** is capable of:
+However, here is a **powerful** example of what **LinGoose** is capable of:
 
 _Talk is cheap. Show me the [code](examples/)._ - Linus Torvalds
 
@@ -43,138 +43,26 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	"github.com/henomis/lingoose/chat"
-	"github.com/henomis/lingoose/decoder"
+	openaiembedder "github.com/henomis/lingoose/embedder/openai"
+	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/memory/ram"
+	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/pipeline"
-	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/textsplitter"
 )
 
 func main() {
-
-	cache := ram.New()
-
-	llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
-
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
-
-	prompt1, _ := prompt.NewPromptTemplate(
-		"You are a {{.mode}} {{.role}}",
-		map[string]string{
-			"mode": "professional",
-		},
-	)
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Write a {{.length}} joke about a {{.animal}}.",
-		map[string]string{
-			"length": "short",
-		},
-	)
-	chat := chat.New(
-		chat.PromptMessage{
-			Type:   chat.MessageTypeSystem,
-			Prompt: prompt1,
-		},
-		chat.PromptMessage{
-			Type:   chat.MessageTypeUser,
-			Prompt: prompt2,
-		},
-	)
-
-	llm1 := pipeline.Llm{
-		LlmEngine: llmChatOpenAI,
-		LlmMode:   pipeline.LlmModeChat,
-		Chat:      chat,
-	}
-	pipeStep1 := pipeline.NewStep(
-		"step1",
-		llm1,
-		nil,
-		cache,
-	)
-
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
-		map[string]string{
-			"command": "Put the joke in a JSON object with only one field called 'joke'. " +
-				"Do not add other json fields. Do not add other information.",
-		},
-	)
-	llm2 := pipeline.Llm{
-		LlmEngine: llmOpenAI,
-		LlmMode:   pipeline.LlmModeCompletion,
-		Prompt:    prompt3,
-	}
-	joke := struct {
-		Joke string `json:"joke"`
-	}{}
-	pipeStep2 := pipeline.NewStep(
-		"step2",
-		llm2,
-		decoder.NewJSONDecoder(&joke),
-		cache,
-	)
-
-	pipe := pipeline.New(pipeStep1, pipeStep2)
-
-	values := map[string]string{
-		"role":   "joke writer",
-		"animal": "goose",
-	}
-	response, err := pipe.Run(context.Background(), values)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Final output: %#v\n", response)
-	fmt.Println("---Memory---")
-	dump, _ := json.MarshalIndent(cache.All(), "", "  ")
-	fmt.Printf("%s\n", string(dump))
-
+	query := "Who is Mario?"
+	docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load()
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+	index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
+	similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, index.WithTopK(3))
+	pipeline.NewQATube(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities.ToDocuments())
 }
 ```
 
-Running this example will produce the following output:
-
-```
----SYSTEM---
-You are a professional joke writer
----USER---
-Write a short joke about a goose.
----AI---
-Why did the goose cross the playground? To get to the other slide!
----USER---
-Considering the following joke.
-
-joke:
-Why did the goose cross the playground? To get to the other slide!
-
-Put the joke in a JSON object with only one field called 'joke'. Do not add other json fields. Do not add other information.
----AI---
-{
-        "joke": "Why did the goose cross the playground? To get to the other slide!"
-}
-Final output: &struct { Joke string "json:\"joke\"" }{Joke:"Why did the goose cross the playground? To get to the other slide!"}
----Memory---
-{
-  "step1": {
-    "output": "Why did the goose cross the playground? To get to the other slide!"
-  },
-  "step2": {
-    "joke": "Why did the goose cross the playground? To get to the other slide!"
-  }
-}
-```
+This is the _famous_ 6-lines **lingoose** knowledge base chatbot. 🤖
 
 # Installation
 Be sure to have a working Go environment, then run the following command:
