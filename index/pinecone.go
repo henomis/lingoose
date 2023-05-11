@@ -200,7 +200,10 @@ func (p *Pinecone) createIndexIfRequired(ctx context.Context) error {
 	}
 
 	resp := &pineconeresponse.IndexList{}
-	p.pineconeClient.IndexList(ctx, &pineconerequest.IndexList{}, resp)
+	err := p.pineconeClient.IndexList(ctx, &pineconerequest.IndexList{}, resp)
+	if err != nil {
+		return err
+	}
 
 	for _, index := range resp.Indexes {
 		if index == p.indexName {
@@ -218,7 +221,7 @@ func (p *Pinecone) createIndexIfRequired(ctx context.Context) error {
 		PodType:   &p.createIndex.PodType,
 	}
 
-	err := p.pineconeClient.IndexCreate(ctx, req, &pineconeresponse.IndexCreate{})
+	err = p.pineconeClient.IndexCreate(ctx, req, &pineconeresponse.IndexCreate{})
 	if err != nil {
 		return err
 	}
