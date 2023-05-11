@@ -16,49 +16,48 @@ type template struct {
 	templateEngine *texttemplate.Template
 }
 
-func NewPromptTemplate(text string, input interface{}) (*template, error) {
-
-	if input == nil {
-		input = types.M{}
-	}
-
-	genericMap := types.M{}
-	err := mapstructure.Decode(input, &genericMap)
-	if err != nil {
-		return nil, ErrDecoding
-	}
-	input = genericMap
+func NewPromptTemplate(text string) *template {
 
 	promptTemplate := &template{
-		input:    input,
+		input:    types.M{},
 		template: text,
 	}
 
-	err = promptTemplate.initTemplateEngine()
-	if err != nil {
-		return nil, ErrTemplateEngine
-	}
+	return promptTemplate
+}
 
-	return promptTemplate, nil
+func (t *template) WithInputs(inputs interface{}) *template {
+	t.input = inputs
+	return t
 }
 
 // Format formats the prompt using the template engine and the provided inputs.
-func (p *template) Format(input types.M) error {
+func (t *template) Format(input types.M) error {
 
-	input, err := structToMap(input)
+	err := t.initTemplateEngine()
+	if err != nil {
+		return ErrTemplateEngine
+	}
+
+	err = t.decodeInput()
+	if err != nil {
+		return err
+	}
+
+	input, err = structToMap(input)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrDecoding, err)
 	}
 
-	overallMap := mergeMaps(p.input.(types.M), input)
+	overallMap := mergeMaps(t.input.(types.M), input)
 
 	var buffer bytes.Buffer
-	err = p.templateEngine.Execute(&buffer, overallMap)
+	err = t.templateEngine.Execute(&buffer, overallMap)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
 	}
 
-	p.value = buffer.String()
+	t.value = buffer.String()
 
 	return nil
 }
@@ -102,4 +101,15 @@ func structToMap(obj interface{}) (types.M, error) {
 	}
 
 	return genericMap, nil
+}
+
+func (t *template) decodeInput() error {
+	genericMap := types.M{}
+	err := mapstructure.Decode(t.input, &genericMap)
+	if err != nil {
+		return ErrDecoding
+	}
+	t.input = genericMap
+
+	return nil
 }

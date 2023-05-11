@@ -10,8 +10,8 @@ import (
 
 func TestChat_ToMessages(t *testing.T) {
 
-	prompt1, _ := prompt.NewPromptTemplate(
-		"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.",
+	prompt1 := prompt.NewPromptTemplate(
+		"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.").WithInputs(
 		types.M{
 			"input_language":  "English",
 			"output_language": "Spanish",

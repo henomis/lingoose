@@ -67,16 +67,13 @@ func main() {
 			"the provided context. Don't add any information that is not in the context. " +
 			"If you don't know the answer, just say 'I don't know'.",
 		)
-		userPrompt, err := prompt.NewPromptTemplate(
-			"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+		userPrompt := prompt.NewPromptTemplate(
+			"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 			types.M{
 				"query":   query,
 				"context": content,
 			},
 		)
-		if err != nil {
-			panic(err)
-		}
 
 		chat := chat.New(
 			chat.PromptMessage{

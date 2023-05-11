@@ -16,7 +16,7 @@ func main() {
 
 	cache := ram.New()
 
-	llmOpenAI := openai.NewCompletion()
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	llmOpenAI.WithCallback(func(response types.Meta) {
 		fmt.Printf("USAGE: %#v\n", response)
@@ -29,9 +29,9 @@ func main() {
 	}
 	tube1 := pipeline.NewTube(llm).WithMemory("step1", cache)
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-			"Translate it in {{.language}}!",
+	prompt2 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n" +
+			"Translate it in {{.language}}!").WithInputs(
 		map[string]string{
 			"language": "italian",
 		},
@@ -39,9 +39,9 @@ func main() {
 	llm.Prompt = prompt2
 	tube2 := pipeline.NewTube(llm)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
-			"\n\nTranslate it in {{.language}}!",
+	prompt3 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}" +
+			"\n\nTranslate it in {{.language}}!").WithInputs(
 		map[string]string{
 			"language": "spanish",
 		},
