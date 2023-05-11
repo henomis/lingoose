@@ -125,28 +125,31 @@ func (p *Pinecone) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
 
-	matches, err := p.similaritySearch(ctx, topK, query)
+	pineconeOptions := &options{
+		topK: defaultPineconeTopK,
+	}
+
+	for _, opt := range opts {
+		opt(pineconeOptions)
+	}
+
+	matches, err := p.similaritySearch(ctx, query, pineconeOptions.topK)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	searchResponses := buildSearchReponsesFromMatches(matches, p.includeContent)
 
-	return filterSearchResponses(searchResponses, topK), nil
+	return filterSearchResponses(searchResponses, pineconeOptions.topK), nil
 }
 
-func (p *Pinecone) similaritySearch(ctx context.Context, topK *int, query string) ([]pineconeresponse.QueryMatch, error) {
+func (p *Pinecone) similaritySearch(ctx context.Context, query string, topK int) ([]pineconeresponse.QueryMatch, error) {
 
 	err := p.getProjectID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
-	}
-
-	pineconeTopK := defaultPineconeTopK
-	if topK != nil {
-		pineconeTopK = *topK
 	}
 
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
@@ -161,7 +164,7 @@ func (p *Pinecone) similaritySearch(ctx context.Context, topK *int, query string
 		&pineconerequest.VectorQuery{
 			IndexName:       p.indexName,
 			ProjectID:       *p.projectID,
-			TopK:            int32(pineconeTopK),
+			TopK:            int32(topK),
 			Vector:          embeddings[0],
 			IncludeMetadata: &includeMetadata,
 			Namespace:       &p.namespace,
@@ -352,7 +355,7 @@ func buildVectorsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) []SearchResponse {
+func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) SearchResponses {
 	searchResponses := make([]SearchResponse, len(matches))
 
 	for i, match := range matches {

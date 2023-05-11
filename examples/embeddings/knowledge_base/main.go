@@ -48,8 +48,7 @@ func main() {
 			break
 		}
 
-		topk := 3
-		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, &topk)
+		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, index.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}
@@ -105,7 +104,7 @@ func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 
-	loader := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
+	loader := loader.NewPDFToTextLoader("./kb")
 
 	documents, err := loader.Load()
 	if err != nil {

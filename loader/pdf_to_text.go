@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrPdfToTextNotFound = fmt.Errorf("pdftotext not found")
+	defaultPdfToTextPath = "/usr/bin/pdftotext"
 )
 
 type pdfLoader struct {
@@ -22,11 +23,16 @@ type pdfLoader struct {
 	path          string
 }
 
-func NewPDFToTextLoader(pdfToTextPath, path string) *pdfLoader {
+func NewPDFToTextLoader(path string) *pdfLoader {
 	return &pdfLoader{
-		pdfToTextPath: pdfToTextPath,
+		pdfToTextPath: defaultPdfToTextPath,
 		path:          path,
 	}
+}
+
+func (p *pdfLoader) WithPDFToTextPath(pdfToTextPath string) *pdfLoader {
+	p.pdfToTextPath = pdfToTextPath
+	return p
 }
 
 func (p *pdfLoader) WithTextSplitter(textSplitter TextSplitter) *pdfLoader {
@@ -86,7 +92,7 @@ func (p *pdfLoader) loadDir() ([]document.Document, error) {
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
 
-			d, err := NewPDFToTextLoader(p.pdfToTextPath, path).loadFile()
+			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile()
 			if err != nil {
 				return err
 			}
