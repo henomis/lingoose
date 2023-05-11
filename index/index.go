@@ -37,18 +37,13 @@ type Embedder interface {
 	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
-func filterSearchResponses(searchResponses SearchResponses, topK *int) SearchResponses {
+func filterSearchResponses(searchResponses SearchResponses, topK int) SearchResponses {
 	//sort by similarity score
 	sort.Slice(searchResponses, func(i, j int) bool {
 		return searchResponses[i].Score > searchResponses[j].Score
 	})
 
-	//return topK
-	if topK == nil {
-		return searchResponses
-	}
-
-	maxTopK := *topK
+	maxTopK := topK
 	if maxTopK > len(searchResponses) {
 		maxTopK = len(searchResponses)
 	}

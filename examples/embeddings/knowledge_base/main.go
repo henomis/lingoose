@@ -48,8 +48,7 @@ func main() {
 			break
 		}
 
-		topk := 3
-		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, &topk)
+		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, index.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}

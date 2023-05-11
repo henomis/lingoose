@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	defaultBatchSize = 32
+	defaultSimpleVectorIndexBatchSize = 32
+
+	defaultSimpleVectorIndexTopK = 10
 )
 
 type simpleVectorIndexData struct {
@@ -44,9 +46,9 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 	s.data = []simpleVectorIndexData{}
 
 	documentIndex := 0
-	for i := 0; i < len(documents); i += defaultBatchSize {
+	for i := 0; i < len(documents); i += defaultSimpleVectorIndexBatchSize {
 
-		end := i + defaultBatchSize
+		end := i + defaultSimpleVectorIndexBatchSize
 		if end > len(documents) {
 			end = len(documents)
 		}
@@ -115,7 +117,15 @@ func (s *SimpleVectorIndex) IsEmpty() (bool, error) {
 	return len(s.data) == 0, nil
 }
 
-func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) (SearchResponses, error) {
+func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
+
+	sviOptions := &options{
+		topK: defaultSimpleVectorIndexTopK,
+	}
+
+	for _, opt := range opts {
+		opt(sviOptions)
+	}
 
 	err := s.load()
 	if err != nil {
@@ -142,7 +152,7 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 		}
 	}
 
-	return filterSearchResponses(searchResponses, topK), nil
+	return filterSearchResponses(searchResponses, sviOptions.topK), nil
 }
 
 func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
