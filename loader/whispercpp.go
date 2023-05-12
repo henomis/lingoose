@@ -22,7 +22,7 @@ type whisperCppLoader struct {
 	filename            string
 }
 
-var whisperSanitizeRegexp = regexp.MustCompile("\\[.*?\\]")
+var whisperSanitizeRegexp = regexp.MustCompile(`\[.*?\]`)
 
 func NewWhisperCppLoader(filename string) *whisperCppLoader {
 	return &whisperCppLoader{
