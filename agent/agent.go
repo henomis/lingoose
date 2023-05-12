@@ -29,7 +29,6 @@ type Tool interface {
 }
 
 type agent struct {
-	name              string
 	llm               Llm
 	tube              *pipeline.Tube
 	tools             map[string]Tool
@@ -38,22 +37,19 @@ type agent struct {
 	finalAnswerRegexp *regexp.Regexp
 }
 
-func New(name string, llm Llm, tools []Tool) (*agent, error) {
+func New(llm Llm, tools []Tool) (*agent, error) {
 
 	toolMap := make(map[string]Tool)
 	for _, tool := range tools {
 		toolMap[tool.Name()] = tool
 	}
 
-	prompt, err := prompt.NewPromptTemplate(
-		promptTemplate,
+	prompt := prompt.NewPromptTemplate(
+		promptTemplate).WithInputs(
 		types.M{
 			"tools": tools,
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	tubeLlm := pipeline.Llm{
 		LlmEngine: llm,
@@ -62,12 +58,7 @@ func New(name string, llm Llm, tools []Tool) (*agent, error) {
 		Chat:      nil,
 	}
 
-	tube := pipeline.NewTube(
-		"agent-"+name,
-		tubeLlm,
-		nil,
-		nil,
-	)
+	tube := pipeline.NewTube(tubeLlm)
 
 	actionRegexp, err := regexp.Compile(actionRegexExpr)
 	if err != nil {
@@ -85,7 +76,6 @@ func New(name string, llm Llm, tools []Tool) (*agent, error) {
 	}
 
 	return &agent{
-		name:              "agent-" + name,
 		llm:               llm,
 		tube:              tube,
 		tools:             toolMap,
@@ -152,15 +142,12 @@ func (a *agent) rebuildPrompt(text string) error {
 		tools = append(tools, tool)
 	}
 
-	prompt, err := prompt.NewPromptTemplate(
-		promptTemplate+text,
+	prompt := prompt.NewPromptTemplate(
+		promptTemplate + text).WithInputs(
 		types.M{
 			"tools": tools,
 		},
 	)
-	if err != nil {
-		return err
-	}
 
 	tubeLlm := pipeline.Llm{
 		LlmEngine: a.llm,
@@ -169,12 +156,7 @@ func (a *agent) rebuildPrompt(text string) error {
 		Chat:      nil,
 	}
 
-	a.tube = pipeline.NewTube(
-		a.name,
-		tubeLlm,
-		nil,
-		nil,
-	)
+	a.tube = pipeline.NewTube(tubeLlm)
 
 	return nil
 }

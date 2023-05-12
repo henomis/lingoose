@@ -23,7 +23,7 @@ const (
 func NewDuckDuckGo() *duckDuckGo {
 	return &duckDuckGo{
 		name:        "duckduckgo",
-		description: "A wrapper around DuckDuckGo Search. Useful for when you need to answer questions about current events. Input should be a search query.",
+		description: "A wrapper around DuckDuckGo Search. Useful for when you need to answer questions about current events. Input should be a single search query. Example: \"What is the capital of France?\"",
 	}
 }
 
