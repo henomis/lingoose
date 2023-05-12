@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"context"
+
 	"github.com/henomis/lingoose/document"
 
 	"os"
@@ -29,7 +31,7 @@ func (d *directoryLoader) WithTextSplitter(textSplitter TextSplitter) *directory
 	return d
 }
 
-func (d *directoryLoader) Load() ([]document.Document, error) {
+func (d *directoryLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	regExp, err := regexp.Compile(d.regExPathMatch)
 	if err != nil {
@@ -41,7 +43,7 @@ func (d *directoryLoader) Load() ([]document.Document, error) {
 	err = filepath.Walk(d.dirname, func(path string, info os.FileInfo, err error) error {
 		if err == nil && regExp.MatchString(info.Name()) {
 
-			d, err := NewTextLoader(path, nil).Load()
+			d, err := NewTextLoader(path, nil).Load(ctx)
 			if err != nil {
 				return err
 			}

@@ -1,19 +1,12 @@
 package loader
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/types"
-)
-
-var (
-	ErrorInternal = fmt.Errorf("internal error")
-)
-
-const (
-	SourceMetadataKey = "source"
 )
 
 type textLoader struct {
@@ -35,7 +28,7 @@ func (t *textLoader) WithTextSplitter(textSplitter TextSplitter) *textLoader {
 	return t
 }
 
-func (t *textLoader) Load() ([]document.Document, error) {
+func (t *textLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := t.validate()
 	if err != nil {
