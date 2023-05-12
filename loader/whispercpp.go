@@ -3,9 +3,7 @@ package loader
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
-	"os"
 	"os/exec"
 
 	"github.com/henomis/lingoose/document"
@@ -34,14 +32,14 @@ func NewWhisperCppLoader(filename string) *whisperCppLoader {
 	}
 }
 
-func (t *whisperCppLoader) WithTextSplitter(textSplitter TextSplitter) *whisperCppLoader {
-	t.loader.textSplitter = textSplitter
-	return t
+func (w *whisperCppLoader) WithTextSplitter(textSplitter TextSplitter) *whisperCppLoader {
+	w.loader.textSplitter = textSplitter
+	return w
 }
 
-func (t *whisperCppLoader) WithFfmpegPath(ffmpegPath string) *whisperCppLoader {
-	t.ffmpegPath = ffmpegPath
-	return t
+func (w *whisperCppLoader) WithFfmpegPath(ffmpegPath string) *whisperCppLoader {
+	w.ffmpegPath = ffmpegPath
+	return w
 }
 
 func (w *whisperCppLoader) WithWhisperCppPath(whisperCppPath string) *whisperCppLoader {
@@ -54,19 +52,19 @@ func (w *whisperCppLoader) WithModel(whisperCppModelPath string) *whisperCppLoad
 	return w
 }
 
-func (t *whisperCppLoader) WithArgs(whisperCppArgs []string) *whisperCppLoader {
-	t.whisperCppArgs = whisperCppArgs
-	return t
+func (w *whisperCppLoader) WithArgs(whisperCppArgs []string) *whisperCppLoader {
+	w.whisperCppArgs = whisperCppArgs
+	return w
 }
 
-func (t *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (w *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
 
-	err := t.validate()
+	err := isFile(w.filename)
 	if err != nil {
 		return nil, err
 	}
 
-	content, err := t.convertAndTrascribe(ctx)
+	content, err := w.convertAndTrascribe(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,45 +73,32 @@ func (t *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error
 		{
 			Content: content,
 			Metadata: types.Meta{
-				SourceMetadataKey: t.filename,
+				SourceMetadataKey: w.filename,
 			},
 		},
 	}
 
-	if t.loader.textSplitter != nil {
-		documents = t.loader.textSplitter.SplitDocuments(documents)
+	if w.loader.textSplitter != nil {
+		documents = w.loader.textSplitter.SplitDocuments(documents)
 	}
 
 	return documents, nil
 }
 
-func (t *whisperCppLoader) validate() error {
+func (w *whisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
 
-	fileStat, err := os.Stat(t.filename)
-	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
-	}
+	ffmpegArgs := []string{"-i", w.filename}
+	ffmpegArgs = append(ffmpegArgs, w.ffmpegArgs...)
+	ffmpeg := exec.CommandContext(ctx, w.ffmpegPath, ffmpegArgs...)
 
-	if fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
-	}
+	whisperCppArgs := []string{"-m", w.whisperCppModelPath, "-nt", "-f", "-"}
+	whisperCppArgs = append(w.whisperCppArgs, whisperCppArgs...)
 
-	return nil
-}
+	whispercpp := exec.CommandContext(ctx, w.whisperCppPath, whisperCppArgs...)
 
-func (whi *whisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
-
-	ffmpegArgs := []string{"-i", whi.filename}
-	ffmpegArgs = append(ffmpegArgs, whi.ffmpegArgs...)
-	ffmpeg := exec.CommandContext(ctx, whi.ffmpegPath, ffmpegArgs...)
-
-	whisperCppArgs := []string{"-m", whi.whisperCppModelPath, "-nt", "-f", "-"}
-	whi.whisperCppArgs = append(whi.whisperCppArgs, whisperCppArgs...)
-	whispercpp := exec.CommandContext(ctx, whi.whisperCppPath, whi.whisperCppArgs...)
-
-	r, w := io.Pipe()
-	ffmpeg.Stdout = w
-	whispercpp.Stdin = r
+	pipeReader, pipeWriter := io.Pipe()
+	ffmpeg.Stdout = pipeWriter
+	whispercpp.Stdin = pipeReader
 
 	var out bytes.Buffer
 	whispercpp.Stdout = &out
@@ -133,7 +118,7 @@ func (whi *whisperCppLoader) convertAndTrascribe(ctx context.Context) (string, e
 		return "", err
 	}
 
-	err = w.Close()
+	err = pipeWriter.Close()
 	if err != nil {
 		return "", err
 	}
