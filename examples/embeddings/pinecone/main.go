@@ -87,7 +87,7 @@ func main() {
 
 func ingestData(pineconeIndex *index.Pinecone) error {
 
-	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
 	}

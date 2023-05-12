@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,13 +38,13 @@ func (p *pubMedLoader) WithTextSplitter(textSplitter TextSplitter) *pubMedLoader
 	return p
 }
 
-func (p *pubMedLoader) Load() ([]document.Document, error) {
+func (p *pubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	documens := make([]document.Document, len(p.pubMedIDs))
 
 	for i, pubMedID := range p.pubMedIDs {
 
-		doc, err := p.load(pubMedID)
+		doc, err := p.load(ctx, pubMedID)
 		if err != nil {
 			return nil, err
 		}
@@ -58,10 +59,19 @@ func (p *pubMedLoader) Load() ([]document.Document, error) {
 	return documens, nil
 }
 
-func (p *pubMedLoader) load(pubMedID string) (*document.Document, error) {
+func (p *pubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {
 
 	url := fmt.Sprintf(pubMedBioCURLFormat, pubMedID)
-	resp, err := http.Get(url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

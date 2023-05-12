@@ -103,7 +103,7 @@ func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 
 	loader := loader.NewPDFToTextLoader("./kb")
 
-	documents, err := loader.Load()
+	documents, err := loader.Load(context.Background())
 	if err != nil {
 		return err
 	}

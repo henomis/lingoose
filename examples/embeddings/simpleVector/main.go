@@ -74,7 +74,7 @@ func ingestData(openaiEmbedder index.Embedder) error {
 
 	fmt.Printf("Ingesting data...")
 
-	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
 	}

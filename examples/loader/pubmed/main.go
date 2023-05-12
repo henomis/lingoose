@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/henomis/lingoose/loader"
@@ -10,7 +11,7 @@ func main() {
 
 	p := loader.NewPubmedLoader([]string{"33024307", "32265180"})
 
-	docs, err := p.Load()
+	docs, err := p.Load(context.Background())
 	if err != nil {
 		panic(err)
 	}

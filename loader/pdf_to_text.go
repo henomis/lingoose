@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -40,7 +41,7 @@ func (p *pdfLoader) WithTextSplitter(textSplitter TextSplitter) *pdfLoader {
 	return p
 }
 
-func (p *pdfLoader) Load() ([]document.Document, error) {
+func (p *pdfLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	_, err := os.Stat(p.pdfToTextPath)
 	if err != nil {
@@ -54,9 +55,9 @@ func (p *pdfLoader) Load() ([]document.Document, error) {
 
 	var documents []document.Document
 	if fileInfo.IsDir() {
-		documents, err = p.loadDir()
+		documents, err = p.loadDir(ctx)
 	} else {
-		documents, err = p.loadFile()
+		documents, err = p.loadFile(ctx)
 	}
 	if err != nil {
 		return nil, err
@@ -69,8 +70,8 @@ func (p *pdfLoader) Load() ([]document.Document, error) {
 	return documents, nil
 }
 
-func (p *pdfLoader) loadFile() ([]document.Document, error) {
-	out, err := exec.Command(p.pdfToTextPath, p.path, "-").Output()
+func (p *pdfLoader) loadFile(ctx context.Context) ([]document.Document, error) {
+	out, err := exec.CommandContext(ctx, p.pdfToTextPath, p.path, "-").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -86,13 +87,13 @@ func (p *pdfLoader) loadFile() ([]document.Document, error) {
 	}, nil
 }
 
-func (p *pdfLoader) loadDir() ([]document.Document, error) {
+func (p *pdfLoader) loadDir(ctx context.Context) ([]document.Document, error) {
 	docs := []document.Document{}
 
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
 
-			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile()
+			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
 			if err != nil {
 				return err
 			}
