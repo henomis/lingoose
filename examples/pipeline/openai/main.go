@@ -16,56 +16,38 @@ func main() {
 
 	cache := ram.New()
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
-	llmOpenAI.SetCallback(func(response types.Meta) {
+	llmOpenAI.WithCallback(func(response types.Meta) {
 		fmt.Printf("USAGE: %#v\n", response)
-	})
+	}).WithVerbose(true)
 
 	llm := pipeline.Llm{
 		LlmEngine: llmOpenAI,
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	tube1 := pipeline.NewTube(
-		"step1",
-		llm,
-		nil,
-		cache,
-	)
+	tube1 := pipeline.NewTube(llm).WithMemory("step1", cache)
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-			"Translate it in {{.language}}!",
+	prompt2 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n" +
+			"Translate it in {{.language}}!").WithInputs(
 		map[string]string{
 			"language": "italian",
 		},
 	)
 	llm.Prompt = prompt2
-	tube2 := pipeline.NewTube(
-		"step2",
-		llm,
-		nil,
-		nil,
-	)
+	tube2 := pipeline.NewTube(llm)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}"+
-			"\n\nTranslate it in {{.language}}!",
+	prompt3 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.step1.output}}" +
+			"\n\nTranslate it in {{.language}}!").WithInputs(
 		map[string]string{
 			"language": "spanish",
 		},
 	)
 	llm.Prompt = prompt3
-	step3 := pipeline.NewTube(
-		"step3",
-		llm,
-		nil,
-		cache,
-	)
+	step3 := pipeline.NewTube(llm).WithMemory("step3", cache)
 
 	pipeLine := pipeline.New(
 		tube1,

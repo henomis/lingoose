@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	defaultBatchSize = 32
+	defaultSimpleVectorIndexBatchSize = 32
+
+	defaultSimpleVectorIndexTopK = 10
 )
 
 type simpleVectorIndexData struct {
@@ -21,40 +23,32 @@ type simpleVectorIndexData struct {
 	Embedding embedder.Embedding `json:"embedding"`
 }
 
-type simpleVectorIndex struct {
+type SimpleVectorIndex struct {
 	data       []simpleVectorIndexData
 	outputPath string
 	name       string
 	embedder   Embedder
 }
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) (*simpleVectorIndex, error) {
-	simpleVectorIndex := &simpleVectorIndex{
+func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
+	simpleVectorIndex := &SimpleVectorIndex{
 		data:       []simpleVectorIndexData{},
 		outputPath: outputPath,
 		name:       name,
 		embedder:   embedder,
 	}
 
-	_, err := os.Stat(simpleVectorIndex.database())
-	if err == nil {
-		err = simpleVectorIndex.load()
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", ErrInternal, err)
-		}
-	}
-
-	return simpleVectorIndex, nil
+	return simpleVectorIndex
 }
 
-func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
 	s.data = []simpleVectorIndexData{}
 
 	documentIndex := 0
-	for i := 0; i < len(documents); i += defaultBatchSize {
+	for i := 0; i < len(documents); i += defaultSimpleVectorIndexBatchSize {
 
-		end := i + defaultBatchSize
+		end := i + defaultSimpleVectorIndexBatchSize
 		if end > len(documents) {
 			end = len(documents)
 		}
@@ -89,7 +83,7 @@ func (s *simpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 	return nil
 }
 
-func (s simpleVectorIndex) save() error {
+func (s SimpleVectorIndex) save() error {
 
 	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
@@ -99,7 +93,7 @@ func (s simpleVectorIndex) save() error {
 	return os.WriteFile(s.database(), jsonContent, 0644)
 }
 
-func (s *simpleVectorIndex) load() error {
+func (s *SimpleVectorIndex) load() error {
 
 	content, err := os.ReadFile(s.database())
 	if err != nil {
@@ -109,15 +103,29 @@ func (s *simpleVectorIndex) load() error {
 	return json.Unmarshal(content, &s.data)
 }
 
-func (s *simpleVectorIndex) database() string {
+func (s *SimpleVectorIndex) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *simpleVectorIndex) IsEmpty() (bool, error) {
+func (s *SimpleVectorIndex) IsEmpty() (bool, error) {
+
+	err := s.load()
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
 	return len(s.data) == 0, nil
 }
 
-func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
+
+	sviOptions := &options{
+		topK: defaultSimpleVectorIndexTopK,
+	}
+
+	for _, opt := range opts {
+		opt(sviOptions)
+	}
 
 	err := s.load()
 	if err != nil {
@@ -144,10 +152,10 @@ func (s *simpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 		}
 	}
 
-	return filterSearchResponses(searchResponses, topK), nil
+	return filterSearchResponses(searchResponses, sviOptions.topK), nil
 }
 
-func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
+func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
 	dotProduct := float64(0.0)
 	normA := float64(0.0)
 	normB := float64(0.0)
@@ -165,7 +173,7 @@ func (s *simpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Em
 	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-func (s *simpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
+func (s *SimpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
 
 	scores := make([]float64, len(s.data))
 

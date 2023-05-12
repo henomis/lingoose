@@ -13,42 +13,64 @@ import (
 
 var (
 	ErrPdfToTextNotFound = fmt.Errorf("pdftotext not found")
+	defaultPdfToTextPath = "/usr/bin/pdftotext"
 )
 
 type pdfLoader struct {
-	pdftotext string
-	path      string
+	loader loader
+
+	pdfToTextPath string
+	path          string
 }
 
-func NewPDFToTextLoader(pdfToTextPath, path string) (*pdfLoader, error) {
-
-	_, err := os.Stat(pdfToTextPath)
-	if err != nil {
-		return nil, ErrPdfToTextNotFound
-	}
-
+func NewPDFToTextLoader(path string) *pdfLoader {
 	return &pdfLoader{
-		pdftotext: pdfToTextPath,
-		path:      path,
-	}, nil
+		pdfToTextPath: defaultPdfToTextPath,
+		path:          path,
+	}
+}
+
+func (p *pdfLoader) WithPDFToTextPath(pdfToTextPath string) *pdfLoader {
+	p.pdfToTextPath = pdfToTextPath
+	return p
+}
+
+func (p *pdfLoader) WithTextSplitter(textSplitter TextSplitter) *pdfLoader {
+	p.loader.textSplitter = textSplitter
+	return p
 }
 
 func (p *pdfLoader) Load() ([]document.Document, error) {
+
+	_, err := os.Stat(p.pdfToTextPath)
+	if err != nil {
+		return nil, ErrPdfToTextNotFound
+	}
 
 	fileInfo, err := os.Stat(p.path)
 	if err != nil {
 		return nil, err
 	}
 
+	var documents []document.Document
 	if fileInfo.IsDir() {
-		return p.loadDir()
+		documents, err = p.loadDir()
+	} else {
+		documents, err = p.loadFile()
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	return p.loadFile()
+	if p.loader.textSplitter != nil {
+		documents = p.loader.textSplitter.SplitDocuments(documents)
+	}
+
+	return documents, nil
 }
 
 func (p *pdfLoader) loadFile() ([]document.Document, error) {
-	out, err := exec.Command(p.pdftotext, p.path, "-").Output()
+	out, err := exec.Command(p.pdfToTextPath, p.path, "-").Output()
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +92,7 @@ func (p *pdfLoader) loadDir() ([]document.Document, error) {
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
 
-			l, err := NewPDFToTextLoader(p.pdftotext, path)
-			if err != nil {
-				return err
-			}
-
-			d, err := l.loadFile()
+			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile()
 			if err != nil {
 				return err
 			}

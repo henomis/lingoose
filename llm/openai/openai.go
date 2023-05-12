@@ -49,16 +49,14 @@ type openAI struct {
 	model        Model
 	temperature  float32
 	maxTokens    int
+	stop         []string
 	verbose      bool
 	callback     OpenAICallback
 }
 
-func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI, error) {
+func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY not set")
-	}
 
 	return &openAI{
 		openAIClient: openai.NewClient(openAIKey),
@@ -66,7 +64,60 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) (*openAI
 		temperature:  temperature,
 		maxTokens:    maxTokens,
 		verbose:      verbose,
-	}, nil
+	}
+}
+
+func (o *openAI) WithModel(model Model) *openAI {
+	o.model = model
+	return o
+}
+
+func (o *openAI) WithTemperature(temperature float32) *openAI {
+	o.temperature = temperature
+	return o
+}
+
+func (o *openAI) WithMaxTokens(maxTokens int) *openAI {
+	o.maxTokens = maxTokens
+	return o
+}
+
+func (o *openAI) WithCallback(callback OpenAICallback) *openAI {
+	o.callback = callback
+	return o
+}
+
+func (o *openAI) WithStop(stop []string) *openAI {
+	o.stop = stop
+	return o
+}
+
+func (o *openAI) WithAPIKey(apiKey string) *openAI {
+	o.openAIClient = openai.NewClient(apiKey)
+	return o
+}
+
+func (o *openAI) WithVerbose(verbose bool) *openAI {
+	o.verbose = verbose
+	return o
+}
+
+func NewCompletion() *openAI {
+	return New(
+		GPT3TextDavinci003,
+		DefaultOpenAITemperature,
+		DefaultOpenAIMaxTokens,
+		false,
+	)
+}
+
+func NewChat() *openAI {
+	return New(
+		GPT3Dot5Turbo,
+		DefaultOpenAITemperature,
+		DefaultOpenAIMaxTokens,
+		false,
+	)
 }
 
 func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) {
@@ -80,7 +131,7 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 			Temperature: o.temperature,
 			N:           DefaultOpenAINumResults,
 			TopP:        DefaultOpenAITopP,
-			Stop:        []string{"Observation:"},
+			Stop:        o.stop,
 		},
 	)
 
@@ -98,8 +149,7 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 
 	output := strings.TrimSpace(response.Choices[0].Text)
 	if o.verbose {
-		fmt.Printf("---USER---\n%s\n", prompt)
-		fmt.Printf("---AI---\n%s\n", output)
+		debugCompletion(prompt, output)
 	}
 
 	return output, nil
@@ -107,10 +157,64 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 
 func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
-	var messages []openai.ChatCompletionMessage
-	promptMessages, err := prompt.ToMessages()
+	messages, err := buildMessages(prompt)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+	}
+
+	response, err := o.openAIClient.CreateChatCompletion(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model:       string(o.model),
+			Messages:    messages,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+	}
+
+	if o.callback != nil {
+		o.setMetadata(response.Usage)
+	}
+
+	if len(response.Choices) == 0 {
+		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
+	}
+
+	content := response.Choices[0].Message.Content
+
+	if o.verbose {
+		debugChat(prompt, content)
+	}
+
+	return content, nil
+}
+
+func (o *openAI) setMetadata(usage openai.Usage) {
+
+	callbackMetadata := make(types.Meta)
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.callback(callbackMetadata)
+}
+
+func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
+
+	var messages []openai.ChatCompletionMessage
+
+	promptMessages, err := prompt.ToMessages()
+	if err != nil {
+		return nil, err
 	}
 
 	for _, message := range promptMessages {
@@ -132,60 +236,29 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		}
 	}
 
-	response, err := o.openAIClient.CreateChatCompletion(
-		ctx,
-		openai.ChatCompletionRequest{
-			Model:       string(o.model),
-			Messages:    messages,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-		},
-	)
-
-	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
-	}
-
-	if o.callback != nil {
-		o.setMetadata(response.Usage)
-	}
-
-	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
-	}
-
-	content := response.Choices[0].Message.Content
-
-	if o.verbose {
-		for _, message := range promptMessages {
-			if message.Type == chat.MessageTypeUser {
-				fmt.Printf("---USER---\n%s\n", message.Content)
-			} else if message.Type == chat.MessageTypeAssistant {
-				fmt.Printf("---AI---\n%s\n", message.Content)
-			} else if message.Type == chat.MessageTypeSystem {
-				fmt.Printf("---SYSTEM---\n%s\n", message.Content)
-			}
-		}
-		fmt.Printf("---AI---\n%s\n", content)
-	}
-
-	return content, nil
+	return messages, nil
 }
 
-func (o *openAI) SetCallback(callback OpenAICallback) {
-	o.callback = callback
-}
+func debugChat(prompt *chat.Chat, content string) {
 
-func (o *openAI) setMetadata(usage openai.Usage) {
-
-	callbackMetadata := make(types.Meta)
-
-	err := mapstructure.Decode(usage, &callbackMetadata)
+	promptMessages, err := prompt.ToMessages()
 	if err != nil {
 		return
 	}
 
-	o.callback(callbackMetadata)
+	for _, message := range promptMessages {
+		if message.Type == chat.MessageTypeUser {
+			fmt.Printf("---USER---\n%s\n", message.Content)
+		} else if message.Type == chat.MessageTypeAssistant {
+			fmt.Printf("---AI---\n%s\n", message.Content)
+		} else if message.Type == chat.MessageTypeSystem {
+			fmt.Printf("---SYSTEM---\n%s\n", message.Content)
+		}
+	}
+	fmt.Printf("---AI---\n%s\n", content)
+}
+
+func debugCompletion(prompt string, content string) {
+	fmt.Printf("---USER---\n%s\n", prompt)
+	fmt.Printf("---AI---\n%s\n", content)
 }

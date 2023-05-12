@@ -22,34 +22,19 @@ const (
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
-	if err != nil {
-		panic(err)
-	}
-
+	docsVectorIndex := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err = ingestData(openaiEmbedder)
+		err := ingestData(docsVectorIndex)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	llmOpenAI, err := openai.New(
-		openai.GPT3Dot5Turbo,
-		openai.DefaultOpenAITemperature,
-		openai.DefaultOpenAIMaxTokens,
-		false,
-	)
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewChat()
 
 	fmt.Println("Enter a query to search the knowledge base. Type 'quit' to exit.")
 	query := ""
@@ -63,8 +48,7 @@ func main() {
 			break
 		}
 
-		topk := 3
-		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, &topk)
+		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, index.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}
@@ -83,16 +67,13 @@ func main() {
 			"the provided context. Don't add any information that is not in the context. " +
 			"If you don't know the answer, just say 'I don't know'.",
 		)
-		userPrompt, err := prompt.NewPromptTemplate(
-			"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+		userPrompt := prompt.NewPromptTemplate(
+			"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 			types.M{
 				"query":   query,
 				"context": content,
 			},
 		)
-		if err != nil {
-			panic(err)
-		}
 
 		chat := chat.New(
 			chat.PromptMessage{
@@ -116,26 +97,18 @@ func main() {
 
 }
 
-func ingestData(openaiEmbedder index.Embedder) error {
+func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
-	if err != nil {
-		return err
-	}
-
-	loader, err := loader.NewPDFToTextLoader("/usr/bin/pdftotext", "./kb")
-	if err != nil {
-		return err
-	}
+	loader := loader.NewPDFToTextLoader("./kb")
 
 	documents, err := loader.Load()
 	if err != nil {
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 200, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 

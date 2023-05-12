@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
@@ -19,35 +20,37 @@ const (
 	defaultBatchUpsertSize = 32
 )
 
-type pinecone struct {
+type Pinecone struct {
 	pineconeClient  *pineconego.PineconeGo
 	indexName       string
-	projectID       string
+	projectID       *string
 	namespace       string
 	embedder        Embedder
 	includeContent  bool
 	batchUpsertSize int
+
+	createIndex *PineconeCreateIndexOptions
+}
+
+type PineconeCreateIndexOptions struct {
+	Dimension int
+	Replicas  int
+	Metric    string
+	PodType   string
 }
 
 type PineconeOptions struct {
 	IndexName       string
-	ProjectID       string
 	Namespace       string
 	IncludeContent  bool
 	BatchUpsertSize *int
+	CreateIndex     *PineconeCreateIndexOptions
 }
 
-func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) {
+func NewPinecone(options PineconeOptions, embedder Embedder) *Pinecone {
 
 	apiKey := os.Getenv("PINECONE_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("PINECONE_API_KEY is not set")
-	}
-
 	environment := os.Getenv("PINECONE_ENVIRONMENT")
-	if environment == "" {
-		return nil, fmt.Errorf("PINECONE_ENVIRONMENT is not set")
-	}
 
 	pineconeClient := pineconego.New(environment, apiKey)
 
@@ -56,36 +59,57 @@ func NewPinecone(options PineconeOptions, embedder Embedder) (*pinecone, error) 
 		batchUpsertSize = *options.BatchUpsertSize
 	}
 
-	return &pinecone{
+	return &Pinecone{
 		pineconeClient:  pineconeClient,
 		indexName:       options.IndexName,
-		projectID:       options.ProjectID,
 		embedder:        embedder,
 		namespace:       options.Namespace,
 		includeContent:  options.IncludeContent,
 		batchUpsertSize: batchUpsertSize,
-	}, nil
+		createIndex:     options.CreateIndex,
+	}
 }
 
-func (s *pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
-	err := s.batchUpsert(ctx, documents)
+func (p *Pinecone) WithAPIKeyAndEnvironment(apiKey, environment string) *Pinecone {
+	p.pineconeClient = pineconego.New(environment, apiKey)
+	return p
+}
+
+func (p *Pinecone) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+
+	err := p.createIndexIfRequired(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
+	err = p.batchUpsert(ctx, documents)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 	return nil
 }
 
-func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
+func (p *Pinecone) IsEmpty(ctx context.Context) (bool, error) {
+
+	err := p.createIndexIfRequired(ctx)
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
+	err = p.getProjectID(ctx)
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
 
 	req := &pineconerequest.VectorDescribeIndexStats{
 		IndexName: p.indexName,
-		ProjectID: p.projectID,
+		ProjectID: *p.projectID,
 	}
 	res := &pineconeresponse.VectorDescribeIndexStats{}
 
-	err := p.pineconeClient.VectorDescribeIndexStats(ctx, req, res)
+	err = p.pineconeClient.VectorDescribeIndexStats(ctx, req, res)
 	if err != nil {
-		return false, fmt.Errorf("%s: %w", ErrInternal, err)
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	namespace, ok := res.Namespaces[p.namespace]
@@ -101,22 +125,31 @@ func (p *pinecone) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (p *pinecone) SimilaritySearch(ctx context.Context, query string, topK *int) ([]SearchResponse, error) {
+func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
 
-	matches, err := p.similaritySearch(ctx, topK, query)
+	pineconeOptions := &options{
+		topK: defaultPineconeTopK,
+	}
+
+	for _, opt := range opts {
+		opt(pineconeOptions)
+	}
+
+	matches, err := p.similaritySearch(ctx, query, pineconeOptions.topK)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	searchResponses := buildSearchReponsesFromMatches(matches, p.includeContent)
 
-	return filterSearchResponses(searchResponses, topK), nil
+	return filterSearchResponses(searchResponses, pineconeOptions.topK), nil
 }
 
-func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string) ([]pineconeresponse.QueryMatch, error) {
-	pineconeTopK := defaultPineconeTopK
-	if topK != nil {
-		pineconeTopK = *topK
+func (p *Pinecone) similaritySearch(ctx context.Context, query string, topK int) ([]pineconeresponse.QueryMatch, error) {
+
+	err := p.getProjectID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
@@ -130,8 +163,8 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 		ctx,
 		&pineconerequest.VectorQuery{
 			IndexName:       p.indexName,
-			ProjectID:       p.projectID,
-			TopK:            int32(pineconeTopK),
+			ProjectID:       *p.projectID,
+			TopK:            int32(topK),
 			Vector:          embeddings[0],
 			IncludeMetadata: &includeMetadata,
 			Namespace:       &p.namespace,
@@ -145,7 +178,80 @@ func (p *pinecone) similaritySearch(ctx context.Context, topK *int, query string
 	return res.Matches, nil
 }
 
-func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
+func (p *Pinecone) getProjectID(ctx context.Context) error {
+
+	if p.projectID != nil {
+		return nil
+	}
+
+	whoamiResp := &pineconeresponse.Whoami{}
+
+	err := p.pineconeClient.Whoami(ctx, &pineconerequest.Whoami{}, whoamiResp)
+	if err != nil {
+		return err
+	}
+
+	p.projectID = &whoamiResp.ProjectID
+
+	return nil
+}
+
+func (p *Pinecone) createIndexIfRequired(ctx context.Context) error {
+
+	if p.createIndex == nil {
+		return nil
+	}
+
+	resp := &pineconeresponse.IndexList{}
+	err := p.pineconeClient.IndexList(ctx, &pineconerequest.IndexList{}, resp)
+	if err != nil {
+		return err
+	}
+
+	for _, index := range resp.Indexes {
+		if index == p.indexName {
+			return nil
+		}
+	}
+
+	metric := pineconerequest.Metric(p.createIndex.Metric)
+
+	req := &pineconerequest.IndexCreate{
+		Name:      p.indexName,
+		Dimension: p.createIndex.Dimension,
+		Replicas:  &p.createIndex.Replicas,
+		Metric:    &metric,
+		PodType:   &p.createIndex.PodType,
+	}
+
+	err = p.pineconeClient.IndexCreate(ctx, req, &pineconeresponse.IndexCreate{})
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+
+			describe := &pineconeresponse.IndexDescribe{}
+			err = p.pineconeClient.IndexDescribe(ctx, &pineconerequest.IndexDescribe{IndexName: p.indexName}, describe)
+			if err != nil {
+				return err
+			}
+
+			if describe.Status.Ready {
+				return nil
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+}
+
+func (p *Pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
 
 	for i := 0; i < len(documents); i += defaultBatchUpsertSize {
 
@@ -178,17 +284,22 @@ func (p *pinecone) batchUpsert(ctx context.Context, documents []document.Documen
 	return nil
 }
 
-func (p *pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
+func (p *Pinecone) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
+
+	err := p.getProjectID(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrInternal, err)
+	}
 
 	req := &pineconerequest.VectorUpsert{
 		IndexName: p.indexName,
-		ProjectID: p.projectID,
+		ProjectID: *p.projectID,
 		Vectors:   vectors,
 		Namespace: p.namespace,
 	}
 	res := &pineconeresponse.VectorUpsert{}
 
-	err := p.pineconeClient.VectorUpsert(ctx, req, res)
+	err = p.pineconeClient.VectorUpsert(ctx, req, res)
 	if err != nil {
 		return err
 	}
@@ -244,7 +355,7 @@ func buildVectorsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) []SearchResponse {
+func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) SearchResponses {
 	searchResponses := make([]SearchResponse, len(matches))
 
 	for i, match := range matches {

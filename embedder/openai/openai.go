@@ -2,8 +2,8 @@ package openaiembedder
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/henomis/lingoose/embedder"
@@ -62,32 +62,81 @@ type openAIEmbedder struct {
 	model        Model
 }
 
-func New(model Model) (*openAIEmbedder, error) {
+func New(model Model) *openAIEmbedder {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		return nil, fmt.Errorf("OPENAI_API_KEY not set")
-	}
 
 	return &openAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
-	}, nil
+	}
+}
+
+func (o *openAIEmbedder) WithAPIKey(apiKey string) *openAIEmbedder {
+	o.openAIClient = openai.NewClient(apiKey)
+	return o
 }
 
 func (o *openAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	maxTokens := o.getMaxTokens()
 
-	var embeddings []embedder.Embedding
-	for _, text := range texts {
-		embedding, err := o.safeEmbed(ctx, text, maxTokens)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", embedder.ErrCreateEmbedding, err)
-		}
-
-		embeddings = append(embeddings, embedding)
+	embeddings, err := o.concurrentEmbed(ctx, texts, maxTokens)
+	if err != nil {
+		return nil, err
 	}
 
 	return embeddings, nil
+}
+
+func (o *openAIEmbedder) concurrentEmbed(ctx context.Context, texts []string, maxTokens int) ([]embedder.Embedding, error) {
+
+	type indexedEmbeddings struct {
+		index     int
+		embedding embedder.Embedding
+		err       error
+	}
+
+	var embeddings []indexedEmbeddings
+	embeddingsChan := make(chan indexedEmbeddings, len(texts))
+
+	for i, text := range texts {
+
+		go func(ctx context.Context, i int, text string, maxTokens int) {
+			embedding, err := o.safeEmbed(ctx, text, maxTokens)
+
+			embeddingsChan <- indexedEmbeddings{
+				index:     i,
+				embedding: embedding,
+				err:       err,
+			}
+
+		}(ctx, i, text, maxTokens)
+
+	}
+
+	var err error = nil
+	for i := 0; i < len(texts); i++ {
+		embedding := <-embeddingsChan
+		if embedding.err != nil {
+			err = embedding.err
+			continue
+		}
+		embeddings = append(embeddings, embedding)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	sort.Slice(embeddings, func(i, j int) bool {
+		return embeddings[i].index < embeddings[j].index
+	})
+
+	var result []embedder.Embedding
+	for _, embedding := range embeddings {
+		result = append(result, embedding.embedding)
+	}
+
+	return result, nil
 }
 
 func (o *openAIEmbedder) safeEmbed(ctx context.Context, text string, maxTokens int) (embedder.Embedding, error) {

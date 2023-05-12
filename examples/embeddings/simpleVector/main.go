@@ -14,31 +14,23 @@ import (
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
-	if err != nil {
-		panic(err)
-	}
-
+	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err = ingestData(openaiEmbedder)
+		err := ingestData(openaiEmbedder)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	query := "Describe within a paragraph what is the purpose of the NATO Alliance."
-	topk := 3
 	similarities, err := docsVectorIndex.SimilaritySearch(
 		context.Background(),
 		query,
-		&topk,
+		index.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
@@ -56,58 +48,42 @@ func main() {
 		documentContext += similarity.Document.Content + "\n\n"
 	}
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
-
-	prompt1, err := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+	llmOpenAI := openai.NewCompletion()
+	prompt1 := prompt.NewPromptTemplate(
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
 			"query":   query,
 			"context": documentContext,
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	err = prompt1.Format(nil)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = llmOpenAI.Completion(context.Background(), prompt1.String())
-
+	output, err := llmOpenAI.Completion(context.Background(), prompt1.String())
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println(output)
 }
 
 func ingestData(openaiEmbedder index.Embedder) error {
 
 	fmt.Printf("Ingesting data...")
 
-	docsVectorIndex, err := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
 	if err != nil {
 		return err
 	}
 
-	loader, err := loader.NewDirectoryLoader(".", ".txt")
-	if err != nil {
-		return err
-	}
-
-	documents, err := loader.Load()
-	if err != nil {
-		return err
-	}
-
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
-	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+	err = index.NewSimpleVectorIndex("docs", ".", openaiEmbedder).LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}

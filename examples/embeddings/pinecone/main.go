@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
@@ -11,49 +10,26 @@ import (
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
-	pineconego "github.com/henomis/pinecone-go"
-	pineconerequest "github.com/henomis/pinecone-go/request"
-	pineconeresponse "github.com/henomis/pinecone-go/response"
 )
-
-var pineconeClient *pineconego.PineconeGo
 
 func main() {
 
-	openaiEmbedder, err := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	if err != nil {
-		panic(err)
-	}
+	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
-	if pineconeApiKey == "" {
-		panic("PINECONE_API_KEY is not set")
-	}
-
-	pineconeEnvironment := os.Getenv("PINECONE_ENVIRONMENT")
-	if pineconeEnvironment == "" {
-		panic("PINECONE_ENVIRONMENT is not set")
-	}
-
-	pineconeClient = pineconego.New(pineconeEnvironment, pineconeApiKey)
-
-	projectID, err := getProjectID(pineconeEnvironment, pineconeApiKey)
-	if err != nil {
-		panic(err)
-	}
-
-	pineconeIndex, err := index.NewPinecone(
+	pineconeIndex := index.NewPinecone(
 		index.PineconeOptions{
 			IndexName:      "test",
-			ProjectID:      projectID,
 			Namespace:      "test-namespace",
 			IncludeContent: true,
+			CreateIndex: &index.PineconeCreateIndexOptions{
+				Dimension: 1536,
+				Replicas:  1,
+				Metric:    "cosine",
+				PodType:   "p1.x1",
+			},
 		},
 		openaiEmbedder,
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	indexIsEmpty, err := pineconeIndex.IsEmpty(context.Background())
 	if err != nil {
@@ -61,46 +37,41 @@ func main() {
 	}
 
 	if indexIsEmpty {
-		err = ingestData(projectID, openaiEmbedder)
+		err = ingestData(pineconeIndex)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	topk := 3
 	similarities, err := pineconeIndex.SimilaritySearch(
 		context.Background(),
 		query,
-		&topk,
+		index.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
 	}
 
+	content := ""
 	for _, similarity := range similarities {
 		fmt.Printf("Similarity: %f\n", similarity.Score)
 		fmt.Printf("Document: %s\n", similarity.Document.Content)
 		fmt.Println("Metadata: ", similarity.Document.Metadata)
 		fmt.Println("ID: ", similarity.ID)
 		fmt.Println("----------")
+		content += similarity.Document.Content + "\n"
 	}
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
-	prompt1, err := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}",
+	prompt1 := prompt.NewPromptTemplate(
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
 			"query":   query,
-			"context": similarities[0].Document.Content,
+			"context": content,
 		},
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	err = prompt1.Format(nil)
 	if err != nil {
@@ -114,46 +85,14 @@ func main() {
 
 }
 
-func getProjectID(pineconeEnvironment, pineconeApiKey string) (string, error) {
-	pineconeClient = pineconego.New(pineconeEnvironment, pineconeApiKey)
+func ingestData(pineconeIndex *index.Pinecone) error {
 
-	whoamiReq := &pineconerequest.Whoami{}
-	whoamiResp := &pineconeresponse.Whoami{}
-
-	err := pineconeClient.Whoami(context.Background(), whoamiReq, whoamiResp)
-	if err != nil {
-		return "", err
-	}
-
-	return whoamiResp.ProjectID, nil
-}
-
-func ingestData(projectID string, openaiEmbedder index.Embedder) error {
-
-	pineconeIndex, err := index.NewPinecone(
-		index.PineconeOptions{
-			IndexName:      "test",
-			ProjectID:      projectID,
-			Namespace:      "test-namespace",
-			IncludeContent: true,
-		},
-		openaiEmbedder,
-	)
+	documents, err := loader.NewDirectoryLoader(".", ".txt").Load()
 	if err != nil {
 		return err
 	}
 
-	loader, err := loader.NewDirectoryLoader(".", ".txt")
-	if err != nil {
-		return err
-	}
-
-	documents, err := loader.Load()
-	if err != nil {
-		return err
-	}
-
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20, nil, nil)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 

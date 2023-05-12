@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/llm/openai"
+	"github.com/henomis/lingoose/memory/ram"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
@@ -13,34 +14,23 @@ import (
 
 func main() {
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci003, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
+	cache := ram.New()
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	llm := pipeline.Llm{
 		LlmEngine: llmOpenAI,
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt.New("Hello how are you?"),
 	}
-	tube1 := pipeline.NewTube(
-		"step1",
-		llm,
-		nil,
-		nil,
-	)
+	tube1 := pipeline.NewTube(llm)
 
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n"+
-			"Translate it in {{.language}}!",
-		nil,
-	)
+	prompt2 := prompt.NewPromptTemplate(
+		"Consider the following sentence.\n\nSentence:\n{{.output}}\n\n" +
+			"Translate it in {{.language}}!")
+
 	llm.Prompt = prompt2
 	tube2 := pipeline.NewSplitter(
-		"step2",
 		llm,
-		nil,
-		nil,
 		func(input types.M) ([]types.M, error) {
 			return []types.M{
 				mergeMaps(input, types.M{
@@ -60,20 +50,14 @@ func main() {
 				}),
 			}, nil
 		},
-	)
+	).WithMemory("splitter", cache)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"For each of the following sentences, detect the language.\n\nSentences:\n"+
+	prompt3 := prompt.NewPromptTemplate(
+		"For each of the following sentences, detect the language.\n\nSentences:\n" +
 			"{{ range $i, $key := .output }}{{ $i }}. {{ $key.output }}\n{{ end }}\n\n",
-		nil,
 	)
 	llm.Prompt = prompt3
-	tube3 := pipeline.NewTube(
-		"step3",
-		llm,
-		nil,
-		nil,
-	)
+	tube3 := pipeline.NewTube(llm)
 
 	pipeLine := pipeline.New(
 		tube1,
@@ -89,6 +73,9 @@ func main() {
 	data, _ := json.MarshalIndent(response, "", "  ")
 
 	fmt.Printf("Final output: %s\n", data)
+	fmt.Println("------------")
+	fmt.Println("Memory:")
+	fmt.Println(cache)
 
 }
 

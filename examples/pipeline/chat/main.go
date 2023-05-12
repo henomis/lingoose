@@ -18,24 +18,17 @@ func main() {
 
 	cache := ram.New()
 
-	llmChatOpenAI, err := openai.New(openai.GPT3Dot5Turbo, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
+	llmChatOpenAI := openai.NewChat().WithVerbose(true)
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
-	llmOpenAI, err := openai.New(openai.GPT3TextDavinci002, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
-	if err != nil {
-		panic(err)
-	}
-
-	prompt1, _ := prompt.NewPromptTemplate(
-		"You are a {{.mode}} {{.role}}",
+	prompt1 := prompt.NewPromptTemplate(
+		"You are a {{.mode}} {{.role}}").WithInputs(
 		map[string]string{
 			"mode": "professional",
 		},
 	)
-	prompt2, _ := prompt.NewPromptTemplate(
-		"Write a {{.length}} joke about a {{.animal}}.",
+	prompt2 := prompt.NewPromptTemplate(
+		"Write a {{.length}} joke about a {{.animal}}.").WithInputs(
 		map[string]string{
 			"length": "short",
 		},
@@ -56,15 +49,10 @@ func main() {
 		LlmMode:   pipeline.LlmModeChat,
 		Chat:      chat,
 	}
-	tube1 := pipeline.NewTube(
-		"step1",
-		llm1,
-		nil,
-		cache,
-	)
+	tube1 := pipeline.NewTube(llm1).WithMemory("step1", cache)
 
-	prompt3, _ := prompt.NewPromptTemplate(
-		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}",
+	prompt3 := prompt.NewPromptTemplate(
+		"Considering the following joke.\n\njoke:\n{{.output}}\n\n{{.command}}").WithInputs(
 		map[string]string{
 			"command": "Put the joke in a JSON object with only one field called 'joke'. " +
 				"Do not add other json fields. Do not add other information.",
@@ -76,12 +64,7 @@ func main() {
 		Prompt:    prompt3,
 	}
 
-	tube2 := pipeline.NewTube(
-		"step2",
-		llm2,
-		decoder.NewJSONDecoder(),
-		cache,
-	)
+	tube2 := pipeline.NewTube(llm2).WithDecoder(decoder.NewJSONDecoder()).WithMemory("step2", cache)
 
 	pipe := pipeline.New(tube1, tube2)
 

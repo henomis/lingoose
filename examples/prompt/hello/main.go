@@ -16,15 +16,12 @@ func main() {
 	var input Inputs
 	input.Name = "world"
 
-	promptTemplate, err := prompt.NewPromptTemplate(
-		"Hello {{.Name}}. How are {{.you}}?",
+	promptTemplate := prompt.NewPromptTemplate(
+		"Hello {{.Name}}. How are {{.you}}?").WithInputs(
 		input,
 	)
-	if err != nil {
-		panic(err)
-	}
 
-	err = promptTemplate.Format(types.M{"you": "you"})
+	err := promptTemplate.Format(types.M{"you": "you"})
 	if err != nil {
 		panic(err)
 	}
