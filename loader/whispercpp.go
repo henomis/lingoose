@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"os/exec"
+	"regexp"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/types"
@@ -20,6 +21,8 @@ type whisperCppLoader struct {
 	whisperCppModelPath string
 	filename            string
 }
+
+var whisperSanitizeRegexp = regexp.MustCompile(`\[.*?\]`)
 
 func NewWhisperCppLoader(filename string) *whisperCppLoader {
 	return &whisperCppLoader{
@@ -128,5 +131,5 @@ func (w *whisperCppLoader) convertAndTrascribe(ctx context.Context) (string, err
 		return "", err
 	}
 
-	return out.String(), nil
+	return whisperSanitizeRegexp.ReplaceAllString(out.String(), ""), nil
 }
