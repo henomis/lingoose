@@ -62,7 +62,17 @@ func (w *whisperCppLoader) WithArgs(whisperCppArgs []string) *whisperCppLoader {
 
 func (w *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
 
-	err := isFile(w.filename)
+	err := isFile(w.ffmpegPath)
+	if err != nil {
+		return nil, err
+	}
+
+	err = isFile(w.whisperCppPath)
+	if err != nil {
+		return nil, err
+	}
+
+	err = isFile(w.filename)
 	if err != nil {
 		return nil, err
 	}
