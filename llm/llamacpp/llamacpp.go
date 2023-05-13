@@ -3,6 +3,7 @@ package llamacpp
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 
@@ -66,6 +67,12 @@ func (l *llamacpp) WithArgs(llamacppArgs []string) *llamacpp {
 }
 
 func (l *llamacpp) Completion(ctx context.Context, prompt string) (string, error) {
+
+	_, err := os.Stat(l.llamacppPath)
+	if err != nil {
+		return "", err
+	}
+
 	llamacppArgs := []string{"-m", l.modelPath, "-p", prompt, "-n", fmt.Sprintf("%d", l.maxTokens), "--temp", fmt.Sprintf("%.2f", l.temperature)}
 	llamacppArgs = append(llamacppArgs, l.llamacppArgs...)
 

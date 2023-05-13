@@ -47,7 +47,12 @@ func (l *libreOfficeLoader) WithArgs(libreOfficeArgs []string) *libreOfficeLoade
 
 func (l *libreOfficeLoader) Load(ctx context.Context) ([]document.Document, error) {
 
-	err := isFile(l.filename)
+	err := isFile(l.libreOfficePath)
+	if err != nil {
+		return nil, ErrLibreOfficeNotFound
+	}
+
+	err = isFile(l.filename)
 	if err != nil {
 		return nil, err
 	}
