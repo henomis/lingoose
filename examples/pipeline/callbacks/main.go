@@ -31,26 +31,24 @@ func main() {
 		},
 	)
 
-	cbTranslate := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
-		iterator++
-		return output, nil
+	translatePreCallback := pipeline.PipelineCallback(func(input types.M) (types.M, error) {
+		input["language"] = languages[iterator]
+		input["sentence"] = sentence
+		return input, nil
 	})
 
-	cbExpand := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
-
+	expandPostCallback := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
+		iterator++
 		if iterator >= len(languages) {
 			pipeline.SetNextTubeExit(output)
 		} else {
 			pipeline.SetNextTube(output, 0)
-			output["language"] = languages[iterator]
-			output["sentence"] = sentence
 		}
-
 		return output, nil
 	})
 
-	pipeLine := pipeline.New(translate, expand).WithCallbacks(cbTranslate, cbExpand)
+	pipeLine := pipeline.New(translate, expand).WithPreCallbacks(translatePreCallback, nil).WithPostCallbacks(nil, expandPostCallback)
 
-	pipeLine.Run(context.Background(), types.M{"sentence": sentence, "language": languages[iterator]})
+	pipeLine.Run(context.Background(), nil)
 
 }
