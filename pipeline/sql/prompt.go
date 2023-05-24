@@ -15,13 +15,14 @@ Use the following table schema info to create your SQL query:
 
 Question: {{.question}}`
 
-	sqlRefinePromptTemplate = `{{.ai_sql_query}}
+	sqlRefinePromptTemplate = `
+SQLQuery: {{.sql_query}}
 
-The SQLResult has the following error: "{{.sql_error}}"
+The SQLResult has the following error: "{{.sql_result}}"
 The SQLQuery you produced is syntactically incorrect. Please fix.`
 
 	sqlFinalPromptTemplate = `
-SQLQuery: {{.ai_sql_query}}
+SQLQuery: {{.sql_query}}
 SQLResult: {{.sql_result}}
 Answer: `
 )

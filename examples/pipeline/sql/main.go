@@ -1,22 +1,21 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"os/exec"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/pipeline"
+	sqlpipeline "github.com/henomis/lingoose/pipeline/sql"
 	"github.com/henomis/lingoose/types"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 
+	// https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
 	sqliteDB := "/tmp/Chinook_Sqlite.sqlite"
 
 	db, err := sql.Open("sqlite3", sqliteDB)
@@ -26,10 +25,10 @@ func main() {
 	}
 	defer db.Close()
 
-	s := pipeline.NewSQLTube(
-		openai.NewCompletion().WithMaxTokens(1000),
+	s, err := sqlpipeline.New(
+		openai.NewCompletion().WithMaxTokens(1000).WithVerbose(true),
 		db,
-		pipeline.SQLDataSourceSqlite,
+		sqlpipeline.SQLDataSourceSqlite,
 		func() (string, error) {
 			output, err := exec.Command("sqlite3", sqliteDB, ".schema").Output()
 			if err != nil {
@@ -39,32 +38,15 @@ func main() {
 			return string(output), nil
 		},
 	)
-
-	for {
-
-		fmt.Printf("> ")
-		reader := bufio.NewReader(os.Stdin)
-		query, _ := reader.ReadString('\n')
-
-		query = query[:len(query)-1]
-
-		if query == "quit" {
-			break
-		}
-
-		output, err := s.Run(context.Background(), query)
-		if err != nil {
-			panic(err)
-		}
-		_ = output
-
-		results := output["output"].(types.M)
-
-		fmt.Println(results["answer"])
-		fmt.Println()
-		fmt.Println(results["query"])
-		fmt.Println()
-		fmt.Println(results["result"])
+	if err != nil {
+		panic(err)
 	}
+
+	output, err := s.Run(context.Background(), types.M{"question": "list the top 3 playlists and count how many tracks they have."})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(output)
 
 }
