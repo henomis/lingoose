@@ -196,6 +196,10 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return content, nil
 }
 
+func (o *openAI) SetStop(stop []string) {
+	o.stop = stop
+}
+
 func (o *openAI) setMetadata(usage openai.Usage) {
 
 	callbackMetadata := make(types.Meta)

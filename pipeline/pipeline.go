@@ -33,25 +33,25 @@ type Pipe interface {
 
 type PipelineCallback func(values types.M) (types.M, error)
 
-type pipeline struct {
+type Pipeline struct {
 	pipes         map[int]Pipe
 	preCallbacks  map[int]PipelineCallback
 	postCallbacks map[int]PipelineCallback
 }
 
-func New(pipes ...Pipe) *pipeline {
+func New(pipes ...Pipe) *Pipeline {
 
 	pipesMap := make(map[int]Pipe)
 	for i, pipe := range pipes {
 		pipesMap[i] = pipe
 	}
 
-	return &pipeline{
+	return &Pipeline{
 		pipes: pipesMap,
 	}
 }
 
-func (p *pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *pipeline {
+func (p *Pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *Pipeline {
 
 	p.preCallbacks = make(map[int]PipelineCallback)
 	for i, callback := range callbacks {
@@ -61,7 +61,7 @@ func (p *pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *pipeline {
 	return p
 }
 
-func (p *pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *pipeline {
+func (p *Pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *Pipeline {
 
 	p.postCallbacks = make(map[int]PipelineCallback)
 	for i, callback := range callbacks {
@@ -72,7 +72,7 @@ func (p *pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *pipeline {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
-func (p pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
+func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
 	currentTube := 0
 
@@ -134,17 +134,17 @@ func SetNextTubeExit(output types.M) types.M {
 	return output
 }
 
-func (p *pipeline) thereIsAValidPreCallbackForTube(currentTube int) bool {
+func (p *Pipeline) thereIsAValidPreCallbackForTube(currentTube int) bool {
 	cb, ok := p.preCallbacks[currentTube]
 	return cb != nil && ok
 }
 
-func (p *pipeline) thereIsAValidPostCallbackForTube(currentTube int) bool {
+func (p *Pipeline) thereIsAValidPostCallbackForTube(currentTube int) bool {
 	cb, ok := p.postCallbacks[currentTube]
 	return cb != nil && ok
 }
 
-func (p *pipeline) getNextTube(output types.M) *int {
+func (p *Pipeline) getNextTube(output types.M) *int {
 
 	nextTube, ok := output[NextTubeKey]
 	if !ok {
