@@ -3,6 +3,7 @@ package sqlpipeline
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/henomis/lingoose/decoder"
 	"github.com/henomis/lingoose/pipeline"
@@ -10,10 +11,11 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type SQLDataSourceType string
+type DataSourceType string
 
 const (
-	SQLDataSourceSqlite SQLDataSourceType = "sqlite"
+	DataSourceSqlite DataSourceType = "sqlite3"
+	DataSourceMySQL  DataSourceType = "mysql"
 )
 
 const (
@@ -40,8 +42,9 @@ var (
 	sqlStopSequence = []string{"SQLResult:"}
 )
 
-var sqlDataSourceTypePromptTemplate = map[SQLDataSourceType]string{
-	SQLDataSourceSqlite: sqliteDataSourcePromptTemplate,
+var dataSourceTypePromptTemplate = map[DataSourceType]string{
+	DataSourceSqlite: sqliteDataSourcePromptTemplate,
+	DataSourceMySQL:  mysqlDataSourcePromptTemplate,
 }
 
 type llmWithStop interface {
@@ -50,7 +53,7 @@ type llmWithStop interface {
 
 type SqlDDLFn func() (string, error)
 
-func New(llmEngine pipeline.LlmEngine, db *sql.DB, dataSourceType SQLDataSourceType, sqlDDLFn SqlDDLFn) (*pipeline.Pipeline, error) {
+func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSourceName string) (*pipeline.Pipeline, error) {
 
 	memory := types.M{}
 
@@ -58,14 +61,22 @@ func New(llmEngine pipeline.LlmEngine, db *sql.DB, dataSourceType SQLDataSourceT
 		return nil, fmt.Errorf("llmEngine does not implement SetStop([]string)")
 	}
 
-	sqlDDL, err := sqlDDLFn()
+	db, err := openDatabase(dataSourceType, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDDL, err := getDDL(db, dataSourceType, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	dataSourcePromptTemplate, err := getPromptTemplate(dataSourceType)
 	if err != nil {
 		return nil, err
 	}
 
 	llmEngine.(llmWithStop).SetStop(sqlStopSequence)
-
-	dataSourcePromptTemplate := sqlDataSourceTypePromptTemplate[dataSourceType]
 
 	sqlPrompt := prompt.NewPromptTemplate(dataSourcePromptTemplate + sqlPromptTemplate)
 	queryLLM := pipeline.Llm{
@@ -269,4 +280,50 @@ func getSqlResult(db *sql.DB, query string) (string, error) {
 	}
 
 	return content, nil
+}
+
+func openDatabase(dataSourceType DataSourceType, dataSourceName string) (*sql.DB, error) {
+
+	db, err := sql.Open(string(dataSourceType), dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func getDDL(db *sql.DB, dataSourceType DataSourceType, dataSourceName string) (string, error) {
+
+	if dataSourceType == DataSourceSqlite {
+		return getSqliteSchema(db)
+	} else if dataSourceType == DataSourceMySQL {
+
+		dataSourceNameParts := strings.Split(dataSourceName, "/")
+		if len(dataSourceNameParts) < 1 {
+			return "", fmt.Errorf("invalid mysql data source name %s", dataSourceName)
+		}
+
+		databaseName := dataSourceNameParts[len(dataSourceNameParts)-1]
+		return getMySQLSchema(db, databaseName)
+	} else {
+		return "", fmt.Errorf("unsupported datasource %s", dataSourceType)
+	}
+
+}
+
+func getPromptTemplate(dataSourceType DataSourceType) (string, error) {
+
+	if dataSourceType == DataSourceSqlite {
+		return dataSourceTypePromptTemplate[DataSourceSqlite], nil
+	} else if dataSourceType == DataSourceMySQL {
+		return dataSourceTypePromptTemplate[DataSourceMySQL], nil
+	} else {
+		return "", fmt.Errorf("unsupported database scheme %s", dataSourceType)
+	}
+
 }

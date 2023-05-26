@@ -2,42 +2,36 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"os/exec"
 
 	"github.com/henomis/lingoose/llm/openai"
 	sqlpipeline "github.com/henomis/lingoose/pipeline/sql"
 	"github.com/henomis/lingoose/types"
-
-	_ "github.com/mattn/go-sqlite3"
+	// enable sqlite3 driver
+	// _ "github.com/mattn/go-sqlite3"
+	// enable mysql driver
+	// _ "github.com/go-sql-driver/mysql"
 )
+
+// mysql https://raw.githubusercontent.com/lerocha/chinook-database/master/ChinookDatabase/DataSources/Chinook_MySql.sql
+// sqlite https://raw.githubusercontent.com/lerocha/chinook-database/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
 
 func main() {
 
-	// https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
-	sqliteDB := "/tmp/Chinook_Sqlite.sqlite"
-
-	db, err := sql.Open("sqlite3", sqliteDB)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer db.Close()
-
+	// SQLite
 	s, err := sqlpipeline.New(
 		openai.NewCompletion().WithMaxTokens(1000).WithVerbose(true),
-		db,
-		sqlpipeline.SQLDataSourceSqlite,
-		func() (string, error) {
-			output, err := exec.Command("sqlite3", sqliteDB, ".schema").Output()
-			if err != nil {
-				return "", err
-			}
-
-			return string(output), nil
-		},
+		sqlpipeline.DataSourceSqlite,
+		"/tmp/Chinook_Sqlite.sqlite",
 	)
+
+	// MySQL
+	// s, err := sqlpipeline.New(
+	// 	openai.NewCompletion().WithMaxTokens(1000).WithVerbose(true),
+	// 	sqlpipeline.DataSourceMySQL,
+	// 	"root:password@tcp(localhost:3306)/Chinook",
+	// )
+
 	if err != nil {
 		panic(err)
 	}

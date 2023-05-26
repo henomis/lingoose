@@ -7,8 +7,6 @@ github.com/henomis/pinecone-go v1.1.1 h1:uZmRi1XD6J/fA02Nsbb5TuGggwLet9//t0LLX/d
 github.com/henomis/pinecone-go v1.1.1/go.mod h1:FsMMRjLyiJ9zHqGOlmGvjolqOp2kkbMsRm8oc85vykU=
 github.com/henomis/restclientgo v1.0.3 h1:y5+ydfvWJ0/7crObdnCHSn7ya/h1whD+PV4Ir2dZ9Ig=
 github.com/henomis/restclientgo v1.0.3/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
-github.com/mattn/go-sqlite3 v1.14.16 h1:yOQRA0RpS5PFz/oikGwBEqvAWhWg5ufRz4ETLjwpU1Y=
-github.com/mattn/go-sqlite3 v1.14.16/go.mod h1:2eHXhiwb8IkHr+BDWZGa96P6+rkvnG63S2DGjv9HUNg=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/pkoukk/tiktoken-go v0.1.1 h1:jtkYlIECjyM9OW1w4rjPmTohK4arORP9V25y6TM6nXo=
