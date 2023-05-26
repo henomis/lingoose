@@ -12,6 +12,8 @@ import (
 	"github.com/henomis/lingoose/textsplitter"
 )
 
+// download https://frontiernerds.com/files/state_of_the_union.txt
+
 func main() {
 
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)

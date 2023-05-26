@@ -1,10 +1,11 @@
-package pipeline
+package qapipeline
 
 import (
 	"context"
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
 )
@@ -17,11 +18,12 @@ const (
 	qaTubeUserPromptTemplate = "Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}"
 )
 
-type QATube struct {
-	tube *Tube
+type QAPipeline struct {
+	llmEngine pipeline.LlmEngine
+	pipeline  *pipeline.Pipeline
 }
 
-func NewQATube(llmEngine LlmEngine) *QATube {
+func New(llmEngine pipeline.LlmEngine) *QAPipeline {
 
 	systemPrompt := prompt.New(qaTubeSystemPromptTemplate)
 	userPrompt := prompt.NewPromptTemplate(qaTubeUserPromptTemplate)
@@ -37,31 +39,41 @@ func NewQATube(llmEngine LlmEngine) *QATube {
 		},
 	)
 
-	llm := Llm{
+	llm := pipeline.Llm{
 		LlmEngine: llmEngine,
-		LlmMode:   LlmModeChat,
+		LlmMode:   pipeline.LlmModeChat,
 		Chat:      chat,
 	}
 
-	tube := NewTube(llm)
-	return &QATube{
-		tube: tube,
+	tube := pipeline.NewTube(llm)
+	return &QAPipeline{
+		llmEngine: llmEngine,
+		pipeline:  pipeline.New(tube),
 	}
 }
 
-func (t *QATube) WithPrompt(chat *chat.Chat) *QATube {
-	t.tube.llm.Chat = chat
-	return t
+func (p *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
+	llm := pipeline.Llm{
+		LlmEngine: p.llmEngine,
+		LlmMode:   pipeline.LlmModeChat,
+		Chat:      chat,
+	}
+
+	tube := pipeline.NewTube(llm)
+
+	return &QAPipeline{
+		pipeline: pipeline.New(tube),
+	}
 }
 
-func (t *QATube) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
+func (t *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
 
 	content := ""
 	for _, document := range documents {
 		content += document.Content + "\n"
 	}
 
-	return t.tube.Run(
+	return t.pipeline.Run(
 		ctx,
 		types.M{
 			"query":   query,
