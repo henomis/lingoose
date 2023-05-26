@@ -206,7 +206,7 @@
             <div class="row">
               <div class="col-sm-6 col-lg-4">
                 <ul class="list-unstyled">
-                  <li><strong>Version:</strong> 0.0.5</li>
+                  <li><strong>Version:</strong> 0.0.6</li>
                   <li>
                     <strong>Author:</strong>
                     <a href="http://www.simonevellei.com" target="_blank">Simone Vellei
@@ -220,7 +220,7 @@
                     <strong class="font-weight-700">Created:</strong> 27
                     April, 2023
                   </li>
-                  <li><strong>Update:</strong> 11 May, 2023</li>
+                  <li><strong>Update:</strong> 26 May, 2023</li>
                 </ul>
               </div>
             </div>
@@ -455,7 +455,11 @@ fmt.Println(jokeChat.ToMessages())
             <p>
               There are a lot of language models out there, LinGoose
               provides a simple interface to use them. Lingoose currently
-              supports <a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i> LLMs.
+              supports:
+              <ul>
+                <li><a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i></li>
+                <li><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a> <i>Completion</i></li>
+              </ul>
             </p>
             <h3>Completion</h3>
             <p>LLM implements the method <code>Completion()</code> if the underlying model supports it. Here is an
@@ -753,6 +757,57 @@ response, err := pipeLine.Run(context.Background(), nil)
   </code>
 </pre>             
               
+            
+            
+            <h3>Pipeline callbacks</h3>
+            You can add callbacks to a <code>pipeline</code>. Callbacks are functions that are executed before and after a <code>tube</code> is run.
+            <pre>
+<code class="go">
+query := pipeline.NewTube(queryLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
+
+preQueryCB := pipeline.PipelineCallback(func(input types.M) (types.M, error) {
+  if q, ok := input[questionKey].(string); ok {
+    memory[questionKey] = q
+  }
+
+  return preQueryCBFn(input, sqlDDL)
+})
+
+postQueryCB := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
+  return postQueryCBFn(output, db, sqlDDL, memory)
+})
+...
+sqlPipeline := pipeline.New(query).WithPreCallbacks(preQueryCB).WithPostCallbacks(postQueryCB)
+</code>
+  </pre>            
+  <h3>Awesome pipelines</h3>
+  Lingoose provides special pre-built pipelines that can be used to solve common problems.
+  <br><br>
+  <strong>Question and Answer pipeline</strong><br>
+  Here is an example of a pipeline that can be used to answer questions.
+  <pre>
+    <code class="go">
+  query := "What is the NATO purpose?"
+  docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
+  openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+  index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
+  similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, index.WithTopK(3))
+  qapipeline.New(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities.ToDocuments())
+    </code>
+  </pre>
+  <strong>SQL pipeline</strong><br>
+  This pipeline can be used to answer SQL queries.
+  <pre>
+    <code class="go">
+  s, err := sqlpipeline.New(
+    openai.NewCompletion().WithMaxTokens(1000).WithVerbose(true),
+    sqlpipeline.DataSourceMySQL,
+    "root:password@tcp(localhost:3306)/Chinook",
+  )
+  ...
+  output, err := s.Run(context.Background(), types.M{"question": "list the top 3 playlists and count how many tracks they have."})
+    </code>
+  </pre>
             You can extend <code>Llm</code> component using the interface <code>pipeline.LlmEngine</code>.
           </section>
 
@@ -839,18 +894,24 @@ response, err := pipelineTubes.Run(context.Background(), nil)
             <ul>
               <li>textLoader</li>
               <li>directoryLoader</li>
+              <li>PDFToTextLoader - using pdftotext utiliy</li>
+              <li>PubMedLoader</li>
+              <li>libreofficeLoader - using libreoffice to load documents in various format</li>
+              <li>csvLoader</li>
+              <li>whisperLoader - extract documents from audio file</li>
+              <li>whisperCppLoader - extract documents from audio using whispercpp</li>
             </ul>
             </p>
             <pre>
   <code class="go">
 textLoader := loader.NewTextLoader("test.txt", nil)
-documents, err := textLoader.Load()
+documents, err := textLoader.Load(context.Background())
 ...
 directoryLoader := loader.NewDirectoryLoader("./documents/", ".txt")
-documents, err := directoryLoader.Load()
+documents, err := directoryLoader.Load(context.Background())
   </code>
             </pre>
-            unsing the <code>DirectoryLoader</code> each <code>Document</code> metadata will be filled with
+            using the <code>DirectoryLoader</code> each <code>Document</code> metadata will be filled with
             <code>"source": "/path/of/the/file"</code>
           </section>
 
@@ -868,7 +929,7 @@ documents, err := directoryLoader.Load()
   <code class="go">
 loader := loader.NewDirectoryLoader("./documents/", ".txt")
 ...
-documents, err := loader.Load()
+documents, err := loader.Load(context.Background())
 ...
 textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 documentChunks := textSplitter.SplitDocuments(documents)
@@ -885,8 +946,11 @@ documentChunks := textSplitter.SplitDocuments(documents)
             <p class="lead">Embedder is a component that embeds text in a vector of floats.</p>
             <p>
               LLM engines provide a way to embed text in a vector of floats. This is useful to compare
-              two texts only using vectors. There are only one embedder currently available:
-              <code>openAIEmbedder</code>.
+              two texts only using vectors. Lingoose currently supports:
+              <ul>
+                <li>openAI embedder</li>
+                <li>llama.cpp embedder</li>
+              </ul>
             </p>
             <pre>
   <code class="go">
@@ -897,6 +961,7 @@ openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
   </code>
 </pre>
+
             <p class="alert alert-info">
               You can extend <code>Embedder</code> component using the interface <code>index.Embedder</code>.
             </p>
@@ -922,7 +987,7 @@ docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
 ...
 loader := loader.NewDirectoryLoader("./documents/", ".txt")
 ...
-documents, err := loader.Load()
+documents, err := loader.Load(context.Background())
 ...
 textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 documentChunks := textSplitter.SplitDocuments(documents)
