@@ -6,7 +6,7 @@ import (
 )
 
 type conversationalRequest struct {
-	Inputs     converstationalInputs    `json:"inputs,omitempty"`
+	Inputs     conversationalInputs     `json:"inputs,omitempty"`
 	Parameters conversationalParameters `json:"parameters,omitempty"`
 	Options    Options                  `json:"options,omitempty"`
 }
@@ -21,7 +21,7 @@ type conversationalParameters struct {
 	MaxTime           *float32 `json:"maxtime,omitempty"`
 }
 
-type converstationalInputs struct {
+type conversationalInputs struct {
 	Text               string   `json:"text,omitempty"`
 	GeneratedResponses []string `json:"generated_responses,omitempty"`
 	PastUserInputs     []string `json:"past_user_inputs,omitempty"`
@@ -41,7 +41,7 @@ func (h *huggingFace) conversationalCompletion(ctx context.Context, prompt strin
 
 	isTrue := true
 	request := conversationalRequest{
-		Inputs: converstationalInputs{
+		Inputs: conversationalInputs{
 			Text: prompt,
 		},
 		Parameters: conversationalParameters{
