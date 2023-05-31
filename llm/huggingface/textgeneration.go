@@ -24,10 +24,6 @@ type textGenerationParameters struct {
 	NumReturnSequences *int     `json:"num_return_sequences,omitempty"`
 }
 
-type textGenerationResponse struct {
-	GeneratedTexts []string
-}
-
 type textGenerationResponseSequence struct {
 	GeneratedText string `json:"generated_text,omitempty"`
 }
@@ -73,11 +69,8 @@ func (h *huggingFace) textgenerationCompletion(ctx context.Context, prompt strin
 	}
 
 	output := ""
-	// tgresps := make([]*textGenerationResponse, len(request.Inputs))
 	for i := range tgrespsRaw {
-		// tgresps[i] = &textGenerationResponse{}
 		for _, t := range tgrespsRaw[i] {
-			// tgresps[i].GeneratedTexts = append(tgresps[i].GeneratedTexts, t.GeneratedText)
 			output += t.GeneratedText
 		}
 	}
