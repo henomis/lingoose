@@ -3,7 +3,9 @@ package openai
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -42,16 +44,17 @@ const (
 	GPT3Babbage        Model = openai.GPT3Babbage
 )
 
-type OpenAICallback func(types.Meta)
+type OpenAIUsageCallback func(types.Meta)
+type OpenAIStreamCallback func(string)
 
 type openAI struct {
-	openAIClient *openai.Client
-	model        Model
-	temperature  float32
-	maxTokens    int
-	stop         []string
-	verbose      bool
-	callback     OpenAICallback
+	openAIClient  *openai.Client
+	model         Model
+	temperature   float32
+	maxTokens     int
+	stop          []string
+	verbose       bool
+	usageCallback OpenAIUsageCallback
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -82,8 +85,8 @@ func (o *openAI) WithMaxTokens(maxTokens int) *openAI {
 	return o
 }
 
-func (o *openAI) WithCallback(callback OpenAICallback) *openAI {
-	o.callback = callback
+func (o *openAI) WithCallback(callback OpenAIUsageCallback) *openAI {
+	o.usageCallback = callback
 	return o
 }
 
@@ -139,8 +142,8 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 		return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
 	}
 
-	if o.callback != nil {
-		o.setMetadata(response.Usage)
+	if o.usageCallback != nil {
+		o.setUsageMetadata(response.Usage)
 	}
 
 	if len(response.Choices) == 0 {
@@ -153,6 +156,57 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 	}
 
 	return output, nil
+}
+
+func (o *openAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
+
+	stream, err := o.openAIClient.CreateCompletionStream(
+		ctx,
+		openai.CompletionRequest{
+			Model:       string(o.model),
+			Prompt:      prompt,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+	}
+
+	defer stream.Close()
+
+	for {
+
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		}
+
+		if o.usageCallback != nil {
+			o.setUsageMetadata(response.Usage)
+		}
+
+		if len(response.Choices) == 0 {
+			return fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
+		}
+
+		output := response.Choices[0].Text
+		if o.verbose {
+			debugCompletion(prompt, output)
+		}
+
+		callbackFn(output)
+
+	}
+
+	return nil
 }
 
 func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
@@ -179,8 +233,8 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
-	if o.callback != nil {
-		o.setMetadata(response.Usage)
+	if o.usageCallback != nil {
+		o.setUsageMetadata(response.Usage)
 	}
 
 	if len(response.Choices) == 0 {
@@ -196,11 +250,62 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return content, nil
 }
 
+func (o *openAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt *chat.Chat) error {
+
+	messages, err := buildMessages(prompt)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+	}
+
+	stream, err := o.openAIClient.CreateChatCompletionStream(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model:       string(o.model),
+			Messages:    messages,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+	}
+
+	for {
+
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		// oops no usage here?
+		// if o.usageCallback != nil {
+		// 	o.setUsageMetadata(response.Usage)
+		// }
+
+		if len(response.Choices) == 0 {
+			return fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
+		}
+
+		content := response.Choices[0].Delta.Content
+
+		if o.verbose {
+			debugChat(prompt, content)
+		}
+
+		callbackFn(content)
+	}
+
+	return nil
+}
+
 func (o *openAI) SetStop(stop []string) {
 	o.stop = stop
 }
 
-func (o *openAI) setMetadata(usage openai.Usage) {
+func (o *openAI) setUsageMetadata(usage openai.Usage) {
 
 	callbackMetadata := make(types.Meta)
 
@@ -209,7 +314,7 @@ func (o *openAI) setMetadata(usage openai.Usage) {
 		return
 	}
 
-	o.callback(callbackMetadata)
+	o.usageCallback(callbackMetadata)
 }
 
 func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
