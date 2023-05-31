@@ -16,6 +16,7 @@ type HuggingFaceMode int
 
 const (
 	HuggingFaceModeCoversational HuggingFaceMode = iota
+	HuggingFaceModeTextGeneration
 )
 
 type huggingFace struct {
@@ -90,6 +91,8 @@ func (h *huggingFace) Completion(ctx context.Context, prompt string) (string, er
 	var output string
 	var err error
 	switch h.mode {
+	case HuggingFaceModeTextGeneration:
+		output, err = h.textgenerationCompletion(ctx, prompt)
 	case HuggingFaceModeCoversational:
 		fallthrough
 	default:

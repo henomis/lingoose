@@ -8,7 +8,7 @@ import (
 type conversationalRequest struct {
 	Inputs     conversationalInputs     `json:"inputs,omitempty"`
 	Parameters conversationalParameters `json:"parameters,omitempty"`
-	Options    Options                  `json:"options,omitempty"`
+	Options    options                  `json:"options,omitempty"`
 }
 
 type conversationalParameters struct {
@@ -51,7 +51,7 @@ func (h *huggingFace) conversationalCompletion(ctx context.Context, prompt strin
 			TopK:        h.topK,
 			TopP:        h.topP,
 		},
-		Options: Options{
+		Options: options{
 			WaitForModel: &isTrue,
 		},
 	}
