@@ -2,7 +2,7 @@ package huggingface
 
 import "fmt"
 
-type Options struct {
+type options struct {
 	UseGPU       *bool `json:"use_gpu,omitempty"`
 	UseCache     *bool `json:"use_cache,omitempty"`
 	WaitForModel *bool `json:"wait_for_model,omitempty"`

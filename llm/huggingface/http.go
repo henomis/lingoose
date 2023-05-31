@@ -55,7 +55,7 @@ func checkRespForError(respJSON []byte) error {
 		apiErr := apiError{}
 		err := json.Unmarshal(buf, &apiErr)
 		if err != nil {
-			return err
+			return nil
 		}
 		if apiErr.Error != "" {
 			return errors.New(string(respJSON))
@@ -68,7 +68,7 @@ func checkRespForError(respJSON []byte) error {
 		apiErrs := apiErrors{}
 		err := json.Unmarshal(buf, &apiErrs)
 		if err != nil {
-			return err
+			return nil
 		}
 		if apiErrs.Errors != nil {
 			return errors.New(string(respJSON))
