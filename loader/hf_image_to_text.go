@@ -63,7 +63,7 @@ func (h *hfImageToText) Load(ctx context.Context) ([]document.Document, error) {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
-	responses := []*ImageToTextResponse{}
+	responses := []*hfImageToTextResponse{}
 	err = json.Unmarshal(responseBytes, &responses)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
@@ -92,7 +92,7 @@ func (h *hfImageToText) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
-type ImageToTextResponse struct {
+type hfImageToTextResponse struct {
 	GeneratedText string `json:"generated_text"`
 }
 
@@ -123,7 +123,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 		return nil, err
 	}
 
-	err = checkResponse(respBody)
+	err = hfCheckHttpResponse(respBody)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 	return respBody, nil
 }
 
-func checkResponse(respJSON []byte) error {
+func hfCheckHttpResponse(respJSON []byte) error {
 
 	type apiError struct {
 		Error string `json:"error,omitempty"`
@@ -154,7 +154,6 @@ func checkResponse(respJSON []byte) error {
 		}
 	}
 
-	// Check for multiple errors
 	{
 		buf := make([]byte, len(respJSON))
 		copy(buf, respJSON)
