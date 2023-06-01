@@ -28,6 +28,10 @@ type hfImageToText struct {
 	model     string
 }
 
+type hfImageToTextResponse struct {
+	GeneratedText string `json:"generated_text"`
+}
+
 func NewHFImageToTextLoader(mediaFile string) *hfImageToText {
 	return &hfImageToText{
 		mediaFile: mediaFile,
@@ -90,10 +94,6 @@ func (h *hfImageToText) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documents, nil
-}
-
-type hfImageToTextResponse struct {
-	GeneratedText string `json:"generated_text"`
 }
 
 func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
