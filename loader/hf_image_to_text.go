@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -54,12 +55,18 @@ func (h *hfImageToText) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(h.mediaFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
-	responses, err := h.httpCall(ctx)
+	responseBytes, err := hfMediaHttpCall(ctx, h.token, h.model, h.mediaFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+	}
+
+	responses := []*ImageToTextResponse{}
+	err = json.Unmarshal(responseBytes, &responses)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
 	var documents []document.Document
@@ -89,13 +96,13 @@ type ImageToTextResponse struct {
 	GeneratedText string `json:"generated_text"`
 }
 
-func (h *hfImageToText) httpCall(ctx context.Context) ([]*ImageToTextResponse, error) {
-	buf, err := os.ReadFile(h.mediaFile)
+func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
+	buf, err := os.ReadFile(mediaFile)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, hfAPIBaseURL+h.model, bytes.NewReader(buf))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, hfAPIBaseURL+model, bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +110,7 @@ func (h *hfImageToText) httpCall(ctx context.Context) ([]*ImageToTextResponse, e
 		return nil, errors.New("nil request created")
 	}
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("Authorization", "Bearer "+h.token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -121,13 +128,7 @@ func (h *hfImageToText) httpCall(ctx context.Context) ([]*ImageToTextResponse, e
 		return nil, err
 	}
 
-	resps := []*ImageToTextResponse{}
-	err = json.Unmarshal(respBody, &resps)
-	if err != nil {
-		return nil, err
-	}
-
-	return resps, nil
+	return respBody, nil
 }
 
 func checkResponse(respJSON []byte) error {
