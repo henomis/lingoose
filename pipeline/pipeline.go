@@ -31,7 +31,7 @@ type Pipe interface {
 	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
-type PipelineCallback func(values types.M) (types.M, error)
+type PipelineCallback func(ctx context.Context, values types.M) (types.M, error)
 
 type Pipeline struct {
 	pipes         map[int]Pipe
@@ -85,7 +85,7 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	for {
 
 		if p.thereIsAValidPreCallbackForTube(currentTube) {
-			output, err = p.preCallbacks[currentTube](output)
+			output, err = p.preCallbacks[currentTube](ctx, output)
 			if err != nil {
 				return nil, err
 			}
@@ -97,7 +97,7 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 		}
 
 		if p.thereIsAValidPostCallbackForTube(currentTube) {
-			output, err = p.postCallbacks[currentTube](output)
+			output, err = p.postCallbacks[currentTube](ctx, output)
 			if err != nil {
 				return nil, err
 			}

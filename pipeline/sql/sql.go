@@ -1,6 +1,7 @@
 package sqlpipeline
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -88,7 +89,7 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 	// ********** QUERY TUBE ************//
 	query := pipeline.NewTube(queryLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preQueryCB := pipeline.PipelineCallback(func(input types.M) (types.M, error) {
+	preQueryCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
 		if q, ok := input[questionKey].(string); ok {
 			memory[questionKey] = q
 		}
@@ -96,7 +97,7 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 		return preQueryCBFn(input, sqlDDL)
 	})
 
-	postQueryCB := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
+	postQueryCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
 		return postQueryCBFn(output, db, sqlDDL, memory)
 	})
 	// ********** END QUERY TUBE ************//
@@ -112,11 +113,11 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 
 	refine := pipeline.NewTube(refineLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preRefineCB := pipeline.PipelineCallback(func(input types.M) (types.M, error) {
+	preRefineCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
 		return preRefineCBFn(input, sqlDDL, memory)
 	})
 
-	postRefineCBFn := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
+	postRefineCBFn := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
 		return postRefineCBFn(output, db, sqlDDL, memory)
 	})
 
@@ -134,11 +135,11 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 
 	describe := pipeline.NewTube(describeLLM)
 
-	preDescribeCB := pipeline.PipelineCallback(func(input types.M) (types.M, error) {
+	preDescribeCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
 		return preDescribeCBFn(input, sqlDDL, memory)
 	})
 
-	postDescribeCB := pipeline.PipelineCallback(func(output types.M) (types.M, error) {
+	postDescribeCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
 		output[sqlQueryKey] = memory[sqlQueryKey]
 		output[sqlResultKey] = memory[sqlResultKey]
 		return output, nil
