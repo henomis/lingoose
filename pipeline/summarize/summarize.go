@@ -14,7 +14,7 @@ type Loader interface {
 	Load(ctx context.Context) ([]document.Document, error)
 }
 
-func New(loader Loader, llmEngine pipeline.LlmEngine) *pipeline.Pipeline {
+func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 
 	docs := []document.Document{}
 	iterator := 0
