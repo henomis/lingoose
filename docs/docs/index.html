@@ -206,7 +206,7 @@
             <div class="row">
               <div class="col-sm-6 col-lg-4">
                 <ul class="list-unstyled">
-                  <li><strong>Version:</strong> 0.0.6</li>
+                  <li><strong>Version:</strong> 0.0.7</li>
                   <li>
                     <strong>Author:</strong>
                     <a href="http://www.simonevellei.com" target="_blank">Simone Vellei
@@ -220,7 +220,7 @@
                     <strong class="font-weight-700">Created:</strong> 27
                     April, 2023
                   </li>
-                  <li><strong>Update:</strong> 26 May, 2023</li>
+                  <li><strong>Update:</strong> 3 Jun, 2023</li>
                 </ul>
               </div>
             </div>
@@ -459,6 +459,7 @@ fmt.Println(jokeChat.ToMessages())
               <ul>
                 <li><a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i></li>
                 <li><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a> <i>Completion</i></li>
+                <li>Hugging Face conversational and text generation <i>Completion</i></li>
               </ul>
             </p>
             <h3>Completion</h3>
@@ -808,6 +809,19 @@ sqlPipeline := pipeline.New(query).WithPreCallbacks(preQueryCB).WithPostCallback
   output, err := s.Run(context.Background(), types.M{"question": "list the top 3 playlists and count how many tracks they have."})
     </code>
   </pre>
+  <strong>Summarize pipeline</strong><br>
+  This pipeline can be used to summarize large text.
+  <pre>
+    <code class="go">
+summarize := summarizepipeline.New(
+  openai.NewCompletion().WithMaxTokens(1000).WithVerbose(true).WithModel(openai.GPT3TextDavinci002),
+  loader.NewTextLoader("state_of_the_union.txt", nil).
+    WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 0)),
+)
+...
+output, err := summarize.Run(context.Background(), nil)
+    </code>
+  </pre>  
             You can extend <code>Llm</code> component using the interface <code>pipeline.LlmEngine</code>.
           </section>
 
@@ -900,6 +914,9 @@ response, err := pipelineTubes.Run(context.Background(), nil)
               <li>csvLoader</li>
               <li>whisperLoader - extract documents from audio file</li>
               <li>whisperCppLoader - extract documents from audio using whispercpp</li>
+              <li>tesseractLoader - extract text from image</li>
+              <li>hfImageToText - extract image caption</li>
+              <li>hfSpeechRecognition - extract text from audio</li>
             </ul>
             </p>
             <pre>
@@ -950,6 +967,7 @@ documentChunks := textSplitter.SplitDocuments(documents)
               <ul>
                 <li>openAI embedder</li>
                 <li>llama.cpp embedder</li>
+                <li>hugging face embedder</li>
               </ul>
             </p>
             <pre>
