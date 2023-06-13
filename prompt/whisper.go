@@ -39,6 +39,11 @@ func NewPromptFromAudioFile(ctx context.Context, filePath string, audioResponseF
 	}, nil
 }
 
+func (p *whisperPrompt) WithClient(client *openai.Client) *whisperPrompt {
+	p.openAIClient = client
+	return p
+}
+
 func (p *whisperPrompt) Format(input types.M) error {
 	return nil
 }
