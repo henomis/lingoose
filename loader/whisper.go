@@ -27,8 +27,8 @@ func NewWhisperLoader(filename string) *whisperLoader {
 	}
 }
 
-func (w *whisperLoader) WithOpenAIApiKey(openAIApiKey string) *whisperLoader {
-	w.openAIClient = openai.NewClient(openAIApiKey)
+func (w *whisperLoader) WithClient(client *openai.Client) *whisperLoader {
+	w.openAIClient = client
 	return w
 }
 

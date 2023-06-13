@@ -71,8 +71,8 @@ func New(model Model) *openAIEmbedder {
 	}
 }
 
-func (o *openAIEmbedder) WithAPIKey(apiKey string) *openAIEmbedder {
-	o.openAIClient = openai.NewClient(apiKey)
+func (o *openAIEmbedder) WithClient(client *openai.Client) *openAIEmbedder {
+	o.openAIClient = client
 	return o
 }
 

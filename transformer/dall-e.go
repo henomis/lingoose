@@ -46,8 +46,8 @@ func NewDallE() *DallE {
 	}
 }
 
-func (d *DallE) WithAPIKey(apiKey string) *DallE {
-	d.openAIClient = openai.NewClient(apiKey)
+func (d *DallE) WithClient(client *openai.Client) *DallE {
+	d.openAIClient = client
 	return d
 }
 

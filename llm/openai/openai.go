@@ -95,8 +95,8 @@ func (o *openAI) WithStop(stop []string) *openAI {
 	return o
 }
 
-func (o *openAI) WithAPIKey(apiKey string) *openAI {
-	o.openAIClient = openai.NewClient(apiKey)
+func (o *openAI) WithClient(client *openai.Client) *openAI {
+	o.openAIClient = client
 	return o
 }
 
