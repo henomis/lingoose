@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/henomis/pinecone-go v1.1.1
 	github.com/pkoukk/tiktoken-go v0.1.1
-	github.com/sashabaranov/go-openai v1.10.1
+	github.com/sashabaranov/go-openai v1.11.1
 )
 
 require (
