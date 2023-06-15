@@ -30,18 +30,29 @@ const (
 type Model string
 
 const (
-	GPT4               Model = openai.GPT4
-	GPT3Dot5Turbo      Model = openai.GPT3Dot5Turbo
-	GPT3TextDavinci003 Model = openai.GPT3TextDavinci003
-	GPT3TextDavinci002 Model = openai.GPT3TextDavinci002
-	GPT3TextCurie001   Model = openai.GPT3TextCurie001
-	GPT3TextBabbage001 Model = openai.GPT3TextBabbage001
-	GPT3TextAda001     Model = openai.GPT3TextAda001
-	GPT3TextDavinci001 Model = openai.GPT3TextDavinci001
-	GPT3Davinci        Model = openai.GPT3Davinci
-	GPT3Curie          Model = openai.GPT3Curie
-	GPT3Ada            Model = openai.GPT3Ada
-	GPT3Babbage        Model = openai.GPT3Babbage
+	GPT432K0613             Model = openai.GPT432K0613
+	GPT432K0314             Model = openai.GPT432K0314
+	GPT432K                 Model = openai.GPT432K
+	GPT40613                Model = openai.GPT40613
+	GPT40314                Model = openai.GPT40314
+	GPT4                    Model = openai.GPT4
+	GPT3Dot5Turbo0613       Model = openai.GPT3Dot5Turbo0613
+	GPT3Dot5Turbo0301       Model = openai.GPT3Dot5Turbo0301
+	GPT3Dot5Turbo16K        Model = openai.GPT3Dot5Turbo16K
+	GPT3Dot5Turbo16K0613    Model = openai.GPT3Dot5Turbo16K0613
+	GPT3Dot5Turbo           Model = openai.GPT3Dot5Turbo
+	GPT3TextDavinci003      Model = openai.GPT3TextDavinci003
+	GPT3TextDavinci002      Model = openai.GPT3TextDavinci002
+	GPT3TextCurie001        Model = openai.GPT3TextCurie001
+	GPT3TextBabbage001      Model = openai.GPT3TextBabbage001
+	GPT3TextAda001          Model = openai.GPT3TextAda001
+	GPT3TextDavinci001      Model = openai.GPT3TextDavinci001
+	GPT3DavinciInstructBeta Model = openai.GPT3DavinciInstructBeta
+	GPT3Davinci             Model = openai.GPT3Davinci
+	GPT3CurieInstructBeta   Model = openai.GPT3CurieInstructBeta
+	GPT3Curie               Model = openai.GPT3Curie
+	GPT3Ada                 Model = openai.GPT3Ada
+	GPT3Babbage             Model = openai.GPT3Babbage
 )
 
 type OpenAIUsageCallback func(types.Meta)
