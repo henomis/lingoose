@@ -7,6 +7,7 @@ require github.com/mitchellh/mapstructure v1.5.0
 require (
 	github.com/google/uuid v1.3.0
 	github.com/henomis/pinecone-go v1.1.1
+	github.com/henomis/qdrant-go v1.0.0
 	github.com/pkoukk/tiktoken-go v0.1.1
 	github.com/sashabaranov/go-openai v1.11.1
 )
