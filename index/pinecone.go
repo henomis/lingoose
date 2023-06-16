@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	defaultPineconeTopK    = 10
-	defaultBatchUpsertSize = 32
+	defaultPineconeTopK            = 10
+	defaultPineconeBatchUpsertSize = 32
 )
 
 type Pinecone struct {
@@ -54,7 +54,7 @@ func NewPinecone(options PineconeOptions, embedder Embedder) *Pinecone {
 
 	pineconeClient := pineconego.New(environment, apiKey)
 
-	batchUpsertSize := defaultBatchUpsertSize
+	batchUpsertSize := defaultPineconeBatchUpsertSize
 	if options.BatchUpsertSize != nil {
 		batchUpsertSize = *options.BatchUpsertSize
 	}
@@ -253,9 +253,9 @@ func (p *Pinecone) createIndexIfRequired(ctx context.Context) error {
 
 func (p *Pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
 
-	for i := 0; i < len(documents); i += defaultBatchUpsertSize {
+	for i := 0; i < len(documents); i += defaultPineconeBatchUpsertSize {
 
-		batchEnd := i + defaultBatchUpsertSize
+		batchEnd := i + defaultPineconeBatchUpsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
 		}
@@ -270,7 +270,7 @@ func (p *Pinecone) batchUpsert(ctx context.Context, documents []document.Documen
 			return err
 		}
 
-		vectors, err := buildVectorsFromEmbeddingsAndDocuments(embeddings, documents, i, p.includeContent)
+		vectors, err := buildPineconeVectorsFromEmbeddingsAndDocuments(embeddings, documents, i, p.includeContent)
 		if err != nil {
 			return err
 		}
@@ -319,7 +319,7 @@ func deepCopyMetadata(metadata types.Meta) types.Meta {
 	return metadataCopy
 }
 
-func buildVectorsFromEmbeddingsAndDocuments(
+func buildPineconeVectorsFromEmbeddingsAndDocuments(
 	embeddings []embedder.Embedding,
 	documents []document.Document,
 	startIndex int,
