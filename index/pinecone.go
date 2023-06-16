@@ -140,7 +140,7 @@ func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, opts ...O
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
 
-	searchResponses := buildSearchReponsesFromMatches(matches, p.includeContent)
+	searchResponses := buildSearchReponsesFromPineconeMatches(matches, p.includeContent)
 
 	return filterSearchResponses(searchResponses, pineconeOptions.topK), nil
 }
@@ -355,7 +355,7 @@ func buildPineconeVectorsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchReponsesFromMatches(matches []pineconeresponse.QueryMatch, includeContent bool) SearchResponses {
+func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatch, includeContent bool) SearchResponses {
 	searchResponses := make([]SearchResponse, len(matches))
 
 	for i, match := range matches {

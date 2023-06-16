@@ -3,13 +3,14 @@ package index
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
-	qdrant "github.com/qdrant/go-client/qdrant"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	qdrantgo "github.com/henomis/qdrant-go"
+	qdrantrequest "github.com/henomis/qdrant-go/request"
+	qdrantresponse "github.com/henomis/qdrant-go/response"
 )
 
 const (
@@ -17,42 +18,43 @@ const (
 	defaultQdrantBatchUpsertSize = 32
 )
 
-type QdrantDistance int32
-
-const (
-	QdrantDistanceUnknow QdrantDistance = 0
-	QdrantDistanceCosine QdrantDistance = 1
-	QdrantDistanceEuclid QdrantDistance = 2
-	QdrantDistanceDot    QdrantDistance = 3
-)
-
 type Qdrant struct {
-	embedder          Embedder
-	endpoint          string
-	collectionName    string
-	batchUpsertSize   int
-	includeContent    bool
-	grpcClient        *grpc.ClientConn
-	collectionsClient qdrant.CollectionsClient
-	pointsClient      qdrant.PointsClient
+	qdrantClient    *qdrantgo.Client
+	collectionName  string
+	embedder        Embedder
+	includeContent  bool
+	batchUpsertSize int
 
 	createCollection *QdrantCreateCollectionOptions
 }
 
+type QdrantDistance string
+
+const (
+	QdrantDistanceCosine    QdrantDistance = QdrantDistance(qdrantrequest.DistanceCosine)
+	QdrantDistanceEuclidean QdrantDistance = QdrantDistance(qdrantrequest.DistanceEuclidean)
+	QdrantDistanceDot       QdrantDistance = QdrantDistance(qdrantrequest.DistanceDot)
+)
+
+type QdrantCreateCollectionOptions struct {
+	Dimension uint64
+	Distance  QdrantDistance
+	OnDisk    bool
+}
+
 type QdrantOptions struct {
-	Endpoint         string
 	CollectionName   string
 	IncludeContent   bool
 	BatchUpsertSize  *int
 	CreateCollection *QdrantCreateCollectionOptions
 }
 
-type QdrantCreateCollectionOptions struct {
-	Size     uint64
-	Distance QdrantDistance
-}
-
 func NewQdrant(options QdrantOptions, embedder Embedder) *Qdrant {
+
+	apiKey := os.Getenv("QDRANT_API_KEY")
+	endpoint := os.Getenv("QDRANT_ENDPOINT")
+
+	qdrantClient := qdrantgo.New(endpoint, apiKey)
 
 	batchUpsertSize := defaultQdrantBatchUpsertSize
 	if options.BatchUpsertSize != nil {
@@ -60,80 +62,23 @@ func NewQdrant(options QdrantOptions, embedder Embedder) *Qdrant {
 	}
 
 	return &Qdrant{
-		endpoint:         options.Endpoint,
-		embedder:         embedder,
+		qdrantClient:     qdrantClient,
 		collectionName:   options.CollectionName,
-		createCollection: options.CreateCollection,
+		embedder:         embedder,
 		includeContent:   options.IncludeContent,
 		batchUpsertSize:  batchUpsertSize,
+		createCollection: options.CreateCollection,
 	}
 }
 
-func (q *Qdrant) WithGRPCClient(client *grpc.ClientConn) *Qdrant {
-	q.grpcClient = client
+func (q *Qdrant) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Qdrant {
+	q.qdrantClient = qdrantgo.New(endpoint, apiKey)
 	return q
-}
-
-func (q *Qdrant) connect(ctx context.Context) error {
-
-	if q.grpcClient == nil {
-		q.createDefaultGRPCClient(ctx)
-	}
-
-	// _, err := qdrant.NewQdrantClient(q.grpcClient).HealthCheck(ctx, &qdrant.HealthCheckRequest{})
-	// if err != nil {
-	// 	return fmt.Errorf("%s: %w", ErrInternal, err)
-	// }
-
-	q.collectionsClient = qdrant.NewCollectionsClient(q.grpcClient)
-	q.pointsClient = qdrant.NewPointsClient(q.grpcClient)
-
-	return nil
-}
-
-func (q *Qdrant) createDefaultGRPCClient(ctx context.Context) error {
-	var conn *grpc.ClientConn
-	var err error
-
-	conn, err = grpc.DialContext(ctx, q.endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	q.grpcClient = conn
-	return nil
-}
-
-func (q *Qdrant) createCollectionIfRequired(ctx context.Context) error {
-
-	if q.createCollection == nil {
-		return nil
-	}
-
-	_, err := q.collectionsClient.Create(ctx, &qdrant.CreateCollection{
-		CollectionName: q.collectionName,
-		VectorsConfig: &qdrant.VectorsConfig{Config: &qdrant.VectorsConfig_Params{
-			Params: &qdrant.VectorParams{
-				Size:     q.createCollection.Size,
-				Distance: qdrant.Distance(q.createCollection.Distance),
-			},
-		}},
-	})
-	if err != nil {
-		return fmt.Errorf("%s: %w", ErrInternal, err)
-	}
-
-	return nil
 }
 
 func (q *Qdrant) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
-	err := q.connect(ctx)
-	if err != nil {
-		return fmt.Errorf("%s: %w", ErrInternal, err)
-	}
-
-	err = q.createCollectionIfRequired(ctx)
+	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrInternal, err)
 	}
@@ -142,6 +87,110 @@ func (q *Qdrant) LoadFromDocuments(ctx context.Context, documents []document.Doc
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrInternal, err)
 	}
+	return nil
+}
+
+func (p *Qdrant) IsEmpty(ctx context.Context) (bool, error) {
+
+	err := p.createCollectionIfRequired(ctx)
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
+	res := &qdrantresponse.CollectionCollectInfo{}
+	err = p.qdrantClient.CollectionCollectInfo(
+		ctx,
+		&qdrantrequest.CollectionCollectInfo{
+			CollectionName: p.collectionName,
+		},
+		res,
+	)
+	if err != nil {
+		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
+	return res.Result.VectorsCount == 0, nil
+
+}
+
+func (q *Qdrant) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
+
+	qdrantOptions := &options{
+		topK: defaultQdrantTopK,
+	}
+
+	for _, opt := range opts {
+		opt(qdrantOptions)
+	}
+
+	matches, err := q.similaritySearch(ctx, query, qdrantOptions.topK)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
+	}
+
+	searchResponses := buildSearchReponsesFromQdrantMatches(matches, q.includeContent)
+
+	return filterSearchResponses(searchResponses, qdrantOptions.topK), nil
+}
+
+func (p *Qdrant) similaritySearch(ctx context.Context, query string, topK int) ([]qdrantresponse.PointSearchResult, error) {
+
+	embeddings, err := p.embedder.Embed(ctx, []string{query})
+	if err != nil {
+		return nil, err
+	}
+
+	includeMetadata := true
+	res := &qdrantresponse.PointSearch{}
+	err = p.qdrantClient.PointSearch(
+		ctx,
+		&qdrantrequest.PointSearch{
+			CollectionName: p.collectionName,
+			Limit:          topK,
+			Vector:         embeddings[0],
+			WithPayload:    &includeMetadata,
+		},
+		res,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Result, nil
+}
+
+func (q *Qdrant) createCollectionIfRequired(ctx context.Context) error {
+
+	if q.createCollection == nil {
+		return nil
+	}
+
+	resp := &qdrantresponse.CollectionList{}
+	err := q.qdrantClient.CollectionList(ctx, &qdrantrequest.CollectionList{}, resp)
+	if err != nil {
+		return err
+	}
+
+	for _, collection := range resp.Result.Collections {
+		if collection.Name == q.collectionName {
+			return nil
+		}
+	}
+
+	req := &qdrantrequest.CollectionCreate{
+		CollectionName: q.collectionName,
+		Vectors: qdrantrequest.VectorsParams{
+			Size:     q.createCollection.Dimension,
+			Distance: qdrantrequest.Distance(q.createCollection.Distance),
+			OnDisk:   &q.createCollection.OnDisk,
+		},
+	}
+
+	err = q.qdrantClient.CollectionCreate(ctx, req, &qdrantresponse.CollectionCreate{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -164,12 +213,12 @@ func (q *Qdrant) batchUpsert(ctx context.Context, documents []document.Document)
 			return err
 		}
 
-		vectors, err := buildQdrantVectorsFromEmbeddingsAndDocuments(embeddings, documents, i, q.includeContent)
+		points, err := buildQdrantPointsFromEmbeddingsAndDocuments(embeddings, documents, i, q.includeContent)
 		if err != nil {
 			return err
 		}
 
-		err = q.upsertPoints(ctx, vectors)
+		err = q.pointUpsert(ctx, points)
 		if err != nil {
 			return err
 		}
@@ -178,26 +227,32 @@ func (q *Qdrant) batchUpsert(ctx context.Context, documents []document.Document)
 	return nil
 }
 
-func (q *Qdrant) upsertPoints(ctx context.Context, points []*qdrant.PointStruct) error {
+func (q *Qdrant) pointUpsert(ctx context.Context, points []qdrantrequest.Point) error {
 
-	waitUpsert := true
-	_, err := q.pointsClient.Upsert(ctx, &qdrant.UpsertPoints{
+	wait := true
+	req := &qdrantrequest.PointUpsert{
+		Wait:           &wait,
 		CollectionName: q.collectionName,
-		Wait:           &waitUpsert,
 		Points:         points,
-	})
+	}
+	res := &qdrantresponse.PointUpsert{}
 
-	return err
+	err := q.qdrantClient.PointUpsert(ctx, req, res)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func buildQdrantVectorsFromEmbeddingsAndDocuments(
+func buildQdrantPointsFromEmbeddingsAndDocuments(
 	embeddings []embedder.Embedding,
 	documents []document.Document,
 	startIndex int,
 	includeContent bool,
-) ([]*qdrant.PointStruct, error) {
+) ([]qdrantrequest.Point, error) {
 
-	var points []*qdrant.PointStruct
+	var vectors []qdrantrequest.Point
 
 	for i, embedding := range embeddings {
 
@@ -208,36 +263,47 @@ func buildQdrantVectorsFromEmbeddingsAndDocuments(
 			metadata[defaultKeyContent] = documents[startIndex+i].Content
 		}
 
-		pointID, err := uuid.NewUUID()
+		vectorID, err := uuid.NewUUID()
 		if err != nil {
 			return nil, err
 		}
 
-		payload := make(map[string]*qdrant.Value)
-		for k, v := range metadata {
-
-			payload[k] = &qdrant.Value{
-				Kind: &qdrant.Value_StringValue{StringValue: v.(string)},
-			}
-		}
-
-		points = append(points, &qdrant.PointStruct{
-			Id: &qdrant.PointId{
-				PointIdOptions: &qdrant.PointId_Uuid{Uuid: pointID.String()},
-			},
-			Vectors: &qdrant.Vectors{
-				VectorsOptions: &qdrant.Vectors_Vector{
-					Vector: &qdrant.Vector{
-						Data: embedding.ToFloat32(),
-					},
-				},
-			},
-			Payload: payload,
+		vectors = append(vectors, qdrantrequest.Point{
+			ID:      vectorID.String(),
+			Vector:  embedding,
+			Payload: metadata,
 		})
 
 		// inject vector ID into document metadata
-		documents[startIndex+i].Metadata[defaultKeyID] = pointID.String()
+		documents[startIndex+i].Metadata[defaultKeyID] = vectorID.String()
 	}
 
-	return points, nil
+	return vectors, nil
+}
+
+func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) SearchResponses {
+	searchResponses := make([]SearchResponse, len(matches))
+
+	for i, match := range matches {
+
+		metadata := deepCopyMetadata(match.Payload)
+
+		content := ""
+		// extract document content from vector metadata
+		if includeContent {
+			content = metadata[defaultKeyContent].(string)
+			delete(metadata, defaultKeyContent)
+		}
+
+		searchResponses[i] = SearchResponse{
+			ID: match.ID,
+			Document: document.Document{
+				Metadata: metadata,
+				Content:  content,
+			},
+			Score: match.Score,
+		}
+	}
+
+	return searchResponses
 }
