@@ -25,6 +25,7 @@ const (
 	DefaultOpenAITemperature = 0.7
 	DefaultOpenAINumResults  = 1
 	DefaultOpenAITopP        = 1.0
+	DefaultMaxIterations     = 3
 )
 
 type Model string
@@ -59,14 +60,15 @@ type OpenAIUsageCallback func(types.Meta)
 type OpenAIStreamCallback func(string)
 
 type openAI struct {
-	openAIClient  *openai.Client
-	model         Model
-	temperature   float32
-	maxTokens     int
-	stop          []string
-	verbose       bool
-	usageCallback OpenAIUsageCallback
-	functions     map[string]Function
+	openAIClient           *openai.Client
+	model                  Model
+	temperature            float32
+	maxTokens              int
+	stop                   []string
+	verbose                bool
+	usageCallback          OpenAIUsageCallback
+	functions              map[string]Function
+	functionsMaxIterations uint
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -74,12 +76,13 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	return &openAI{
-		openAIClient: openai.NewClient(openAIKey),
-		model:        model,
-		temperature:  temperature,
-		maxTokens:    maxTokens,
-		verbose:      verbose,
-		functions:    make(map[string]Function),
+		openAIClient:           openai.NewClient(openAIKey),
+		model:                  model,
+		temperature:            temperature,
+		maxTokens:              maxTokens,
+		verbose:                verbose,
+		functions:              make(map[string]Function),
+		functionsMaxIterations: DefaultMaxIterations,
 	}
 }
 
@@ -115,6 +118,11 @@ func (o *openAI) WithClient(client *openai.Client) *openAI {
 
 func (o *openAI) WithVerbose(verbose bool) *openAI {
 	o.verbose = verbose
+	return o
+}
+
+func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
+	o.functionsMaxIterations = maxIterations
 	return o
 }
 
@@ -266,7 +274,6 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 			prompt,
 			messages,
 			response,
-			prompt.Options().OpenAIFunctionsMaxIterations,
 		)
 		if err != nil {
 			return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)

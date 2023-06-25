@@ -35,10 +35,6 @@ func main() {
 			Type:   chat.MessageTypeUser,
 			Prompt: prompt.New("Hi, who are the top 5 artists by number of tracks?"),
 		},
-	).WithOption(
-		func(o *chat.Options) {
-			o.OpenAIFunctionsMaxIterations = 1
-		},
 	)
 
 	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)

@@ -179,7 +179,6 @@ func (o *openAI) iterateFunctionCall(
 	prompt *chat.Chat,
 	messages []openai.ChatCompletionMessage,
 	response openai.ChatCompletionResponse,
-	maxIterations uint,
 ) (openai.ChatCompletionResponse, error) {
 
 	var err error
@@ -187,7 +186,7 @@ func (o *openAI) iterateFunctionCall(
 	iteration := uint(0)
 	for {
 
-		if iteration > maxIterations {
+		if iteration > o.functionsMaxIterations {
 			return response, fmt.Errorf("%s: max iterations reached", ErrOpenAIChat)
 		}
 
