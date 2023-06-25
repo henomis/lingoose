@@ -240,7 +240,7 @@ func (o *openAI) handleFunctionCall(
 		Stop:        o.stop,
 	}
 
-	if prompt.Options().OpenAIFunctionsEnabled {
+	if len(o.functions) > 0 {
 		chatCompletionRequest.Functions = o.getFunctions()
 	}
 

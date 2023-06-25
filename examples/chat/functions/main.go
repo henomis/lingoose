@@ -37,7 +37,6 @@ func main() {
 		},
 	).WithOption(
 		func(o *chat.Options) {
-			o.OpenAIFunctionsEnabled = true
 			o.OpenAIFunctionsMaxIterations = 1
 		},
 	)

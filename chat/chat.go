@@ -14,7 +14,6 @@ var (
 )
 
 type Options struct {
-	OpenAIFunctionsEnabled       bool
 	OpenAIFunctionsMaxIterations uint
 }
 

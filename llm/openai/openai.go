@@ -239,7 +239,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		Stop:        o.stop,
 	}
 
-	if prompt.Options().OpenAIFunctionsEnabled {
+	if len(o.functions) > 0 {
 		chatCompletionRequest.Functions = o.getFunctions()
 	}
 
@@ -260,7 +260,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
 	}
 
-	if prompt.Options().OpenAIFunctionsEnabled {
+	if len(o.functions) > 0 {
 		response, err = o.iterateFunctionCall(
 			ctx,
 			prompt,
