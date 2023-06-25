@@ -1,55 +1,43 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/prompt"
-	// uncomment this line to use the sqlite3 driver
-	// _ "github.com/mattn/go-sqlite3"
 )
-
-const (
-	database = "Chinook_Sqlite.sqlite"
-)
-
-// Downdload the Chinook database:
-// wget https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
 
 func main() {
-
-	databaseSchemaString, err := getDatabaseSchema(database)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Printf("What's your name?\n> ")
+	reader := bufio.NewReader(os.Stdin)
+	name, _ := reader.ReadString('\n')
 
 	chat := chat.New(
 		chat.PromptMessage{
 			Type:   chat.MessageTypeSystem,
-			Prompt: prompt.New("Answer user questions by generating SQL queries against the Chinook Music Database."),
+			Prompt: prompt.New("You are an helpfull assistant."),
 		},
 		chat.PromptMessage{
-			Type:   chat.MessageTypeUser,
-			Prompt: prompt.New("Hi, who are the top 5 artists by number of tracks?"),
+			Type: chat.MessageTypeUser,
+			Prompt: prompt.New(
+				fmt.Sprintf("My name is %s, can you guess my nationality?", name),
+			),
 		},
 	)
 
-	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, false)
 
 	llmOpenAI.BindFunction(
-		"ask_database",
-		"Use this function to answer user questions about music. Output should be a fully formed SQL query.",
-		askDatabase,
-		func(m map[string]interface{}) error {
-			m["properties"].(map[string]interface{})["query"].(map[string]interface{})["description"] = fmt.Sprintf(
-				"SQL query extracting info to answer the user's question.\nSQL should be written using this database schema:\n%s\nThe query should be returned in plain text, not in JSON.",
-				databaseSchemaString,
-			)
-			return nil
-		},
+		"GetNationalitiesForName",
+		"Use this function to get the nationalities for a given name.",
+		GetNationalitiesForName,
 	)
 
 	response, err := llmOpenAI.Chat(context.Background(), chat)
@@ -57,53 +45,42 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("\n%#v", response)
+	fmt.Printf("\n%s", response)
 
 }
 
 type Query struct {
-	Query string `json:"query"`
+	Name string `json:"name" jsonschema:"description=The name to get the nationalities for"`
 }
 
-func askDatabase(query Query) ([]map[string]interface{}, error) {
+type Country struct {
+	CountryID   string  `json:"country_id"`
+	Probability float64 `json:"probability"`
+}
 
-	conn, err := sql.Open("sqlite3", database)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	defer conn.Close()
+type NationalizeResponse struct {
+	Name    string    `json:"name"`
+	Country []Country `json:"country"`
+}
 
-	rows, err := conn.Query(query.Query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	columns, err := rows.Columns()
+func GetNationalitiesForName(query Query) ([]Country, error) {
+	url := fmt.Sprintf("https://api.nationalize.io/?name=%s", query.Name)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
-	values := make([]interface{}, len(columns))
-	valuePtrs := make([]interface{}, len(columns))
-	for i := range columns {
-		valuePtrs[i] = &values[i]
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	results := make([]map[string]interface{}, 0)
-	for rows.Next() {
-		err := rows.Scan(valuePtrs...)
-		if err != nil {
-			return nil, err
-		}
-
-		row := make(map[string]interface{})
-		for i, col := range columns {
-			row[col] = values[i]
-		}
-		results = append(results, row)
+	var response NationalizeResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
 	}
 
-	return results, nil
+	return response.Country, nil
 }
