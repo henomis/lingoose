@@ -22,7 +22,7 @@ func main() {
 	chat := chat.New(
 		chat.PromptMessage{
 			Type:   chat.MessageTypeSystem,
-			Prompt: prompt.New("You are an helpfull assistant."),
+			Prompt: prompt.New("You are an helpfull assistant. Reply using percentages not float numbers."),
 		},
 		chat.PromptMessage{
 			Type: chat.MessageTypeUser,
