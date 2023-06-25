@@ -13,8 +13,14 @@ var (
 	ErrChatMessages = errors.New("unable to convert chat messages")
 )
 
+type Options struct {
+	OpenAIFunctionsEnabled       bool
+	OpenAIFunctionsMaxIterations uint
+}
+
 type Chat struct {
 	promptMessages PromptMessages
+	options        Options
 }
 
 type Prompt interface {
@@ -28,6 +34,7 @@ const (
 	MessageTypeSystem    MessageType = "system"
 	MessageTypeUser      MessageType = "user"
 	MessageTypeAssistant MessageType = "assistant"
+	MessageTypeFunction  MessageType = "function"
 )
 
 type PromptMessage struct {
@@ -51,6 +58,14 @@ func New(promptMessages ...PromptMessage) *Chat {
 	}
 
 	return chatPromptTemplate
+}
+
+func (c *Chat) AddMessages(messages ...PromptMessage) *Chat {
+	for _, message := range messages {
+		c.addMessagePromptTemplate(message)
+	}
+
+	return c
 }
 
 func (p *Chat) addMessagePromptTemplate(message PromptMessage) {
@@ -84,4 +99,13 @@ func (p *Chat) ToMessages() (Messages, error) {
 
 func (c *Chat) PromptMessages() PromptMessages {
 	return c.promptMessages
+}
+
+func (c *Chat) WithOption(modifier func(*Options)) *Chat {
+	modifier(&c.options)
+	return c
+}
+
+func (c *Chat) Options() Options {
+	return c.options
 }

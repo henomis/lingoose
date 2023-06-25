@@ -66,6 +66,7 @@ type openAI struct {
 	stop          []string
 	verbose       bool
 	usageCallback OpenAIUsageCallback
+	functions     map[string]Function
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -78,6 +79,7 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI 
 		temperature:  temperature,
 		maxTokens:    maxTokens,
 		verbose:      verbose,
+		functions:    make(map[string]Function),
 	}
 }
 
@@ -227,17 +229,23 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
+	chatCompletionRequest := openai.ChatCompletionRequest{
+		Model:       string(o.model),
+		Messages:    messages,
+		MaxTokens:   o.maxTokens,
+		Temperature: o.temperature,
+		N:           DefaultOpenAINumResults,
+		TopP:        DefaultOpenAITopP,
+		Stop:        o.stop,
+	}
+
+	if prompt.Options().OpenAIFunctionsEnabled {
+		chatCompletionRequest.Functions = o.getFunctions()
+	}
+
 	response, err := o.openAIClient.CreateChatCompletion(
 		ctx,
-		openai.ChatCompletionRequest{
-			Model:       string(o.model),
-			Messages:    messages,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
+		chatCompletionRequest,
 	)
 
 	if err != nil {
@@ -250,6 +258,19 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	if len(response.Choices) == 0 {
 		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
+	}
+
+	if prompt.Options().OpenAIFunctionsEnabled {
+		response, err = o.iterateFunctionCall(
+			ctx,
+			prompt,
+			messages,
+			response,
+			prompt.Options().OpenAIFunctionsMaxIterations,
+		)
+		if err != nil {
+			return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		}
 	}
 
 	content := response.Choices[0].Message.Content
