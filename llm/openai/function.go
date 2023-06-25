@@ -22,9 +22,9 @@ type Function struct {
 type FunctionParameterOption func(map[string]interface{}) error
 
 func (o *openAI) BindFunction(
+	fn interface{},
 	name string,
 	description string,
-	fn interface{},
 	functionParamenterOptions ...FunctionParameterOption,
 ) error {
 	parameter, err := extractFunctionParameter(fn)

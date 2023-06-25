@@ -32,12 +32,12 @@ func main() {
 		},
 	)
 
-	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, false)
+	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
 
 	llmOpenAI.BindFunction(
+		GetNationalitiesForName,
 		"GetNationalitiesForName",
 		"Use this function to get the nationalities for a given name.",
-		GetNationalitiesForName,
 	)
 
 	response, err := llmOpenAI.Chat(context.Background(), chat)
