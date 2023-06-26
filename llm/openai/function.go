@@ -70,6 +70,10 @@ func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
 	// Get the type of the input function
 	fnType := reflect.TypeOf(f)
 
+	if fnType.Kind() != reflect.Func {
+		return nil, errors.New("input must be a function")
+	}
+
 	// Check that the function only has one argument
 	if fnType.NumIn() != 1 {
 		return nil, errors.New("function must have exactly one argument")
