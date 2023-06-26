@@ -28,6 +28,7 @@ const (
 	MessageTypeSystem    MessageType = "system"
 	MessageTypeUser      MessageType = "user"
 	MessageTypeAssistant MessageType = "assistant"
+	MessageTypeFunction  MessageType = "function"
 )
 
 type PromptMessage struct {
