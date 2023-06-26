@@ -54,14 +54,6 @@ func New(promptMessages ...PromptMessage) *Chat {
 	return chatPromptTemplate
 }
 
-func (c *Chat) AddMessages(messages ...PromptMessage) *Chat {
-	for _, message := range messages {
-		c.addMessagePromptTemplate(message)
-	}
-
-	return c
-}
-
 func (p *Chat) addMessagePromptTemplate(message PromptMessage) {
 	p.promptMessages = append(p.promptMessages, message)
 }
