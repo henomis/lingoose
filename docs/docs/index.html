@@ -168,6 +168,9 @@
               <li class="nav-item">
                 <a class="nav-link" href="#index">Index</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#transformer">Transformer</a>
+              </li>
             </ul>
           </li>
           <li class="nav-item">
@@ -206,7 +209,7 @@
             <div class="row">
               <div class="col-sm-6 col-lg-4">
                 <ul class="list-unstyled">
-                  <li><strong>Version:</strong> 0.0.7</li>
+                  <li><strong>Version:</strong> 0.0.8</li>
                   <li>
                     <strong>Author:</strong>
                     <a href="http://www.simonevellei.com" target="_blank">Simone Vellei
@@ -220,7 +223,7 @@
                     <strong class="font-weight-700">Created:</strong> 27
                     April, 2023
                   </li>
-                  <li><strong>Update:</strong> 3 Jun, 2023</li>
+                  <li><strong>Update:</strong> 1 Jul, 2023</li>
                 </ul>
               </div>
             </div>
@@ -457,9 +460,9 @@ fmt.Println(jokeChat.ToMessages())
               provides a simple interface to use them. Lingoose currently
               supports:
               <ul>
-                <li><a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i></li>
-                <li><a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a> <i>Completion</i></li>
-                <li>Hugging Face conversational and text generation <i>Completion</i></li>
+                <li><a href="https://openai.com" target="_blank">OpenAI</a> <i>Completion</i> and <i>Chat</i>. <i>Functions</i> are fully supported!</li>
+                <li><a href="https://github.com/ggerganov/llama.cpp" target="_blank">llama.cpp</a> <i>Completion</i></li>
+                <li><a href="https://huggingface.co/" target="_blank">Hugging</a> Face conversational and text generation <i>Completion</i></li>
               </ul>
             </p>
             <h3>Completion</h3>
@@ -993,7 +996,8 @@ embeddings, err = openaiEmbedder.Embed(context.Background(),documents)
               Vectors need to be stored to be retreived later. There are two index types currently available:
             <ul>
               <li><code>simpleVectorIndex</code> - local storage</li>
-              <li><code>pinecone</code> - remote storage at <a href="https://pinecone.io">Pinecone.io</a></li>
+              <li><code>pinecone</code> - remote vector storage database at <a href="https://pinecone.io">Pinecone.io</a></li>
+              <li><code>qdrant</code> - vector storage database <a href="https://qdrant.tech">Qdrant</a></li>
             </ul>
             Here is an example of <code>SimpleVectorIndex</code>:
             </p>
@@ -1023,6 +1027,27 @@ similarities, err := docsVectorIndex.SimilaritySearch(
 Similarity response (<code>index.SearchResponse</code>) will contain Documents and relative similarity score. Indexes are responsible to call an <code>Embedder</code>
 to store and search vectors.
           </section>
+
+          <hr class="divider" />
+          <section id="transformer">
+            <h2>Transformer</h2>
+            <p class="lead">Transformer is a component that transform a multimedia document to a text or viceversa.</p>
+            <p>
+             Lingoose currently supports:
+              <ul>
+                <li>OpenAI Dall-e text to image.</li>
+              </ul>
+            </p>
+            <pre>
+  <code class="go">
+    d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize1024).AsFile("test.png")
+
+    _, err := d.Transform(context.Background(), "a goose working with pipelines")
+  </code>
+</pre>
+
+          </section>
+
           <hr class="divider" />
 
           <section id="goreference">
