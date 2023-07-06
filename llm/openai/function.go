@@ -246,7 +246,6 @@ func (o *openAI) handleFunctionCall(
 
 	if len(o.functions) > 0 {
 		chatCompletionRequest.Functions = o.getFunctions()
-		chatCompletionRequest.FunctionCall = "auto"
 	}
 
 	newResponse, err := o.openAIClient.CreateChatCompletion(
