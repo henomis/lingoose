@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 )
@@ -13,6 +14,7 @@ type Tube struct {
 	decoder   Decoder
 	namespace string
 	memory    Memory
+	history   History
 }
 
 func NewTube(
@@ -31,6 +33,11 @@ func (t *Tube) Namespace() string {
 func (t *Tube) WithMemory(namespace string, memory Memory) *Tube {
 	t.namespace = namespace
 	t.memory = memory
+	return t
+}
+
+func (t *Tube) WithHistory(history History) *Tube {
+	t.history = history
 	return t
 }
 
@@ -94,9 +101,23 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 		return "", err
 	}
 
+	if s.history != nil {
+		err = s.history.Add(s.llm.Prompt.String(), nil)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.String())
 	if err != nil {
 		return "", err
+	}
+
+	if s.history != nil {
+		err = s.history.Add(response, nil)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return response, nil
@@ -109,11 +130,35 @@ func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error
 		if err != nil {
 			return "", err
 		}
+
+		if s.history != nil {
+			err = s.history.Add(
+				promptMessage.Prompt.String(),
+				types.Meta{
+					"role": promptMessage.Type,
+				},
+			)
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 
 	response, err := s.llm.LlmEngine.Chat(ctx, s.llm.Chat)
 	if err != nil {
 		return "", err
+	}
+
+	if s.history != nil {
+		err = s.history.Add(
+			response,
+			types.Meta{
+				"role": chat.MessageTypeAssistant,
+			},
+		)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return response, nil
