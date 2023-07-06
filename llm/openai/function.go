@@ -98,16 +98,9 @@ func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
 
 func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	r := new(jsonschema.Reflector)
+
+	r.DoNotReference = true
 	schema := r.Reflect(v)
-
-	if len(schema.Definitions) != 1 {
-		return nil, fmt.Errorf("expected exactly one definition, got %d", len(schema.Definitions))
-	}
-
-	for _, v := range schema.Definitions {
-		schema = v
-		break
-	}
 
 	b, err := json.Marshal(schema)
 	if err != nil {
@@ -119,6 +112,8 @@ func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	delete(jsonSchema, "$schema")
 
 	return jsonSchema, nil
 }
@@ -194,7 +189,7 @@ func (o *openAI) iterateFunctionCall(
 			return response, fmt.Errorf("%s: max iterations reached", ErrOpenAIChat)
 		}
 
-		if responsePtr.Choices[0].Message.FunctionCall == nil {
+		if responsePtr.Choices[0].Message.FunctionCall == nil || responsePtr.Choices[0].FinishReason == "stop" {
 			return *responsePtr, nil
 		}
 
@@ -204,6 +199,7 @@ func (o *openAI) iterateFunctionCall(
 		}
 
 		iteration++
+
 	}
 }
 
@@ -226,6 +222,11 @@ func (o *openAI) handleFunctionCall(
 		return nil, fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
+	if o.functionsStopAtFirstCall {
+		response.Choices[0].FinishReason = "stop"
+		return response, nil
+	}
+
 	// append the result of the function call
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleFunction,
@@ -245,6 +246,7 @@ func (o *openAI) handleFunctionCall(
 
 	if len(o.functions) > 0 {
 		chatCompletionRequest.Functions = o.getFunctions()
+		chatCompletionRequest.FunctionCall = "auto"
 	}
 
 	newResponse, err := o.openAIClient.CreateChatCompletion(

@@ -60,15 +60,16 @@ type OpenAIUsageCallback func(types.Meta)
 type OpenAIStreamCallback func(string)
 
 type openAI struct {
-	openAIClient           *openai.Client
-	model                  Model
-	temperature            float32
-	maxTokens              int
-	stop                   []string
-	verbose                bool
-	usageCallback          OpenAIUsageCallback
-	functions              map[string]Function
-	functionsMaxIterations uint
+	openAIClient             *openai.Client
+	model                    Model
+	temperature              float32
+	maxTokens                int
+	stop                     []string
+	verbose                  bool
+	usageCallback            OpenAIUsageCallback
+	functions                map[string]Function
+	functionsMaxIterations   uint
+	functionsStopAtFirstCall bool
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -123,6 +124,11 @@ func (o *openAI) WithVerbose(verbose bool) *openAI {
 
 func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
 	o.functionsMaxIterations = maxIterations
+	return o
+}
+
+func (o *openAI) WithFunctionCallOptions(stopAtFirstCall bool) *openAI {
+	o.functionsStopAtFirstCall = stopAtFirstCall
 	return o
 }
 
