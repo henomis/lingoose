@@ -27,6 +27,10 @@ type Memory interface {
 	Clear() error
 }
 
+type History interface {
+	Add(content string, meta types.Meta) error
+}
+
 type Pipe interface {
 	Run(ctx context.Context, input types.M) (types.M, error)
 }
