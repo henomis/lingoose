@@ -222,7 +222,7 @@ func (o *openAI) handleFunctionCall(
 		return nil, fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
-	if o.functionsStopAtFirstCall {
+	if o.stopOnFirstFunctionCall {
 		response.Choices[0].FinishReason = "stop"
 		return response, nil
 	}
