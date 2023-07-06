@@ -102,7 +102,10 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 	}
 
 	if s.history != nil {
-		s.history.Add(s.llm.Prompt.String(), nil)
+		err = s.history.Add(s.llm.Prompt.String(), nil)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.String())
@@ -111,7 +114,10 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 	}
 
 	if s.history != nil {
-		s.history.Add(response, nil)
+		err = s.history.Add(response, nil)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return response, nil
@@ -126,12 +132,15 @@ func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error
 		}
 
 		if s.history != nil {
-			s.history.Add(
+			err = s.history.Add(
 				promptMessage.Prompt.String(),
 				types.Meta{
 					"role": promptMessage.Type,
 				},
 			)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
@@ -141,12 +150,15 @@ func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error
 	}
 
 	if s.history != nil {
-		s.history.Add(
+		err = s.history.Add(
 			response,
 			types.Meta{
 				"role": chat.MessageTypeAssistant,
 			},
 		)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return response, nil
