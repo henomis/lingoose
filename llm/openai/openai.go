@@ -69,6 +69,7 @@ type openAI struct {
 	usageCallback          OpenAIUsageCallback
 	functions              map[string]Function
 	functionsMaxIterations uint
+	lastFunctionCalledName string
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -124,6 +125,10 @@ func (o *openAI) WithVerbose(verbose bool) *openAI {
 func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
 	o.functionsMaxIterations = maxIterations
 	return o
+}
+
+func (o *openAI) LastFunctionCallName() *string {
+	return &o.lastFunctionCalledName
 }
 
 func NewCompletion() *openAI {
@@ -268,19 +273,14 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
 	}
 
-	if len(o.functions) > 0 {
-		response, err = o.iterateFunctionCall(
-			ctx,
-			prompt,
-			messages,
-			response,
-		)
+	content := response.Choices[0].Message.Content
+
+	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
+		content, err = o.functionCall(response)
 		if err != nil {
 			return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 		}
 	}
-
-	content := response.Choices[0].Message.Content
 
 	if o.verbose {
 		debugChat(prompt, content)
@@ -381,6 +381,17 @@ func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
 				Role:    openai.ChatMessageRoleSystem,
 				Content: message.Content,
 			})
+		} else if message.Type == chat.MessageTypeFunction {
+
+			fnmessage := openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleFunction,
+				Content: message.Content,
+			}
+			if message.Name != nil {
+				fnmessage.Name = *message.Name
+			}
+
+			messages = append(messages, fnmessage)
 		}
 	}
 
@@ -401,6 +412,8 @@ func debugChat(prompt *chat.Chat, content string) {
 			fmt.Printf("---AI---\n%s\n", message.Content)
 		} else if message.Type == chat.MessageTypeSystem {
 			fmt.Printf("---SYSTEM---\n%s\n", message.Content)
+		} else if message.Type == chat.MessageTypeFunction {
+			fmt.Printf("---FUNCTION---\n%s()\n%s\n", *message.Name, message.Content)
 		}
 	}
 	fmt.Printf("---AI---\n%s\n", content)

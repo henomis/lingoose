@@ -1,13 +1,11 @@
 package openai
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 
-	"github.com/henomis/lingoose/chat"
 	"github.com/invopop/jsonschema"
 	"github.com/sashabaranov/go-openai"
 )
@@ -98,16 +96,8 @@ func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
 
 func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	r := new(jsonschema.Reflector)
+	r.DoNotReference = true
 	schema := r.Reflect(v)
-
-	if len(schema.Definitions) != 1 {
-		return nil, fmt.Errorf("expected exactly one definition, got %d", len(schema.Definitions))
-	}
-
-	for _, v := range schema.Definitions {
-		schema = v
-		break
-	}
 
 	b, err := json.Marshal(schema)
 	if err != nil {
@@ -119,6 +109,8 @@ func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	delete(jsonSchema, "$schema")
 
 	return jsonSchema, nil
 }
@@ -178,91 +170,18 @@ func callFnWithArgumentAsJson(fn interface{}, argumentAsJson string) (string, er
 	return "", nil
 }
 
-func (o *openAI) iterateFunctionCall(
-	ctx context.Context,
-	prompt *chat.Chat,
-	messages []openai.ChatCompletionMessage,
-	response openai.ChatCompletionResponse,
-) (openai.ChatCompletionResponse, error) {
-
-	var err error
-	responsePtr := &response
-	iteration := uint(0)
-	for {
-
-		if iteration > o.functionsMaxIterations {
-			return response, fmt.Errorf("%s: max iterations reached", ErrOpenAIChat)
-		}
-
-		if responsePtr.Choices[0].Message.FunctionCall == nil {
-			return *responsePtr, nil
-		}
-
-		responsePtr, err = o.handleFunctionCall(ctx, prompt, messages, responsePtr)
-		if err != nil {
-			return openai.ChatCompletionResponse{}, err
-		}
-
-		iteration++
-	}
-}
-
-func (o *openAI) handleFunctionCall(
-	ctx context.Context,
-	prompt *chat.Chat,
-	messages []openai.ChatCompletionMessage,
-	response *openai.ChatCompletionResponse,
-) (*openai.ChatCompletionResponse, error) {
-	// append the request to call the function
-	messages = append(messages, response.Choices[0].Message)
-
+func (o *openAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
-		return nil, fmt.Errorf("%s: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
+		return "", fmt.Errorf("%s: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
 	}
 
 	resultAsJSON, err := callFnWithArgumentAsJson(fn.Fn, response.Choices[0].Message.FunctionCall.Arguments)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
-	// append the result of the function call
-	messages = append(messages, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleFunction,
-		Name:    response.Choices[0].Message.FunctionCall.Name,
-		Content: resultAsJSON,
-	})
+	o.lastFunctionCalledName = fn.Name
 
-	chatCompletionRequest := openai.ChatCompletionRequest{
-		Model:       string(o.model),
-		Messages:    messages,
-		MaxTokens:   o.maxTokens,
-		Temperature: o.temperature,
-		N:           DefaultOpenAINumResults,
-		TopP:        DefaultOpenAITopP,
-		Stop:        o.stop,
-	}
-
-	if len(o.functions) > 0 {
-		chatCompletionRequest.Functions = o.getFunctions()
-	}
-
-	newResponse, err := o.openAIClient.CreateChatCompletion(
-		ctx,
-		chatCompletionRequest,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrOpenAIChat, err)
-	}
-
-	if o.usageCallback != nil {
-		o.setUsageMetadata(response.Usage)
-	}
-
-	if len(newResponse.Choices) == 0 {
-		return nil, fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
-	}
-
-	return &newResponse, err
+	return resultAsJSON, nil
 }

@@ -34,6 +34,7 @@ const (
 type PromptMessage struct {
 	Type   MessageType
 	Prompt Prompt
+	Name   *string
 }
 
 type PromptMessages []PromptMessage
@@ -41,6 +42,7 @@ type PromptMessages []PromptMessage
 type Message struct {
 	Type    MessageType
 	Content string
+	Name    *string
 }
 
 type Messages []Message
@@ -52,6 +54,12 @@ func New(promptMessages ...PromptMessage) *Chat {
 	}
 
 	return chatPromptTemplate
+}
+
+func (c *Chat) AddPromptMessages(messages []PromptMessage) {
+	for _, message := range messages {
+		c.addMessagePromptTemplate(message)
+	}
 }
 
 func (p *Chat) addMessagePromptTemplate(message PromptMessage) {
@@ -66,6 +74,7 @@ func (p *Chat) ToMessages() (Messages, error) {
 	for _, messagePromptTemplate := range p.promptMessages {
 		var message Message
 		message.Type = messagePromptTemplate.Type
+		message.Name = messagePromptTemplate.Name
 
 		if messagePromptTemplate.Prompt != nil {
 			if len(messagePromptTemplate.Prompt.String()) == 0 {
