@@ -96,16 +96,8 @@ func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
 
 func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	r := new(jsonschema.Reflector)
+	r.DoNotReference = true
 	schema := r.Reflect(v)
-
-	if len(schema.Definitions) != 1 {
-		return nil, fmt.Errorf("expected exactly one definition, got %d", len(schema.Definitions))
-	}
-
-	for _, v := range schema.Definitions {
-		schema = v
-		break
-	}
 
 	b, err := json.Marshal(schema)
 	if err != nil {
@@ -117,6 +109,8 @@ func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	delete(jsonSchema, "$schema")
 
 	return jsonSchema, nil
 }
