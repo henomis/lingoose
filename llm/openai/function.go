@@ -181,7 +181,7 @@ func (o *openAI) functionCall(response openai.ChatCompletionResponse) (string, e
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}
 
-	o.lastFunctionCalledName = fn.Name
+	o.calledFunctionName = &fn.Name
 
 	return resultAsJSON, nil
 }

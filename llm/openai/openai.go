@@ -69,7 +69,7 @@ type openAI struct {
 	usageCallback          OpenAIUsageCallback
 	functions              map[string]Function
 	functionsMaxIterations uint
-	lastFunctionCalledName string
+	calledFunctionName     *string
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -127,8 +127,8 @@ func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
 	return o
 }
 
-func (o *openAI) LastFunctionCallName() *string {
-	return &o.lastFunctionCalledName
+func (o *openAI) CalledFunctionName() *string {
+	return o.calledFunctionName
 }
 
 func NewCompletion() *openAI {
@@ -275,6 +275,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	content := response.Choices[0].Message.Content
 
+	o.calledFunctionName = nil
 	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
 		content, err = o.functionCall(response)
 		if err != nil {

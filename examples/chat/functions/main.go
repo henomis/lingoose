@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/llm/openai"
@@ -13,11 +15,9 @@ import (
 )
 
 func main() {
-	// fmt.Printf("What's your name?\n> ")
-	// reader := bufio.NewReader(os.Stdin)
-	// name, _ := reader.ReadString('\n')
-
-	name := "simone"
+	fmt.Printf("What's your name?\n> ")
+	reader := bufio.NewReader(os.Stdin)
+	name, _ := reader.ReadString('\n')
 
 	llmChat := chat.New(
 
@@ -41,25 +41,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Printf("\n%s", response)
-	_ = response
+
+	if llmOpenAI.CalledFunctionName() == nil {
+		fmt.Printf("expected called function name to be set")
+		return
+	}
 
 	llmChat.AddPromptMessages(
 		[]chat.PromptMessage{
 			{
 				Type:   chat.MessageTypeFunction,
 				Prompt: prompt.New(response),
-				Name:   llmOpenAI.LastFunctionCallName(),
+				Name:   llmOpenAI.CalledFunctionName(),
 			},
 		},
 	)
 
-	response, err = llmOpenAI.Chat(context.Background(), llmChat)
+	_, err = llmOpenAI.Chat(context.Background(), llmChat)
 	if err != nil {
 		panic(err)
 	}
-	_ = response
-	// fmt.Printf("\n%s", response)
 
 }
 
