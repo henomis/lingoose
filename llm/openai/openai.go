@@ -70,6 +70,7 @@ type openAI struct {
 	functions              map[string]Function
 	functionsMaxIterations uint
 	calledFunctionName     *string
+	finishReason           string
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
@@ -129,6 +130,10 @@ func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
 
 func (o *openAI) CalledFunctionName() *string {
 	return o.calledFunctionName
+}
+
+func (o *openAI) FinishReason() string {
+	return o.finishReason
 }
 
 func NewCompletion() *openAI {
@@ -275,6 +280,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	content := response.Choices[0].Message.Content
 
+	o.finishReason = string(response.Choices[0].FinishReason)
 	o.calledFunctionName = nil
 	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
 		content, err = o.functionCall(response)
