@@ -13,35 +13,35 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type csvLoader struct {
+type CSVLoader struct {
 	separator  rune
 	filename   string
 	lazyQuotes bool
 }
 
-func NewCSVLoader(filename string) *csvLoader {
-	return &csvLoader{
+func NewCSVLoader(filename string) *CSVLoader {
+	return &CSVLoader{
 		filename:  filename,
 		separator: ',',
 	}
 }
 
-func (c *csvLoader) WithLazyQuotes() *csvLoader {
+func (c *CSVLoader) WithLazyQuotes() *CSVLoader {
 	c.lazyQuotes = true
 	return c
 }
 
-func (c *csvLoader) WithSeparator(separator rune) *csvLoader {
+func (c *CSVLoader) WithSeparator(separator rune) *CSVLoader {
 	c.separator = separator
 	return c
 }
 
-func (t *csvLoader) WithTextSplitter(textSplitter TextSplitter) *csvLoader {
+func (t *CSVLoader) WithTextSplitter(textSplitter TextSplitter) *CSVLoader {
 	// can't split csv
 	return t
 }
 
-func (c *csvLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := c.validate()
 	if err != nil {
@@ -56,7 +56,7 @@ func (c *csvLoader) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
-func (c *csvLoader) validate() error {
+func (c *CSVLoader) validate() error {
 
 	fileStat, err := os.Stat(c.filename)
 	if err != nil {
@@ -70,7 +70,7 @@ func (c *csvLoader) validate() error {
 	return nil
 }
 
-func (c *csvLoader) readCSV() ([]document.Document, error) {
+func (c *CSVLoader) readCSV() ([]document.Document, error) {
 	csvFile, err := os.Open(c.filename)
 	if err != nil {
 		log.Fatal(err)

@@ -12,7 +12,7 @@ var (
 	ErrSplitFunction = fmt.Errorf("split function error")
 )
 
-type splitter struct {
+type Splitter struct {
 	name       string
 	llm        Llm
 	decoder    Decoder
@@ -25,25 +25,25 @@ type SplitterFn func(input types.M) ([]types.M, error)
 func NewSplitter(
 	llm Llm,
 	splitterFn SplitterFn,
-) *splitter {
-	return &splitter{
+) *Splitter {
+	return &Splitter{
 		llm:        llm,
 		splitterFn: splitterFn,
 	}
 }
 
-func (s *splitter) WithDecoder(decoder Decoder) *splitter {
+func (s *Splitter) WithDecoder(decoder Decoder) *Splitter {
 	s.decoder = decoder
 	return s
 }
 
-func (s *splitter) WithMemory(name string, memory Memory) *splitter {
+func (s *Splitter) WithMemory(name string, memory Memory) *Splitter {
 	s.name = name
 	s.memory = memory
 	return s
 }
 
-func (s *splitter) Run(ctx context.Context, input types.M) (types.M, error) {
+func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {

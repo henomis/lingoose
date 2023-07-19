@@ -14,38 +14,38 @@ var (
 	defaultLibreOfficePath = "/usr/bin/soffice"
 )
 
-type libreOfficeLoader struct {
-	loader loader
+type LibreOfficeLoader struct {
+	loader Loader
 
 	libreOfficePath string
 	libreOfficeArgs []string
 	filename        string
 }
 
-func NewLibreOfficeLoader(filename string) *libreOfficeLoader {
-	return &libreOfficeLoader{
+func NewLibreOfficeLoader(filename string) *LibreOfficeLoader {
+	return &LibreOfficeLoader{
 		libreOfficePath: defaultLibreOfficePath,
 		libreOfficeArgs: []string{"--headless", "--convert-to", "txt:Text", "--cat"},
 		filename:        filename,
 	}
 }
 
-func (l *libreOfficeLoader) WithLibreOfficePath(libreOfficePath string) *libreOfficeLoader {
+func (l *LibreOfficeLoader) WithLibreOfficePath(libreOfficePath string) *LibreOfficeLoader {
 	l.libreOfficePath = libreOfficePath
 	return l
 }
 
-func (l *libreOfficeLoader) WithTextSplitter(textSplitter TextSplitter) *libreOfficeLoader {
+func (l *LibreOfficeLoader) WithTextSplitter(textSplitter TextSplitter) *LibreOfficeLoader {
 	l.loader.textSplitter = textSplitter
 	return l
 }
 
-func (l *libreOfficeLoader) WithArgs(libreOfficeArgs []string) *libreOfficeLoader {
+func (l *LibreOfficeLoader) WithArgs(libreOfficeArgs []string) *LibreOfficeLoader {
 	l.libreOfficeArgs = libreOfficeArgs
 	return l
 }
 
-func (l *libreOfficeLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (l *LibreOfficeLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(l.libreOfficePath)
 	if err != nil {
@@ -69,7 +69,7 @@ func (l *libreOfficeLoader) Load(ctx context.Context) ([]document.Document, erro
 	return documents, nil
 }
 
-func (l *libreOfficeLoader) loadFile(ctx context.Context) ([]document.Document, error) {
+func (l *LibreOfficeLoader) loadFile(ctx context.Context) ([]document.Document, error) {
 
 	libreOfficeArgs := append(l.libreOfficeArgs, l.filename)
 

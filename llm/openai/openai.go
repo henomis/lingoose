@@ -59,7 +59,7 @@ const (
 type OpenAIUsageCallback func(types.Meta)
 type OpenAIStreamCallback func(string)
 
-type openAI struct {
+type OpenAI struct {
 	openAIClient           *openai.Client
 	model                  Model
 	temperature            float32
@@ -73,11 +73,11 @@ type openAI struct {
 	finishReason           string
 }
 
-func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI {
+func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
 
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
-	return &openAI{
+	return &OpenAI{
 		openAIClient:           openai.NewClient(openAIKey),
 		model:                  model,
 		temperature:            temperature,
@@ -88,55 +88,55 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) *openAI 
 	}
 }
 
-func (o *openAI) WithModel(model Model) *openAI {
+func (o *OpenAI) WithModel(model Model) *OpenAI {
 	o.model = model
 	return o
 }
 
-func (o *openAI) WithTemperature(temperature float32) *openAI {
+func (o *OpenAI) WithTemperature(temperature float32) *OpenAI {
 	o.temperature = temperature
 	return o
 }
 
-func (o *openAI) WithMaxTokens(maxTokens int) *openAI {
+func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
 	o.maxTokens = maxTokens
 	return o
 }
 
-func (o *openAI) WithCallback(callback OpenAIUsageCallback) *openAI {
+func (o *OpenAI) WithCallback(callback OpenAIUsageCallback) *OpenAI {
 	o.usageCallback = callback
 	return o
 }
 
-func (o *openAI) WithStop(stop []string) *openAI {
+func (o *OpenAI) WithStop(stop []string) *OpenAI {
 	o.stop = stop
 	return o
 }
 
-func (o *openAI) WithClient(client *openai.Client) *openAI {
+func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
 	o.openAIClient = client
 	return o
 }
 
-func (o *openAI) WithVerbose(verbose bool) *openAI {
+func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 	o.verbose = verbose
 	return o
 }
 
-func (o *openAI) WithFunctionCallMaxIterations(maxIterations uint) *openAI {
+func (o *OpenAI) WithFunctionCallMaxIterations(maxIterations uint) *OpenAI {
 	o.functionsMaxIterations = maxIterations
 	return o
 }
 
-func (o *openAI) CalledFunctionName() *string {
+func (o *OpenAI) CalledFunctionName() *string {
 	return o.calledFunctionName
 }
 
-func (o *openAI) FinishReason() string {
+func (o *OpenAI) FinishReason() string {
 	return o.finishReason
 }
 
-func NewCompletion() *openAI {
+func NewCompletion() *OpenAI {
 	return New(
 		GPT3TextDavinci003,
 		DefaultOpenAITemperature,
@@ -145,7 +145,7 @@ func NewCompletion() *openAI {
 	)
 }
 
-func NewChat() *openAI {
+func NewChat() *OpenAI {
 	return New(
 		GPT3Dot5Turbo,
 		DefaultOpenAITemperature,
@@ -154,7 +154,7 @@ func NewChat() *openAI {
 	)
 }
 
-func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) {
+func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
 
 	response, err := o.openAIClient.CreateCompletion(
 		ctx,
@@ -189,7 +189,7 @@ func (o *openAI) Completion(ctx context.Context, prompt string) (string, error) 
 	return output, nil
 }
 
-func (o *openAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
+func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
 
 	stream, err := o.openAIClient.CreateCompletionStream(
 		ctx,
@@ -240,7 +240,7 @@ func (o *openAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCa
 	return nil
 }
 
-func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	messages, err := buildMessages(prompt)
 	if err != nil {
@@ -283,6 +283,11 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	o.finishReason = string(response.Choices[0].FinishReason)
 	o.calledFunctionName = nil
 	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
+		if o.verbose {
+			fmt.Printf("Calling function %s\n", response.Choices[0].Message.FunctionCall.Name)
+			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.FunctionCall.Arguments)
+		}
+
 		content, err = o.functionCall(response)
 		if err != nil {
 			return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
@@ -296,7 +301,7 @@ func (o *openAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return content, nil
 }
 
-func (o *openAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt *chat.Chat) error {
+func (o *OpenAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt *chat.Chat) error {
 
 	messages, err := buildMessages(prompt)
 	if err != nil {
@@ -347,11 +352,11 @@ func (o *openAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback
 	return nil
 }
 
-func (o *openAI) SetStop(stop []string) {
+func (o *OpenAI) SetStop(stop []string) {
 	o.stop = stop
 }
 
-func (o *openAI) setUsageMetadata(usage openai.Usage) {
+func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
 
 	callbackMetadata := make(types.Meta)
 

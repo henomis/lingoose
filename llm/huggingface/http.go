@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func (h *huggingFace) doRequest(ctx context.Context, jsonBody []byte, model string) ([]byte, error) {
+func (h *HuggingFace) doRequest(ctx context.Context, jsonBody []byte, model string) ([]byte, error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, APIBaseURL+model, bytes.NewBuffer(jsonBody))
 	if err != nil {

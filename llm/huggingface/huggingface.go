@@ -19,7 +19,7 @@ const (
 	HuggingFaceModeTextGeneration
 )
 
-type huggingFace struct {
+type HuggingFace struct {
 	mode        HuggingFaceMode
 	token       string
 	model       string
@@ -31,8 +31,8 @@ type huggingFace struct {
 	verbose     bool
 }
 
-func New(model string, temperature float32, verbose bool) *huggingFace {
-	return &huggingFace{
+func New(model string, temperature float32, verbose bool) *HuggingFace {
+	return &HuggingFace{
 		mode:        HuggingFaceModeCoversational,
 		token:       os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 		model:       model,
@@ -41,52 +41,52 @@ func New(model string, temperature float32, verbose bool) *huggingFace {
 	}
 }
 
-func (h *huggingFace) WithModel(model string) *huggingFace {
+func (h *HuggingFace) WithModel(model string) *HuggingFace {
 	h.model = model
 	return h
 }
 
-func (h *huggingFace) WithTemperature(temperature float32) *huggingFace {
+func (h *HuggingFace) WithTemperature(temperature float32) *HuggingFace {
 	h.temperature = temperature
 	return h
 }
 
-func (h *huggingFace) WithMaxLength(maxLength int) *huggingFace {
+func (h *HuggingFace) WithMaxLength(maxLength int) *HuggingFace {
 	h.maxLength = &maxLength
 	return h
 }
 
-func (h *huggingFace) WithMinLength(minLength int) *huggingFace {
+func (h *HuggingFace) WithMinLength(minLength int) *HuggingFace {
 	h.minLength = &minLength
 	return h
 }
 
-func (h *huggingFace) WithToken(token string) *huggingFace {
+func (h *HuggingFace) WithToken(token string) *HuggingFace {
 	h.token = token
 	return h
 }
 
-func (h *huggingFace) WithVerbose(verbose bool) *huggingFace {
+func (h *HuggingFace) WithVerbose(verbose bool) *HuggingFace {
 	h.verbose = verbose
 	return h
 }
 
-func (h *huggingFace) WithTopK(topK int) *huggingFace {
+func (h *HuggingFace) WithTopK(topK int) *HuggingFace {
 	h.topK = &topK
 	return h
 }
 
-func (h *huggingFace) WithTopP(topP float32) *huggingFace {
+func (h *HuggingFace) WithTopP(topP float32) *HuggingFace {
 	h.topP = &topP
 	return h
 }
 
-func (h *huggingFace) WithMode(mode HuggingFaceMode) *huggingFace {
+func (h *HuggingFace) WithMode(mode HuggingFaceMode) *HuggingFace {
 	h.mode = mode
 	return h
 }
 
-func (h *huggingFace) Completion(ctx context.Context, prompt string) (string, error) {
+func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, error) {
 
 	var output string
 	var err error

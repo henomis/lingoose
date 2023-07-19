@@ -14,15 +14,15 @@ var (
 	ErrDecoding = errors.New("decoding output error")
 )
 
-type jsonDecoder struct {
+type JSONDecoder struct {
 	output types.M
 }
 
-func NewJSONDecoder() *jsonDecoder {
-	return &jsonDecoder{}
+func NewJSONDecoder() *JSONDecoder {
+	return &JSONDecoder{}
 }
 
-func (d *jsonDecoder) Decode(input string) (types.M, error) {
+func (d *JSONDecoder) Decode(input string) (types.M, error) {
 	err := json.Unmarshal([]byte(input), &d.output)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
@@ -33,18 +33,18 @@ func (d *jsonDecoder) Decode(input string) (types.M, error) {
 	}, nil
 }
 
-type regExDecoder struct {
+type RegExDecoder struct {
 	output types.M
 	regex  string
 }
 
-func NewRegExDecoder(regex string) *regExDecoder {
-	return &regExDecoder{
+func NewRegExDecoder(regex string) *RegExDecoder {
+	return &RegExDecoder{
 		regex: regex,
 	}
 }
 
-func (d *regExDecoder) Decode(input string) (types.M, error) {
+func (d *RegExDecoder) Decode(input string) (types.M, error) {
 	re, err := regexp.Compile(d.regex)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)

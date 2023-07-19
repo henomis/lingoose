@@ -9,26 +9,26 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type textLoader struct {
-	loader loader
+type TextLoader struct {
+	loader Loader
 
 	filename string
 	metadata types.Meta
 }
 
-func NewTextLoader(filename string, metadata types.Meta) *textLoader {
-	return &textLoader{
+func NewTextLoader(filename string, metadata types.Meta) *TextLoader {
+	return &TextLoader{
 		filename: filename,
 		metadata: metadata,
 	}
 }
 
-func (t *textLoader) WithTextSplitter(textSplitter TextSplitter) *textLoader {
+func (t *TextLoader) WithTextSplitter(textSplitter TextSplitter) *TextLoader {
 	t.loader.textSplitter = textSplitter
 	return t
 }
 
-func (t *textLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (t *TextLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := t.validate()
 	if err != nil {
@@ -54,7 +54,7 @@ func (t *textLoader) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
-func (t *textLoader) validate() error {
+func (t *TextLoader) validate() error {
 	if t.metadata == nil {
 		t.metadata = make(types.Meta)
 	} else {

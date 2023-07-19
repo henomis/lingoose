@@ -40,7 +40,7 @@ func TestJSONDecoder_Decode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &jsonDecoder{
+			d := &JSONDecoder{
 				output: tt.fields.output,
 			}
 			got, err := d.Decode(tt.args.input)
@@ -86,7 +86,7 @@ func TestRegExDecoder_Decode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &regExDecoder{
+			d := &RegExDecoder{
 				output: tt.fields.output,
 				regex:  tt.fields.regex,
 			}

@@ -11,17 +11,17 @@ var (
 	ErrObjectNotFound = errors.New("object not found")
 )
 
-type ram struct {
+type Ram struct {
 	memory types.M
 }
 
-func New() *ram {
-	return &ram{
+func New() *Ram {
+	return &Ram{
 		memory: types.M{},
 	}
 }
 
-func (r *ram) Get(key string) interface{} {
+func (r *Ram) Get(key string) interface{} {
 	value, ok := r.memory[key]
 	if !ok {
 		return nil
@@ -29,16 +29,16 @@ func (r *ram) Get(key string) interface{} {
 	return value
 }
 
-func (r *ram) Set(key string, value interface{}) error {
+func (r *Ram) Set(key string, value interface{}) error {
 	r.memory[key] = value
 	return nil
 }
 
-func (r *ram) All() types.M {
+func (r *Ram) All() types.M {
 	return r.memory
 }
 
-func (r *ram) Delete(key string) error {
+func (r *Ram) Delete(key string) error {
 	_, ok := r.memory[key]
 	if !ok {
 		return ErrObjectNotFound
@@ -48,7 +48,7 @@ func (r *ram) Delete(key string) error {
 	return nil
 }
 
-func (r *ram) Clear() error {
+func (r *Ram) Clear() error {
 	r.memory = types.M{}
 	return nil
 }

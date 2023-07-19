@@ -19,7 +19,7 @@ type TextSplitter interface {
 	SplitDocuments(documents []document.Document) []document.Document
 }
 
-type loader struct {
+type Loader struct {
 	textSplitter TextSplitter
 }
 

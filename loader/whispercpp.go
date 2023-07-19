@@ -12,7 +12,7 @@ import (
 )
 
 type whisperCppLoader struct {
-	loader loader
+	loader Loader
 
 	ffmpegPath          string
 	ffmpegArgs          []string

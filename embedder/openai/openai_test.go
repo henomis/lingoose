@@ -82,7 +82,7 @@ func Test_openAIEmbedder_splitText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			o := &openAIEmbedder{
+			o := &OpenAIEmbedder{
 				openAIClient: tt.fields.openAIClient,
 				model:        tt.fields.model,
 			}

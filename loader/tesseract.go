@@ -14,38 +14,38 @@ var (
 	defaultTesseractPath = "/usr/bin/tesseract"
 )
 
-type tesseractLoader struct {
-	loader loader
+type TesseractLoader struct {
+	loader Loader
 
 	tesseractPath string
 	tesseractArgs []string
 	filename      string
 }
 
-func NewTesseractLoader(filename string) *tesseractLoader {
-	return &tesseractLoader{
+func NewTesseractLoader(filename string) *TesseractLoader {
+	return &TesseractLoader{
 		tesseractPath: defaultTesseractPath,
 		tesseractArgs: []string{},
 		filename:      filename,
 	}
 }
 
-func (l *tesseractLoader) WithTesseractPath(tesseractPath string) *tesseractLoader {
+func (l *TesseractLoader) WithTesseractPath(tesseractPath string) *TesseractLoader {
 	l.tesseractPath = tesseractPath
 	return l
 }
 
-func (l *tesseractLoader) WithTextSplitter(textSplitter TextSplitter) *tesseractLoader {
+func (l *TesseractLoader) WithTextSplitter(textSplitter TextSplitter) *TesseractLoader {
 	l.loader.textSplitter = textSplitter
 	return l
 }
 
-func (l *tesseractLoader) WithArgs(tesseractArgs []string) *tesseractLoader {
+func (l *TesseractLoader) WithArgs(tesseractArgs []string) *TesseractLoader {
 	l.tesseractArgs = tesseractArgs
 	return l
 }
 
-func (l *tesseractLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (l *TesseractLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(l.tesseractPath)
 	if err != nil {
@@ -69,7 +69,7 @@ func (l *tesseractLoader) Load(ctx context.Context) ([]document.Document, error)
 	return documents, nil
 }
 
-func (l *tesseractLoader) loadFile(ctx context.Context) ([]document.Document, error) {
+func (l *TesseractLoader) loadFile(ctx context.Context) ([]document.Document, error) {
 
 	tesseractArgs := []string{l.filename, "stdout"}
 	tesseractArgs = append(tesseractArgs, l.tesseractArgs...)

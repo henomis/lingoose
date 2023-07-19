@@ -16,7 +16,7 @@ type featureExtractionRequest struct {
 	Options options  `json:"options,omitempty"`
 }
 
-func (h *huggingFaceEmbedder) featureExtraction(ctx context.Context, text []string) ([]embedder.Embedding, error) {
+func (h *HuggingFaceEmbedder) featureExtraction(ctx context.Context, text []string) ([]embedder.Embedding, error) {
 
 	isTrue := true
 	request := featureExtractionRequest{

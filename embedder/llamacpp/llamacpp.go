@@ -10,36 +10,36 @@ import (
 	"github.com/henomis/lingoose/embedder"
 )
 
-type llamaCppEmbedder struct {
+type LlamaCppEmbedder struct {
 	llamacppPath string
 	llamacppArgs []string
 	modelPath    string
 }
 
-func New() *llamaCppEmbedder {
-	return &llamaCppEmbedder{
+func New() *LlamaCppEmbedder {
+	return &LlamaCppEmbedder{
 		llamacppPath: "./llama.cpp/embedding",
 		modelPath:    "./llama.cpp/models/7B/ggml-model-q4_0.bin",
 		llamacppArgs: []string{},
 	}
 }
 
-func (l *llamaCppEmbedder) WithLlamaCppPath(llamacppPath string) *llamaCppEmbedder {
+func (l *LlamaCppEmbedder) WithLlamaCppPath(llamacppPath string) *LlamaCppEmbedder {
 	l.llamacppPath = llamacppPath
 	return l
 }
 
-func (l *llamaCppEmbedder) WithModel(modelPath string) *llamaCppEmbedder {
+func (l *LlamaCppEmbedder) WithModel(modelPath string) *LlamaCppEmbedder {
 	l.modelPath = modelPath
 	return l
 }
 
-func (l *llamaCppEmbedder) WithArgs(llamacppArgs []string) *llamaCppEmbedder {
+func (l *LlamaCppEmbedder) WithArgs(llamacppArgs []string) *LlamaCppEmbedder {
 	l.llamacppArgs = llamacppArgs
 	return l
 }
 
-func (o *llamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+func (o *LlamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 
 	embeddings := make([]embedder.Embedding, len(texts))
 	for i, text := range texts {
@@ -52,7 +52,7 @@ func (o *llamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedde
 	return embeddings, nil
 }
 
-func (l *llamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Embedding, error) {
+func (l *LlamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Embedding, error) {
 
 	_, err := os.Stat(l.llamacppPath)
 	if err != nil {

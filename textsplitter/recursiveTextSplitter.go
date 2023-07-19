@@ -12,14 +12,14 @@ var (
 	defaultLengthFunction LenFunction = func(s string) int { return len(s) }
 )
 
-type recursiveCharacterTextSplitter struct {
-	textSplitter
+type RecursiveCharacterTextSplitter struct {
+	TextSplitter
 	separators []string
 }
 
-func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int) *recursiveCharacterTextSplitter {
-	return &recursiveCharacterTextSplitter{
-		textSplitter: textSplitter{
+func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int) *RecursiveCharacterTextSplitter {
+	return &RecursiveCharacterTextSplitter{
+		TextSplitter: TextSplitter{
 			chunkSize:      chunkSize,
 			chunkOverlap:   chunkOverlap,
 			lengthFunction: defaultLengthFunction,
@@ -28,18 +28,18 @@ func NewRecursiveCharacterTextSplitter(chunkSize int, chunkOverlap int) *recursi
 	}
 }
 
-func (r *recursiveCharacterTextSplitter) WithSeparators(separators []string) *recursiveCharacterTextSplitter {
+func (r *RecursiveCharacterTextSplitter) WithSeparators(separators []string) *RecursiveCharacterTextSplitter {
 	r.separators = separators
 	return r
 }
 
-func (r *recursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) *recursiveCharacterTextSplitter {
+func (r *RecursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) *RecursiveCharacterTextSplitter {
 	r.lengthFunction = lengthFunction
 	return r
 }
 
 // AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
-func (r *recursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
+func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
 
 	docs := make([]document.Document, 0)
 
@@ -63,7 +63,7 @@ func (r *recursiveCharacterTextSplitter) SplitDocuments(documents []document.Doc
 	return docs
 }
 
-func (r *recursiveCharacterTextSplitter) SplitText(text string) []string {
+func (r *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	// Split incoming text and return chunks.
 	finalChunks := []string{}
 	// Get appropriate separator to use

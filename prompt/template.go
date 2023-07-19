@@ -9,16 +9,16 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type template struct {
+type Template struct {
 	input          interface{}
 	template       string
 	value          string
 	templateEngine *texttemplate.Template
 }
 
-func NewPromptTemplate(text string) *template {
+func NewPromptTemplate(text string) *Template {
 
-	promptTemplate := &template{
+	promptTemplate := &Template{
 		input:    types.M{},
 		template: text,
 	}
@@ -26,13 +26,13 @@ func NewPromptTemplate(text string) *template {
 	return promptTemplate
 }
 
-func (t *template) WithInputs(inputs interface{}) *template {
+func (t *Template) WithInputs(inputs interface{}) *Template {
 	t.input = inputs
 	return t
 }
 
 // Format formats the prompt using the template engine and the provided inputs.
-func (t *template) Format(input types.M) error {
+func (t *Template) Format(input types.M) error {
 
 	err := t.initTemplateEngine()
 	if err != nil {
@@ -62,11 +62,11 @@ func (t *template) Format(input types.M) error {
 	return nil
 }
 
-func (p *template) String() string {
+func (p *Template) String() string {
 	return p.value
 }
 
-func (p *template) initTemplateEngine() error {
+func (p *Template) initTemplateEngine() error {
 
 	if p.templateEngine != nil {
 		return nil
@@ -103,7 +103,7 @@ func structToMap(obj interface{}) (types.M, error) {
 	return genericMap, nil
 }
 
-func (t *template) decodeInput() error {
+func (t *Template) decodeInput() error {
 	genericMap := types.M{}
 	err := mapstructure.Decode(t.input, &genericMap)
 	if err != nil {
