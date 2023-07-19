@@ -18,20 +18,20 @@ const (
 	AudioResponseFormatVTT  AudioResponseFormat = "vtt"
 )
 
-type whisperPrompt struct {
+type WhisperPrompt struct {
 	openAIClient        *openai.Client
 	filePath            string
 	ctx                 context.Context
 	audioResponseFormat AudioResponseFormat
 }
 
-func NewPromptFromAudioFile(ctx context.Context, filePath string, audioResponseFormat AudioResponseFormat) (*whisperPrompt, error) {
+func NewPromptFromAudioFile(ctx context.Context, filePath string, audioResponseFormat AudioResponseFormat) (*WhisperPrompt, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
 	}
 
-	return &whisperPrompt{
+	return &WhisperPrompt{
 		openAIClient:        openai.NewClient(openAIKey),
 		filePath:            filePath,
 		ctx:                 ctx,
@@ -39,16 +39,16 @@ func NewPromptFromAudioFile(ctx context.Context, filePath string, audioResponseF
 	}, nil
 }
 
-func (p *whisperPrompt) WithClient(client *openai.Client) *whisperPrompt {
+func (p *WhisperPrompt) WithClient(client *openai.Client) *WhisperPrompt {
 	p.openAIClient = client
 	return p
 }
 
-func (p *whisperPrompt) Format(input types.M) error {
+func (p *WhisperPrompt) Format(input types.M) error {
 	return nil
 }
 
-func (p *whisperPrompt) String() string {
+func (p *WhisperPrompt) String() string {
 	req := openai.AudioRequest{
 		Model:    openai.Whisper1,
 		FilePath: p.filePath,

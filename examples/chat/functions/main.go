@@ -12,12 +12,16 @@ import (
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
 )
 
 func main() {
 	fmt.Printf("What's your name?\n> ")
 	reader := bufio.NewReader(os.Stdin)
 	name, _ := reader.ReadString('\n')
+
+	outputToken := 0
+	inputToken := 0
 
 	llmChat := chat.New(
 
@@ -29,7 +33,16 @@ func main() {
 		},
 	)
 
-	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true)
+	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true).
+		WithCallback(func(response types.Meta) {
+			for k, v := range response {
+				if k == "CompletionTokens" {
+					outputToken += v.(int)
+				} else if k == "PromptTokens" {
+					inputToken += v.(int)
+				}
+			}
+		})
 
 	llmOpenAI.BindFunction(
 		GetNationalitiesForName,
@@ -61,6 +74,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("You used %d tokens (input=%d/output=%d)\n", inputToken+outputToken, inputToken, outputToken)
+
+	inputPrice := float64(inputToken) / 1000 * 0.0015
+	outputPrice := float64(outputToken) / 1000 * 0.002
+	fmt.Printf("You spent $%f\n", inputPrice+outputPrice)
 
 }
 

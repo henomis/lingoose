@@ -37,7 +37,7 @@ type conversation struct {
 	PastUserInputs     []string `json:"past_user_inputs,omitempty"`
 }
 
-func (h *huggingFace) conversationalCompletion(ctx context.Context, prompt string) (string, error) {
+func (h *HuggingFace) conversationalCompletion(ctx context.Context, prompt string) (string, error) {
 
 	isTrue := true
 	request := conversationalRequest{

@@ -4,7 +4,7 @@ import (
 	"github.com/pkoukk/tiktoken-go"
 )
 
-func (o *openAIEmbedder) textToTokens(text string) ([]int, error) {
+func (o *OpenAIEmbedder) textToTokens(text string) ([]int, error) {
 	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
 	if err != nil {
 		return nil, err
@@ -13,7 +13,7 @@ func (o *openAIEmbedder) textToTokens(text string) ([]int, error) {
 	return tokenizer.Encode(text, nil, nil), nil
 }
 
-func (o *openAIEmbedder) getMaxTokens() int {
+func (o *OpenAIEmbedder) getMaxTokens() int {
 
 	if tiktoken.MODEL_TO_ENCODING[o.model.String()] == "cl100k_base" {
 		return 8191
@@ -22,7 +22,7 @@ func (o *openAIEmbedder) getMaxTokens() int {
 	return 2046
 }
 
-func (o *openAIEmbedder) tokensToText(tokens []int) (string, error) {
+func (o *OpenAIEmbedder) tokensToText(tokens []int) (string, error) {
 	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
 	if err != nil {
 		return "", err

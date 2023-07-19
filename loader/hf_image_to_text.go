@@ -20,8 +20,8 @@ const (
 	hfDefaultImageToTextModel = "nlpconnect/vit-gpt2-image-captioning"
 )
 
-type hfImageToText struct {
-	loader loader
+type HFImageToText struct {
+	loader Loader
 
 	mediaFile string
 	token     string
@@ -32,30 +32,30 @@ type hfImageToTextResponse struct {
 	GeneratedText string `json:"generated_text"`
 }
 
-func NewHFImageToTextLoader(mediaFile string) *hfImageToText {
-	return &hfImageToText{
+func NewHFImageToTextLoader(mediaFile string) *HFImageToText {
+	return &HFImageToText{
 		mediaFile: mediaFile,
 		model:     hfDefaultImageToTextModel,
 		token:     os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 	}
 }
 
-func (h *hfImageToText) WithToken(token string) *hfImageToText {
+func (h *HFImageToText) WithToken(token string) *HFImageToText {
 	h.token = token
 	return h
 }
 
-func (h *hfImageToText) WithModel(model string) *hfImageToText {
+func (h *HFImageToText) WithModel(model string) *HFImageToText {
 	h.model = model
 	return h
 }
 
-func (h *hfImageToText) WithTextSplitter(textSplitter TextSplitter) *hfImageToText {
+func (h *HFImageToText) WithTextSplitter(textSplitter TextSplitter) *HFImageToText {
 	h.loader.textSplitter = textSplitter
 	return h
 }
 
-func (h *hfImageToText) Load(ctx context.Context) ([]document.Document, error) {
+func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(h.mediaFile)
 	if err != nil {

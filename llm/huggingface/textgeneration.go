@@ -32,7 +32,7 @@ func (tgs textGenerationResponseSequence) String() string {
 	return tgs.GeneratedText
 }
 
-func (h *huggingFace) textgenerationCompletion(ctx context.Context, prompt string) (string, error) {
+func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompt string) (string, error) {
 
 	numSequences := 1
 	isTrue := true

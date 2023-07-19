@@ -7,13 +7,13 @@ import (
 
 type LenFunction func(string) int
 
-type textSplitter struct {
+type TextSplitter struct {
 	chunkSize      int
 	chunkOverlap   int
 	lengthFunction LenFunction
 }
 
-func (p *textSplitter) mergeSplits(splits []string, separator string) []string {
+func (p *TextSplitter) mergeSplits(splits []string, separator string) []string {
 
 	docs := make([]string, 0)
 	current_doc := make([]string, 0)
@@ -47,7 +47,7 @@ func (p *textSplitter) mergeSplits(splits []string, separator string) []string {
 	return docs
 }
 
-func (t *textSplitter) joinDocs(docs []string, separator string) string {
+func (t *TextSplitter) joinDocs(docs []string, separator string) string {
 	text := strings.Join(docs, separator)
 	return strings.TrimSpace(text)
 }

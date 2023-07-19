@@ -10,29 +10,29 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type whisperLoader struct {
-	loader loader
+type WhisperLoader struct {
+	loader Loader
 
 	filename     string
 	openAIClient *openai.Client
 }
 
-func NewWhisperLoader(filename string) *whisperLoader {
+func NewWhisperLoader(filename string) *WhisperLoader {
 
 	openAIApiKey := os.Getenv("OPENAI_API_KEY")
 
-	return &whisperLoader{
+	return &WhisperLoader{
 		filename:     filename,
 		openAIClient: openai.NewClient(openAIApiKey),
 	}
 }
 
-func (w *whisperLoader) WithClient(client *openai.Client) *whisperLoader {
+func (w *WhisperLoader) WithClient(client *openai.Client) *WhisperLoader {
 	w.openAIClient = client
 	return w
 }
 
-func (w *whisperLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (w *WhisperLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(w.filename)
 	if err != nil {

@@ -253,9 +253,9 @@ func (p *Pinecone) createIndexIfRequired(ctx context.Context) error {
 
 func (p *Pinecone) batchUpsert(ctx context.Context, documents []document.Document) error {
 
-	for i := 0; i < len(documents); i += defaultPineconeBatchUpsertSize {
+	for i := 0; i < len(documents); i += p.batchUpsertSize {
 
-		batchEnd := i + defaultPineconeBatchUpsertSize
+		batchEnd := i + p.batchUpsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
 		}

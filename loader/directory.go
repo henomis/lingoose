@@ -10,28 +10,28 @@ import (
 	"regexp"
 )
 
-type directoryLoader struct {
-	loader loader
+type DirectoryLoader struct {
+	loader Loader
 
 	dirname        string
 	regExPathMatch string
 }
 
-func NewDirectoryLoader(dirname string, regExPathMatch string) *directoryLoader {
+func NewDirectoryLoader(dirname string, regExPathMatch string) *DirectoryLoader {
 
-	return &directoryLoader{
+	return &DirectoryLoader{
 		dirname:        dirname,
 		regExPathMatch: regExPathMatch,
 	}
 
 }
 
-func (d *directoryLoader) WithTextSplitter(textSplitter TextSplitter) *directoryLoader {
+func (d *DirectoryLoader) WithTextSplitter(textSplitter TextSplitter) *DirectoryLoader {
 	d.loader.textSplitter = textSplitter
 	return d
 }
 
-func (d *directoryLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	regExp, err := regexp.Compile(d.regExPathMatch)
 	if err != nil {

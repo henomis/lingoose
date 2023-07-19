@@ -10,7 +10,7 @@ import (
 
 func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 	type fields struct {
-		textSplitter textSplitter
+		textSplitter TextSplitter
 		separators   []string
 	}
 	type args struct {
@@ -25,7 +25,7 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 		{
 			name: "TestRecursiveCharacterTextSplitter_SplitDocuments",
 			fields: fields{
-				textSplitter: textSplitter{
+				textSplitter: TextSplitter{
 					chunkSize:    10,
 					chunkOverlap: 0,
 					lengthFunction: func(s string) int {
@@ -56,7 +56,7 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 		{
 			name: "TestRecursiveCharacterTextSplitter_SplitDocuments",
 			fields: fields{
-				textSplitter: textSplitter{
+				textSplitter: TextSplitter{
 					chunkSize:    10,
 					chunkOverlap: 0,
 					lengthFunction: func(s string) int {
@@ -96,7 +96,7 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 		{
 			name: "TestRecursiveCharacterTextSplitter_SplitDocuments2",
 			fields: fields{
-				textSplitter: textSplitter{
+				textSplitter: TextSplitter{
 					chunkSize:    20,
 					chunkOverlap: 5,
 					lengthFunction: func(s string) int {
@@ -135,8 +135,8 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &recursiveCharacterTextSplitter{
-				textSplitter: tt.fields.textSplitter,
+			r := &RecursiveCharacterTextSplitter{
+				TextSplitter: tt.fields.textSplitter,
 				separators:   tt.fields.separators,
 			}
 			if got := r.SplitDocuments(tt.args.documents); !reflect.DeepEqual(got, tt.want) {

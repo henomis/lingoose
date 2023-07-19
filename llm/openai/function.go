@@ -19,7 +19,7 @@ type Function struct {
 
 type FunctionParameterOption func(map[string]interface{}) error
 
-func (o *openAI) BindFunction(
+func (o *OpenAI) BindFunction(
 	fn interface{},
 	name string,
 	description string,
@@ -49,7 +49,7 @@ func (o *openAI) BindFunction(
 	return nil
 }
 
-func (o *openAI) getFunctions() []openai.FunctionDefinition {
+func (o *OpenAI) getFunctions() []openai.FunctionDefinition {
 
 	functions := []openai.FunctionDefinition{}
 
@@ -170,7 +170,7 @@ func callFnWithArgumentAsJson(fn interface{}, argumentAsJson string) (string, er
 	return "", nil
 }
 
-func (o *openAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
+func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
 		return "", fmt.Errorf("%s: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)

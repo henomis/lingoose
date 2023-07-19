@@ -15,8 +15,8 @@ const (
 	hfDefaultSpeechRecognitionModel = "facebook/wav2vec2-large-960h-lv60-self"
 )
 
-type hfSpeechRecognition struct {
-	loader loader
+type HFSpeechRecognition struct {
+	loader Loader
 
 	mediaFile string
 	token     string
@@ -27,30 +27,30 @@ type hfSpeechRecognitionResponse struct {
 	Text string `json:"text,omitempty"`
 }
 
-func NewHFSpeechRecognitionLoader(mediaFile string) *hfSpeechRecognition {
-	return &hfSpeechRecognition{
+func NewHFSpeechRecognitionLoader(mediaFile string) *HFSpeechRecognition {
+	return &HFSpeechRecognition{
 		mediaFile: mediaFile,
 		model:     hfDefaultSpeechRecognitionModel,
 		token:     os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 	}
 }
 
-func (h *hfSpeechRecognition) WithToken(token string) *hfSpeechRecognition {
+func (h *HFSpeechRecognition) WithToken(token string) *HFSpeechRecognition {
 	h.token = token
 	return h
 }
 
-func (h *hfSpeechRecognition) WithModel(model string) *hfSpeechRecognition {
+func (h *HFSpeechRecognition) WithModel(model string) *HFSpeechRecognition {
 	h.model = model
 	return h
 }
 
-func (h *hfSpeechRecognition) WithTextSplitter(textSplitter TextSplitter) *hfSpeechRecognition {
+func (h *HFSpeechRecognition) WithTextSplitter(textSplitter TextSplitter) *HFSpeechRecognition {
 	h.loader.textSplitter = textSplitter
 	return h
 }
 
-func (h *hfSpeechRecognition) Load(ctx context.Context) ([]document.Document, error) {
+func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(h.mediaFile)
 	if err != nil {

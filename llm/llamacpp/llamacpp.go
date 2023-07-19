@@ -15,7 +15,7 @@ const (
 	DefaultLlamaCppTemperature = 0.8
 )
 
-type llamacpp struct {
+type Llamacpp struct {
 	llamacppPath string
 	llamacppArgs []string
 	modelPath    string
@@ -26,8 +26,8 @@ type llamacpp struct {
 
 var llamacppSanitizeRegexp = regexp.MustCompile(`\[.*?\]`)
 
-func NewCompletion() *llamacpp {
-	return &llamacpp{
+func NewCompletion() *Llamacpp {
+	return &Llamacpp{
 		llamacppPath: "./llama.cpp/main",
 		modelPath:    "./llama.cpp/models/7B/ggml-model-q4_0.bin",
 		llamacppArgs: []string{},
@@ -36,37 +36,37 @@ func NewCompletion() *llamacpp {
 	}
 }
 
-func (l *llamacpp) WithModel(modelPath string) *llamacpp {
+func (l *Llamacpp) WithModel(modelPath string) *Llamacpp {
 	l.modelPath = modelPath
 	return l
 }
 
-func (l *llamacpp) WithTemperature(temperature float32) *llamacpp {
+func (l *Llamacpp) WithTemperature(temperature float32) *Llamacpp {
 	l.temperature = temperature
 	return l
 }
 
-func (l *llamacpp) WithMaxTokens(maxTokens int) *llamacpp {
+func (l *Llamacpp) WithMaxTokens(maxTokens int) *Llamacpp {
 	l.maxTokens = maxTokens
 	return l
 }
 
-func (l *llamacpp) WithVerbose(verbose bool) *llamacpp {
+func (l *Llamacpp) WithVerbose(verbose bool) *Llamacpp {
 	l.verbose = verbose
 	return l
 }
 
-func (l *llamacpp) WithLlamaCppPath(llamacppPath string) *llamacpp {
+func (l *Llamacpp) WithLlamaCppPath(llamacppPath string) *Llamacpp {
 	l.llamacppPath = llamacppPath
 	return l
 }
 
-func (l *llamacpp) WithArgs(llamacppArgs []string) *llamacpp {
+func (l *Llamacpp) WithArgs(llamacppArgs []string) *Llamacpp {
 	l.llamacppArgs = llamacppArgs
 	return l
 }
 
-func (l *llamacpp) Completion(ctx context.Context, prompt string) (string, error) {
+func (l *Llamacpp) Completion(ctx context.Context, prompt string) (string, error) {
 
 	_, err := os.Stat(l.llamacppPath)
 	if err != nil {
@@ -89,6 +89,6 @@ func (l *llamacpp) Completion(ctx context.Context, prompt string) (string, error
 	return llamacppSanitizeRegexp.ReplaceAllString(string(out), ""), nil
 }
 
-func (l *llamacpp) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+func (l *Llamacpp) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }

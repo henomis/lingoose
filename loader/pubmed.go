@@ -21,24 +21,24 @@ type pubMedDocument struct {
 	} `json:"documents"`
 }
 
-type pubMedLoader struct {
-	loader loader
+type PubMedLoader struct {
+	loader Loader
 
 	pubMedIDs []string
 }
 
-func NewPubmedLoader(pubMedIDs []string) *pubMedLoader {
-	return &pubMedLoader{
+func NewPubmedLoader(pubMedIDs []string) *PubMedLoader {
+	return &PubMedLoader{
 		pubMedIDs: pubMedIDs,
 	}
 }
 
-func (p *pubMedLoader) WithTextSplitter(textSplitter TextSplitter) *pubMedLoader {
+func (p *PubMedLoader) WithTextSplitter(textSplitter TextSplitter) *PubMedLoader {
 	p.loader.textSplitter = textSplitter
 	return p
 }
 
-func (p *pubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (p *PubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	documens := make([]document.Document, len(p.pubMedIDs))
 
@@ -59,7 +59,7 @@ func (p *pubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 	return documens, nil
 }
 
-func (p *pubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {
+func (p *PubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {
 
 	url := fmt.Sprintf(pubMedBioCURLFormat, pubMedID)
 
