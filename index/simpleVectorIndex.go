@@ -30,6 +30,8 @@ type SimpleVectorIndex struct {
 	embedder   Embedder
 }
 
+type SimpleVectorIndexFilterFn func([]SearchResponse) []SearchResponse
+
 func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
 	simpleVectorIndex := &SimpleVectorIndex{
 		data:       []simpleVectorIndexData{},
@@ -150,6 +152,10 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 			Document: s.data[i].Document,
 			Score:    score,
 		}
+	}
+
+	if sviOptions.filter != nil {
+		searchResponses = sviOptions.filter.(SimpleVectorIndexFilterFn)(searchResponses)
 	}
 
 	return filterSearchResponses(searchResponses, sviOptions.topK), nil
