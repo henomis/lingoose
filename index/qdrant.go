@@ -123,7 +123,7 @@ func (q *Qdrant) SimilaritySearch(ctx context.Context, query string, opts ...Opt
 		opt(qdrantOptions)
 	}
 
-	matches, err := q.similaritySearch(ctx, query, qdrantOptions.topK)
+	matches, err := q.similaritySearch(ctx, query, qdrantOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
@@ -133,7 +133,7 @@ func (q *Qdrant) SimilaritySearch(ctx context.Context, query string, opts ...Opt
 	return filterSearchResponses(searchResponses, qdrantOptions.topK), nil
 }
 
-func (p *Qdrant) similaritySearch(ctx context.Context, query string, topK int) ([]qdrantresponse.PointSearchResult, error) {
+func (p *Qdrant) similaritySearch(ctx context.Context, query string, opts *options) ([]qdrantresponse.PointSearchResult, error) {
 
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
 	if err != nil {
@@ -146,9 +146,10 @@ func (p *Qdrant) similaritySearch(ctx context.Context, query string, topK int) (
 		ctx,
 		&qdrantrequest.PointSearch{
 			CollectionName: p.collectionName,
-			Limit:          topK,
+			Limit:          opts.topK,
 			Vector:         embeddings[0],
 			WithPayload:    &includeMetadata,
+			Filter:         opts.filter,
 		},
 		res,
 	)

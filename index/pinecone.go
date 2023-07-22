@@ -135,7 +135,7 @@ func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, opts ...O
 		opt(pineconeOptions)
 	}
 
-	matches, err := p.similaritySearch(ctx, query, pineconeOptions.topK)
+	matches, err := p.similaritySearch(ctx, query, pineconeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
 	}
@@ -145,7 +145,7 @@ func (p *Pinecone) SimilaritySearch(ctx context.Context, query string, opts ...O
 	return filterSearchResponses(searchResponses, pineconeOptions.topK), nil
 }
 
-func (p *Pinecone) similaritySearch(ctx context.Context, query string, topK int) ([]pineconeresponse.QueryMatch, error) {
+func (p *Pinecone) similaritySearch(ctx context.Context, query string, opts *options) ([]pineconeresponse.QueryMatch, error) {
 
 	err := p.getProjectID(ctx)
 	if err != nil {
@@ -164,10 +164,11 @@ func (p *Pinecone) similaritySearch(ctx context.Context, query string, topK int)
 		&pineconerequest.VectorQuery{
 			IndexName:       p.indexName,
 			ProjectID:       *p.projectID,
-			TopK:            int32(topK),
+			TopK:            int32(opts.topK),
 			Vector:          embeddings[0],
 			IncludeMetadata: &includeMetadata,
 			Namespace:       &p.namespace,
+			Filter:          opts.filter.(map[string]string),
 		},
 		res,
 	)
