@@ -79,7 +79,6 @@ func (y *YoutubeDLLoader) Load(ctx context.Context) ([]document.Document, error)
 
 func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, error) {
 
-	// create a temporary directory
 	tempDir, err := os.MkdirTemp("", "youtube-dl")
 	if err != nil {
 		return nil, err
@@ -121,39 +120,33 @@ func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, e
 }
 
 func convertVTTtoPlainText(filename string) (string, error) {
-	// Read the VTT file
+
 	file, err := os.Open(filename)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
 
-	// Read the file line by line
 	scanner := bufio.NewScanner(file)
 	var lines []string
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
 
-	// Remove VTT-specific tags and convert to plain text
 	var plainText string
 	for _, line := range lines {
-		// Remove timestamp tags
+
 		timestampRegex := regexp.MustCompile(`\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}`)
 		line = timestampRegex.ReplaceAllString(line, "")
 
-		// Remove cue settings tags
 		cueSettingsRegex := regexp.MustCompile(`(<c[.\w\s]+>|<\/c>)`)
 		line = cueSettingsRegex.ReplaceAllString(line, "")
 
-		// Remove other VTT tags
 		vttTagsRegex := regexp.MustCompile(`(<\/?\w+>)`)
 		line = vttTagsRegex.ReplaceAllString(line, "")
 
-		// Remove &nbsp;
 		line = strings.ReplaceAll(line, "&nbsp;", "")
 
-		// Trim leading/trailing spaces and append to plain text
 		line = strings.TrimSpace(line)
 		if line != "" {
 			plainText += line + "\n"
