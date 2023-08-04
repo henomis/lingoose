@@ -89,8 +89,6 @@ func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, e
 		y.subtitlesMode,
 		"--sub-lang", y.language,
 		"--skip-download",
-		"--sub-format", "srt",
-		"--convert-subs", "srt",
 		"-o", fmt.Sprintf("%s/subtitles", tempDir),
 		y.path,
 	}
