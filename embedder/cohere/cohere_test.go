@@ -26,12 +26,6 @@ func Test_CohereEmbedder(t *testing.T) {
 
 	if len(result) != len(texts) {
 		t.Errorf("CohereEmbedder.Embed() error = %v", fmt.Errorf("got %v embeddings instead of %v", len(result), len(texts)))
-		for _, embedding := range texts {
-			fmt.Println(embedding)
-		}
-		for _, embedding := range result {
-			fmt.Println(embedding.ToFloat32())
-		}
 		return
 	}
 }

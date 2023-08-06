@@ -18,19 +18,19 @@
 # Components
 **LinGoose** is composed of multiple components, each one with its own purpose.
 
-| Component | Package|Description |
-| --- | --- | ---|
-|**Prompt** | [prompt](prompt/)| Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. Supports **Prompt Templates** and  **[Whisper](https://openai.com) prompt**|
-|**Chat Prompt** | [chat](chat/) | Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot. |
-|**Decoders** | [decoder](decoder/) | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. Supports **JSONDecoder** and **RegExDecoder** |
-|**LLMs** |[llm](llm/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. Supports **[OpenAI](https://openai.com)**, **[HuggingFace](https://huggingface.co)** and **[Llama.cpp](https://github.com/ggerganov/llama.cpp)**.
-|**Pipelines** | [pipeline](pipeline/)|Pipelines are used to chain multiple LLM steps together. |
-|**Memory** | [memory](memory/)|Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. Supports memory in **Ram**|
-|**Document** | [document](document/)|Document is used to store a text |
-|**Loaders** | [loader](loader/)|Loaders are used to load Documents from various sources. Supports **TextLoader**, **DirectoryLoader**, **PDFToTextLoader** and **PubMedLoader** . |
-|**TextSplitters**| [textsplitter](textsplitter/)|TextSplitters are used to split text or Documents into multiple parts. Supports **RecursiveTextSplitter**.|
-|**Embedders** | [embedder](embedder/)|Embedders are used to embed text or Documents into embeddings. Supports **[OpenAI](https://openai.com)** |
-|**Indexes**| [index](index/)|Indexes are used to store embeddings and documents and to perform searches. Supports **SimpleVectorIndex**, **[Pinecone](https://pinecone.io)** and **[Qdrant](https://qdrant.tech)**|
+| Component | Package| Description                                                                                                                                                                                                                                                                                            |
+| --- | --- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|**Prompt** | [prompt](prompt/)| Prompts are the way to interact with LLM AI. They can be simple text, or more complex templates. Supports **Prompt Templates** and  **[Whisper](https://openai.com) prompt**                                                                                                                           |
+|**Chat Prompt** | [chat](chat/) | Chat is the way to interact with the chat LLM AI. It can be a simple text prompt, or a more complex chatbot.                                                                                                                                                                                           |
+|**Decoders** | [decoder](decoder/) | Output decoders are used to decode the output of the LLM. They can be used to extract specific information from the output. Supports **JSONDecoder** and **RegExDecoder**                                                                                                                              |
+|**LLMs** |[llm](llm/) | LLM is an interface to various AI such as the ones provided by OpenAI. It is responsible for sending the prompt to the AI and retrieving the output. Supports **[OpenAI](https://openai.com)**, **[HuggingFace](https://huggingface.co)** and **[Llama.cpp](https://github.com/ggerganov/llama.cpp)**. 
+|**Pipelines** | [pipeline](pipeline/)| Pipelines are used to chain multiple LLM steps together.                                                                                                                                                                                                                                               |
+|**Memory** | [memory](memory/)| Memory is used to store the output of each step. It can be used to retrieve the output of a previous step. Supports memory in **Ram**                                                                                                                                                                  |
+|**Document** | [document](document/)| Document is used to store a text                                                                                                                                                                                                                                                                       |
+|**Loaders** | [loader](loader/)| Loaders are used to load Documents from various sources. Supports **TextLoader**, **DirectoryLoader**, **PDFToTextLoader** and **PubMedLoader** .                                                                                                                                                      |
+|**TextSplitters**| [textsplitter](textsplitter/)| TextSplitters are used to split text or Documents into multiple parts. Supports **RecursiveTextSplitter**.                                                                                                                                                                                             |
+|**Embedders** | [embedder](embedder/)| Embedders are used to embed text or Documents into embeddings. Supports **[OpenAI](https://openai.com)** & **[Cohere](https://cohere.com)**                                                                                                                                                            |
+|**Indexes**| [index](index/)| Indexes are used to store embeddings and documents and to perform searches. Supports **SimpleVectorIndex**, **[Pinecone](https://pinecone.io)** and **[Qdrant](https://qdrant.tech)**                                                                                                                  |
 
 # Usage
 

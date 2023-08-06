@@ -18,3 +18,4 @@ bin/
 # vendor/
 llama.cpp/
 whisper.cpp/
+.idea
