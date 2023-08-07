@@ -15,6 +15,7 @@ require (
 
 require (
 	github.com/dlclark/regexp2 v1.8.1 // indirect
-	github.com/henomis/restclientgo v1.0.3 // indirect
+	github.com/henomis/cohere-go v1.0.1 // indirect
+	github.com/henomis/restclientgo v1.0.5 // indirect
 	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 )
