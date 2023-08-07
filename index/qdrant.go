@@ -149,7 +149,7 @@ func (p *Qdrant) similaritySearch(ctx context.Context, query string, opts *optio
 			Limit:          opts.topK,
 			Vector:         embeddings[0],
 			WithPayload:    &includeMetadata,
-			Filter:         opts.filter,
+			Filter:         opts.filter.(qdrantrequest.Filter),
 		},
 		res,
 	)
