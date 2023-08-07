@@ -123,11 +123,6 @@ func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 	return o
 }
 
-func (o *OpenAI) WithFunctionCallMaxIterations(maxIterations uint) *OpenAI {
-	o.functionsMaxIterations = maxIterations
-	return o
-}
-
 func (o *OpenAI) CalledFunctionName() *string {
 	return o.calledFunctionName
 }

@@ -6,6 +6,7 @@ require github.com/mitchellh/mapstructure v1.5.0
 
 require (
 	github.com/google/uuid v1.3.0
+	github.com/henomis/cohere-go v1.0.1
 	github.com/henomis/pinecone-go v1.1.2
 	github.com/henomis/qdrant-go v1.0.2
 	github.com/invopop/jsonschema v0.7.0

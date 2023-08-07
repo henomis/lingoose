@@ -4,6 +4,8 @@ github.com/dlclark/regexp2 v1.8.1 h1:6Lcdwya6GjPUNsBct8Lg/yRPwMhABj269AAzdGSiR+0
 github.com/dlclark/regexp2 v1.8.1/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/henomis/cohere-go v1.0.1 h1:a47gIN29tqAl4yBTAT+BzQMjsWG94Fz07u9AE4Md+a8=
+github.com/henomis/cohere-go v1.0.1/go.mod h1:F6D33jlWle6pbGdf9Fm2bteaOOQOO1cQtFnlFfj+ZXY=
 github.com/henomis/pinecone-go v1.1.2 h1:hOEhk/WAT7r3ini12fyyoAIT65nzeqmWG8t4YObvOZ8=
 github.com/henomis/pinecone-go v1.1.2/go.mod h1:0u2hta1zssq/aaozgS6Nn61CMKlA95Pg6mVsE8zMNus=
 github.com/henomis/qdrant-go v1.0.2 h1:fxLfkPsaKqaI9pJ92AuWWWQo5sZEy4ZPrhEse1m5eog=
