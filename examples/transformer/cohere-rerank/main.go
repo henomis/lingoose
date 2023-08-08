@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	r := transformer.NewCohereRerank()
+	r := transformer.NewCohereRerank().WithTopN(2)
 
 	documents, err := r.Rerank(
 		context.Background(),
@@ -29,5 +29,8 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("%#v\n", documents)
+	for _, doc := range documents {
+		fmt.Println(doc.GetEnrichedContent())
+		fmt.Println("-----")
+	}
 }
