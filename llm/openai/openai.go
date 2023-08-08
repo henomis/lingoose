@@ -184,13 +184,13 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 	return output, nil
 }
 
-func (o *OpenAI) BatchCompletion(ctx context.Context, prompt []string) ([]string, error) {
+func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
 
 	response, err := o.openAIClient.CreateCompletion(
 		ctx,
 		openai.CompletionRequest{
 			Model:       string(o.model),
-			Prompt:      prompt,
+			Prompt:      prompts,
 			MaxTokens:   o.maxTokens,
 			Temperature: o.temperature,
 			N:           DefaultOpenAINumResults,
@@ -216,7 +216,7 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompt []string) ([]string
 		index := choice.Index
 		outputs = append(outputs, strings.TrimSpace(choice.Text))
 		if o.verbose {
-			debugCompletion(prompt[index], choice.Text)
+			debugCompletion(prompts[index], choice.Text)
 		}
 	}
 
@@ -274,13 +274,13 @@ func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCa
 	return nil
 }
 
-func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIStreamCallback, prompt []string) error {
+func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIStreamCallback, prompts []string) error {
 
 	stream, err := o.openAIClient.CreateCompletionStream(
 		ctx,
 		openai.CompletionRequest{
 			Model:       string(o.model),
-			Prompt:      prompt,
+			Prompt:      prompts,
 			MaxTokens:   o.maxTokens,
 			Temperature: o.temperature,
 			N:           DefaultOpenAINumResults,
@@ -317,7 +317,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIS
 			index := choice.Index
 			output := choice.Text
 			if o.verbose {
-				debugCompletion(prompt[index], output)
+				debugCompletion(prompts[index], output)
 			}
 
 			callbackFn[index](output)
