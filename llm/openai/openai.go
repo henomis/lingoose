@@ -184,6 +184,45 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 	return output, nil
 }
 
+func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
+
+	response, err := o.openAIClient.CreateCompletion(
+		ctx,
+		openai.CompletionRequest{
+			Model:       string(o.model),
+			Prompt:      prompts,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+	}
+
+	if o.usageCallback != nil {
+		o.setUsageMetadata(response.Usage)
+	}
+
+	if len(response.Choices) == 0 {
+		return nil, fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
+	}
+
+	var outputs []string
+	for _, choice := range response.Choices {
+		index := choice.Index
+		outputs = append(outputs, strings.TrimSpace(choice.Text))
+		if o.verbose {
+			debugCompletion(prompts[index], choice.Text)
+		}
+	}
+
+	return outputs, nil
+}
+
 func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
 
 	stream, err := o.openAIClient.CreateCompletionStream(
@@ -229,6 +268,60 @@ func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCa
 		}
 
 		callbackFn(output)
+
+	}
+
+	return nil
+}
+
+func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIStreamCallback, prompts []string) error {
+
+	stream, err := o.openAIClient.CreateCompletionStream(
+		ctx,
+		openai.CompletionRequest{
+			Model:       string(o.model),
+			Prompt:      prompts,
+			MaxTokens:   o.maxTokens,
+			Temperature: o.temperature,
+			N:           DefaultOpenAINumResults,
+			TopP:        DefaultOpenAITopP,
+			Stop:        o.stop,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+	}
+
+	defer stream.Close()
+
+	for {
+
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		}
+
+		if o.usageCallback != nil {
+			o.setUsageMetadata(response.Usage)
+		}
+
+		if len(response.Choices) == 0 {
+			return fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
+		}
+
+		for _, choice := range response.Choices {
+			index := choice.Index
+			output := choice.Text
+			if o.verbose {
+				debugCompletion(prompts[index], output)
+			}
+
+			callbackFn[index](output)
+		}
 
 	}
 

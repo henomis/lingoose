@@ -32,13 +32,13 @@ func (tgs textGenerationResponseSequence) String() string {
 	return tgs.GeneratedText
 }
 
-func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompt string) (string, error) {
+func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompts []string) ([]string, error) {
 
 	numSequences := 1
 	isTrue := true
 
 	request := textGenerationRequest{
-		Inputs: []string{prompt},
+		Inputs: prompts,
 		Parameters: textGenerationParameters{
 			Temperature:        &h.temperature,
 			TopK:               h.topK,
@@ -51,34 +51,32 @@ func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompt strin
 
 	jsonBuf, err := json.Marshal(request)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	respBody, err := h.doRequest(ctx, jsonBuf, h.model)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	tgrespsRaw := make([][]*textGenerationResponseSequence, len(request.Inputs))
 	err = json.Unmarshal(respBody, &tgrespsRaw)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(tgrespsRaw) != len(request.Inputs) {
-		return "", fmt.Errorf("%s: expected %d responses, got %d; response=%s", ErrHuggingFaceCompletion, len(request.Inputs), len(tgrespsRaw), string(respBody))
+		return nil, fmt.Errorf("%s: expected %d responses, got %d; response=%s", ErrHuggingFaceCompletion, len(request.Inputs), len(tgrespsRaw), string(respBody))
 	}
 
-	output := ""
+	outputs := make([]string, len(request.Inputs))
 	for i := range tgrespsRaw {
 		for _, t := range tgrespsRaw[i] {
-			output += t.GeneratedText
+			output := strings.TrimLeft(t.GeneratedText, prompts[i])
+			output = strings.TrimSpace(output)
+			outputs[i] = output
+			debugCompletion(prompts[i], outputs[i])
 		}
 	}
 
-	output = strings.TrimLeft(output, prompt)
-	output = strings.TrimSpace(output)
-
-	debugCompletion(prompt, output)
-
-	return output, nil
+	return outputs, nil
 }
