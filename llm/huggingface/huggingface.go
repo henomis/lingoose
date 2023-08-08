@@ -89,10 +89,14 @@ func (h *HuggingFace) WithMode(mode HuggingFaceMode) *HuggingFace {
 func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, error) {
 
 	var output string
+	var outputs []string
 	var err error
 	switch h.mode {
 	case HuggingFaceModeTextGeneration:
-		output, err = h.textgenerationCompletion(ctx, prompt)
+		outputs, err = h.textgenerationCompletion(ctx, []string{prompt})
+		if err == nil {
+			output = outputs[0]
+		}
 	case HuggingFaceModeCoversational:
 		fallthrough
 	default:
@@ -104,4 +108,24 @@ func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, er
 	}
 
 	return output, nil
+}
+
+func (h *HuggingFace) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
+
+	var outputs []string
+	var err error
+	switch h.mode {
+	case HuggingFaceModeTextGeneration:
+		outputs, err = h.textgenerationCompletion(ctx, prompts)
+	case HuggingFaceModeCoversational:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("batch completion not supported for conversational mode")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", ErrHuggingFaceCompletion, err)
+	}
+
+	return outputs, nil
 }
