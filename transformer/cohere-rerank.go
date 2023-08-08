@@ -12,16 +12,23 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+type CohereRerankModel = model.RerankModel
+
 const (
 	defaultCohereRerankMaxChunksPerDoc = 10
 	defaultCohereRerankTopN            = -1
 	CohereRerankScoreMetdataKey        = "cohere-rerank-score"
+
+	CohereRerankModelEnglishV20      CohereRerankModel = model.RerankModelEnglishV20
+	CohereRerankModelMultilingualV20 CohereRerankModel = model.RerankModelMultilingualV20
+	defaultCohereRerankModel                           = CohereRerankModelEnglishV20
 )
 
 type CohereRerank struct {
 	client          *coherego.Client
 	maxChunksPerDoc int
 	topN            int
+	model           CohereRerankModel
 }
 
 func NewCohereRerank() *CohereRerank {
@@ -29,6 +36,7 @@ func NewCohereRerank() *CohereRerank {
 		client:          coherego.New(os.Getenv("COHERE_API_KEY")),
 		maxChunksPerDoc: defaultCohereRerankMaxChunksPerDoc,
 		topN:            defaultCohereRerankTopN,
+		model:           defaultCohereRerankModel,
 	}
 }
 
@@ -44,6 +52,11 @@ func (c *CohereRerank) WithAPIKey(apiKey string) *CohereRerank {
 
 func (c *CohereRerank) WithTopN(topN int) *CohereRerank {
 	c.topN = topN
+	return c
+}
+
+func (c *CohereRerank) WithModel(model CohereRerankModel) *CohereRerank {
+	c.model = model
 	return c
 }
 
@@ -83,8 +96,7 @@ func (c *CohereRerank) documentsToStringSlice(documents []document.Document) []s
 func (c *CohereRerank) rerankDocuments(documents []document.Document, results []model.RerankResult) []document.Document {
 
 	rerankedDocuments := make([]document.Document, 0)
-	for i, result := range results {
-
+	for _, result := range results {
 		index := result.Index
 		metadata := documents[index].Metadata
 		if metadata == nil {
@@ -99,10 +111,6 @@ func (c *CohereRerank) rerankDocuments(documents []document.Document, results []
 				Metadata: metadata,
 			},
 		)
-
-		if i >= c.topN {
-			break
-		}
 	}
 
 	return rerankedDocuments
