@@ -39,16 +39,19 @@ func New() *Embedder {
 	}
 }
 
+// WithAPIKey sets the API key to use for the embedder
 func (e *Embedder) WithAPIKey(apiKey string) *Embedder {
 	e.client = coherego.New(apiKey)
 	return e
 }
 
+// WithModel sets the model to use for the embedder
 func (e *Embedder) WithModel(model EmbedderModel) *Embedder {
 	e.model = model
 	return e
 }
 
+// Embed returns the embeddings for the given texts
 func (h *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	resp := &response.Embed{}
 	err := h.client.Embed(

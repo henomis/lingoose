@@ -71,11 +71,13 @@ func New(model Model) *OpenAIEmbedder {
 	}
 }
 
+// WithClient sets the OpenAI client to use for the embedder
 func (o *OpenAIEmbedder) WithClient(client *openai.Client) *OpenAIEmbedder {
 	o.openAIClient = client
 	return o
 }
 
+// Embed returns the embeddings for the given texts
 func (o *OpenAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	maxTokens := o.getMaxTokens()
 
