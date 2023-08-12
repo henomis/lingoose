@@ -142,6 +142,10 @@ func (p *Index) similaritySearch(ctx context.Context, query string, opts *option
 		return nil, err
 	}
 
+	if opts.Filter == nil {
+		opts.Filter = qdrantrequest.Filter{}
+	}
+
 	includeMetadata := true
 	res := &qdrantresponse.PointSearch{}
 	err = p.qdrantClient.PointSearch(

@@ -14,7 +14,7 @@ import (
 )
 
 // download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
-// run qdrant docker run -p 6333:6333 qdrant/qdrant
+// run qdrant docker run --rm -p 6333:6333 qdrant/qdrant
 
 func main() {
 

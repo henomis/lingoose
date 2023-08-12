@@ -136,6 +136,10 @@ func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		opt(pineconeOptions)
 	}
 
+	if pineconeOptions.Filter == nil {
+		pineconeOptions.Filter = map[string]string{}
+	}
+
 	matches, err := p.similaritySearch(ctx, query, pineconeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
