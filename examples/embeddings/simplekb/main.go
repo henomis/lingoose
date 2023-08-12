@@ -4,7 +4,8 @@ import (
 	"context"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
+	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	qapipeline "github.com/henomis/lingoose/pipeline/qa"
@@ -15,7 +16,7 @@ func main() {
 	query := "What is the NATO purpose?"
 	docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	index.NewSimpleVectorIndex("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
-	similarities, _ := index.NewSimpleVectorIndex("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, index.WithTopK(3))
+	simplevectorindex.New("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
+	similarities, _ := simplevectorindex.New("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, indexoption.WithTopK(3))
 	qapipeline.New(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities.ToDocuments())
 }

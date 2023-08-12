@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
+	qdrantindex "github.com/henomis/lingoose/index/qdrant"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -19,13 +20,13 @@ func main() {
 
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	qdrantIndex := index.NewQdrant(
-		index.QdrantOptions{
+	qdrantIndex := qdrantindex.New(
+		qdrantindex.Options{
 			CollectionName: "test",
 			IncludeContent: true,
-			CreateCollection: &index.QdrantCreateCollectionOptions{
+			CreateCollection: &qdrantindex.CreateCollectionOptions{
 				Dimension: 1536,
-				Distance:  index.QdrantDistanceCosine,
+				Distance:  qdrantindex.DistanceCosine,
 			},
 		},
 		openaiEmbedder,
@@ -47,7 +48,7 @@ func main() {
 	similarities, err := qdrantIndex.SimilaritySearch(
 		context.Background(),
 		query,
-		index.WithTopK(3),
+		indexoption.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
@@ -85,7 +86,7 @@ func main() {
 
 }
 
-func ingestData(qdrantIndex *index.Qdrant) error {
+func ingestData(qdrantIndex *qdrantindex.Index) error {
 
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
