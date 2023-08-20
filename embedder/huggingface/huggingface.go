@@ -23,16 +23,19 @@ func New() *HuggingFaceEmbedder {
 	}
 }
 
+// WithToken sets the API key to use for the embedder
 func (h *HuggingFaceEmbedder) WithToken(token string) *HuggingFaceEmbedder {
 	h.token = token
 	return h
 }
 
+// WithModel sets the model to use for the embedder
 func (h *HuggingFaceEmbedder) WithModel(model string) *HuggingFaceEmbedder {
 	h.model = model
 	return h
 }
 
+// Embed returns the embeddings for the given texts
 func (h *HuggingFaceEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	return h.featureExtraction(ctx, texts)
 }

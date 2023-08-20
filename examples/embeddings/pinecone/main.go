@@ -5,25 +5,26 @@ import (
 	"fmt"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
+	pineconeindex "github.com/henomis/lingoose/index/pinecone"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 )
 
-// download https://frontiernerds.com/files/state_of_the_union.txt
+// download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
 
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	pineconeIndex := index.NewPinecone(
-		index.PineconeOptions{
+	pineconeIndex := pineconeindex.New(
+		pineconeindex.Options{
 			IndexName:      "test",
 			Namespace:      "test-namespace",
 			IncludeContent: true,
-			CreateIndex: &index.PineconeCreateIndexOptions{
+			CreateIndex: &pineconeindex.CreateIndexOptions{
 				Dimension: 1536,
 				Replicas:  1,
 				Metric:    "cosine",
@@ -49,7 +50,7 @@ func main() {
 	similarities, err := pineconeIndex.SimilaritySearch(
 		context.Background(),
 		query,
-		index.WithTopK(3),
+		indexoption.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
@@ -87,7 +88,7 @@ func main() {
 
 }
 
-func ingestData(pineconeIndex *index.Pinecone) error {
+func ingestData(pineconeIndex *pineconeindex.Index) error {
 
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {

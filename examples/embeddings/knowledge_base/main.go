@@ -8,7 +8,8 @@ import (
 
 	"github.com/henomis/lingoose/chat"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
+	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -24,7 +25,7 @@ func main() {
 
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex := index.NewSimpleVectorIndex("db", ".", openaiEmbedder)
+	docsVectorIndex := simplevectorindex.New("db", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
@@ -48,7 +49,7 @@ func main() {
 			break
 		}
 
-		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, index.WithTopK(3))
+		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, indexoption.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}
@@ -97,7 +98,7 @@ func main() {
 
 }
 
-func ingestData(docsVectorIndex *index.SimpleVectorIndex) error {
+func ingestData(docsVectorIndex *simplevectorindex.Index) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 

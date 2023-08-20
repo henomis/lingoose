@@ -1,4 +1,4 @@
-package index
+package qdrant
 
 import (
 	"context"
@@ -8,60 +8,62 @@ import (
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
+	"github.com/henomis/lingoose/index"
+	"github.com/henomis/lingoose/index/option"
 	qdrantgo "github.com/henomis/qdrant-go"
 	qdrantrequest "github.com/henomis/qdrant-go/request"
 	qdrantresponse "github.com/henomis/qdrant-go/response"
 )
 
 const (
-	defaultQdrantTopK            = 10
-	defaultQdrantBatchUpsertSize = 32
+	defaultTopK            = 10
+	defaultBatchUpsertSize = 32
 )
 
-type Qdrant struct {
+type Index struct {
 	qdrantClient    *qdrantgo.Client
 	collectionName  string
-	embedder        Embedder
+	embedder        index.Embedder
 	includeContent  bool
 	batchUpsertSize int
 
-	createCollection *QdrantCreateCollectionOptions
+	createCollection *CreateCollectionOptions
 }
 
-type QdrantDistance string
+type Distance string
 
 const (
-	QdrantDistanceCosine    QdrantDistance = QdrantDistance(qdrantrequest.DistanceCosine)
-	QdrantDistanceEuclidean QdrantDistance = QdrantDistance(qdrantrequest.DistanceEuclidean)
-	QdrantDistanceDot       QdrantDistance = QdrantDistance(qdrantrequest.DistanceDot)
+	DistanceCosine    Distance = Distance(qdrantrequest.DistanceCosine)
+	DistanceEuclidean Distance = Distance(qdrantrequest.DistanceEuclidean)
+	DistanceDot       Distance = Distance(qdrantrequest.DistanceDot)
 )
 
-type QdrantCreateCollectionOptions struct {
+type CreateCollectionOptions struct {
 	Dimension uint64
-	Distance  QdrantDistance
+	Distance  Distance
 	OnDisk    bool
 }
 
-type QdrantOptions struct {
+type Options struct {
 	CollectionName   string
 	IncludeContent   bool
 	BatchUpsertSize  *int
-	CreateCollection *QdrantCreateCollectionOptions
+	CreateCollection *CreateCollectionOptions
 }
 
-func NewQdrant(options QdrantOptions, embedder Embedder) *Qdrant {
+func New(options Options, embedder index.Embedder) *Index {
 
 	apiKey := os.Getenv("QDRANT_API_KEY")
 	endpoint := os.Getenv("QDRANT_ENDPOINT")
 
 	qdrantClient := qdrantgo.New(endpoint, apiKey)
 
-	batchUpsertSize := defaultQdrantBatchUpsertSize
+	batchUpsertSize := defaultBatchUpsertSize
 	if options.BatchUpsertSize != nil {
 		batchUpsertSize = *options.BatchUpsertSize
 	}
 
-	return &Qdrant{
+	return &Index{
 		qdrantClient:     qdrantClient,
 		collectionName:   options.CollectionName,
 		embedder:         embedder,
@@ -71,30 +73,30 @@ func NewQdrant(options QdrantOptions, embedder Embedder) *Qdrant {
 	}
 }
 
-func (q *Qdrant) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Qdrant {
+func (q *Index) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Index {
 	q.qdrantClient = qdrantgo.New(endpoint, apiKey)
 	return q
 }
 
-func (q *Qdrant) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrInternal, err)
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	err = q.batchUpsert(ctx, documents)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrInternal, err)
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 	return nil
 }
 
-func (p *Qdrant) IsEmpty(ctx context.Context) (bool, error) {
+func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 	err := p.createCollectionIfRequired(ctx)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	res := &qdrantresponse.CollectionCollectInfo{}
@@ -106,17 +108,17 @@ func (p *Qdrant) IsEmpty(ctx context.Context) (bool, error) {
 		res,
 	)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	return res.Result.VectorsCount == 0, nil
 
 }
 
-func (q *Qdrant) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
+func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResponses, error) {
 
-	qdrantOptions := &options{
-		topK: defaultQdrantTopK,
+	qdrantOptions := &option.Options{
+		TopK: defaultTopK,
 	}
 
 	for _, opt := range opts {
@@ -125,19 +127,23 @@ func (q *Qdrant) SimilaritySearch(ctx context.Context, query string, opts ...Opt
 
 	matches, err := q.similaritySearch(ctx, query, qdrantOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	searchResponses := buildSearchReponsesFromQdrantMatches(matches, q.includeContent)
 
-	return filterSearchResponses(searchResponses, qdrantOptions.topK), nil
+	return index.FilterSearchResponses(searchResponses, qdrantOptions.TopK), nil
 }
 
-func (p *Qdrant) similaritySearch(ctx context.Context, query string, opts *options) ([]qdrantresponse.PointSearchResult, error) {
+func (p *Index) similaritySearch(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
 
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
+	}
+
+	if opts.Filter == nil {
+		opts.Filter = qdrantrequest.Filter{}
 	}
 
 	includeMetadata := true
@@ -146,10 +152,10 @@ func (p *Qdrant) similaritySearch(ctx context.Context, query string, opts *optio
 		ctx,
 		&qdrantrequest.PointSearch{
 			CollectionName: p.collectionName,
-			Limit:          opts.topK,
+			Limit:          opts.TopK,
 			Vector:         embeddings[0],
 			WithPayload:    &includeMetadata,
-			Filter:         opts.filter.(qdrantrequest.Filter),
+			Filter:         opts.Filter.(qdrantrequest.Filter),
 		},
 		res,
 	)
@@ -160,7 +166,7 @@ func (p *Qdrant) similaritySearch(ctx context.Context, query string, opts *optio
 	return res.Result, nil
 }
 
-func (q *Qdrant) createCollectionIfRequired(ctx context.Context) error {
+func (q *Index) createCollectionIfRequired(ctx context.Context) error {
 
 	if q.createCollection == nil {
 		return nil
@@ -195,7 +201,7 @@ func (q *Qdrant) createCollectionIfRequired(ctx context.Context) error {
 	return nil
 }
 
-func (q *Qdrant) batchUpsert(ctx context.Context, documents []document.Document) error {
+func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
 
 	for i := 0; i < len(documents); i += q.batchUpsertSize {
 
@@ -228,7 +234,7 @@ func (q *Qdrant) batchUpsert(ctx context.Context, documents []document.Document)
 	return nil
 }
 
-func (q *Qdrant) pointUpsert(ctx context.Context, points []qdrantrequest.Point) error {
+func (q *Index) pointUpsert(ctx context.Context, points []qdrantrequest.Point) error {
 
 	wait := true
 	req := &qdrantrequest.PointUpsert{
@@ -257,11 +263,11 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 
 	for i, embedding := range embeddings {
 
-		metadata := deepCopyMetadata(documents[startIndex+i].Metadata)
+		metadata := index.DeepCopyMetadata(documents[startIndex+i].Metadata)
 
 		// inject document content into vector metadata
 		if includeContent {
-			metadata[defaultKeyContent] = documents[startIndex+i].Content
+			metadata[index.DefaultKeyContent] = documents[startIndex+i].Content
 		}
 
 		vectorID, err := uuid.NewUUID()
@@ -276,27 +282,27 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 		})
 
 		// inject vector ID into document metadata
-		documents[startIndex+i].Metadata[defaultKeyID] = vectorID.String()
+		documents[startIndex+i].Metadata[index.DefaultKeyID] = vectorID.String()
 	}
 
 	return vectors, nil
 }
 
-func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) SearchResponses {
-	searchResponses := make([]SearchResponse, len(matches))
+func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) index.SearchResponses {
+	searchResponses := make([]index.SearchResponse, len(matches))
 
 	for i, match := range matches {
 
-		metadata := deepCopyMetadata(match.Payload)
+		metadata := index.DeepCopyMetadata(match.Payload)
 
 		content := ""
 		// extract document content from vector metadata
 		if includeContent {
-			content = metadata[defaultKeyContent].(string)
-			delete(metadata, defaultKeyContent)
+			content = metadata[index.DefaultKeyContent].(string)
+			delete(metadata, index.DefaultKeyContent)
 		}
 
-		searchResponses[i] = SearchResponse{
+		searchResponses[i] = index.SearchResponse{
 			ID: match.ID,
 			Document: document.Document{
 				Metadata: metadata,

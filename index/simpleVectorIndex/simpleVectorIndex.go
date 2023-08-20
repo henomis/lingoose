@@ -1,4 +1,4 @@
-package index
+package simplevectorindex
 
 import (
 	"context"
@@ -10,31 +10,32 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
+	"github.com/henomis/lingoose/index"
+	"github.com/henomis/lingoose/index/option"
 )
 
 const (
-	defaultSimpleVectorIndexBatchSize = 32
-
-	defaultSimpleVectorIndexTopK = 10
+	defaultBatchSize = 32
+	defaultTopK      = 10
 )
 
-type simpleVectorIndexData struct {
+type data struct {
 	Document  document.Document  `json:"document"`
 	Embedding embedder.Embedding `json:"embedding"`
 }
 
-type SimpleVectorIndex struct {
-	data       []simpleVectorIndexData
+type Index struct {
+	data       []data
 	outputPath string
 	name       string
-	embedder   Embedder
+	embedder   index.Embedder
 }
 
-type SimpleVectorIndexFilterFn func([]SearchResponse) []SearchResponse
+type SimpleVectorIndexFilterFn func([]index.SearchResponse) []index.SearchResponse
 
-func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *SimpleVectorIndex {
-	simpleVectorIndex := &SimpleVectorIndex{
-		data:       []simpleVectorIndexData{},
+func New(name string, outputPath string, embedder index.Embedder) *Index {
+	simpleVectorIndex := &Index{
+		data:       []data{},
 		outputPath: outputPath,
 		name:       name,
 		embedder:   embedder,
@@ -43,14 +44,14 @@ func NewSimpleVectorIndex(name string, outputPath string, embedder Embedder) *Si
 	return simpleVectorIndex
 }
 
-func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 
-	s.data = []simpleVectorIndexData{}
+	s.data = []data{}
 
 	documentIndex := 0
-	for i := 0; i < len(documents); i += defaultSimpleVectorIndexBatchSize {
+	for i := 0; i < len(documents); i += defaultBatchSize {
 
-		end := i + defaultSimpleVectorIndexBatchSize
+		end := i + defaultBatchSize
 		if end > len(documents) {
 			end = len(documents)
 		}
@@ -62,16 +63,16 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 
 		embeddings, err := s.embedder.Embed(ctx, texts)
 		if err != nil {
-			return fmt.Errorf("%s: %w", ErrInternal, err)
+			return fmt.Errorf("%s: %w", index.ErrInternal, err)
 		}
 
 		for j, document := range documents[i:end] {
-			s.data = append(s.data, simpleVectorIndexData{
+			s.data = append(s.data, data{
 				Document:  document,
 				Embedding: embeddings[j],
 			})
 
-			documents[documentIndex].Metadata[defaultKeyID] = fmt.Sprintf("%d", documentIndex)
+			documents[documentIndex].Metadata[index.DefaultKeyID] = fmt.Sprintf("%d", documentIndex)
 			documentIndex++
 		}
 
@@ -79,13 +80,13 @@ func (s *SimpleVectorIndex) LoadFromDocuments(ctx context.Context, documents []d
 
 	err := s.save()
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrInternal, err)
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	return nil
 }
 
-func (s SimpleVectorIndex) save() error {
+func (s Index) save() error {
 
 	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
@@ -95,7 +96,7 @@ func (s SimpleVectorIndex) save() error {
 	return os.WriteFile(s.database(), jsonContent, 0644)
 }
 
-func (s *SimpleVectorIndex) load() error {
+func (s *Index) load() error {
 
 	content, err := os.ReadFile(s.database())
 	if err != nil {
@@ -105,24 +106,24 @@ func (s *SimpleVectorIndex) load() error {
 	return json.Unmarshal(content, &s.data)
 }
 
-func (s *SimpleVectorIndex) database() string {
+func (s *Index) database() string {
 	return strings.Join([]string{s.outputPath, s.name + ".json"}, string(os.PathSeparator))
 }
 
-func (s *SimpleVectorIndex) IsEmpty() (bool, error) {
+func (s *Index) IsEmpty() (bool, error) {
 
 	err := s.load()
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", ErrInternal, err)
+		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	return len(s.data) == 0, nil
 }
 
-func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, opts ...Option) (SearchResponses, error) {
+func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResponses, error) {
 
-	sviOptions := &options{
-		topK: defaultSimpleVectorIndexTopK,
+	sviOptions := &option.Options{
+		TopK: defaultTopK,
 	}
 
 	for _, opt := range opts {
@@ -131,37 +132,37 @@ func (s *SimpleVectorIndex) SimilaritySearch(ctx context.Context, query string, 
 
 	err := s.load()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	embeddings, err := s.embedder.Embed(ctx, []string{query})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrInternal, err)
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	scores := s.cosineSimilarityBatch(embeddings[0])
 
-	searchResponses := make([]SearchResponse, len(scores))
+	searchResponses := make([]index.SearchResponse, len(scores))
 
 	for i, score := range scores {
 
-		id := s.data[i].Document.Metadata[defaultKeyID].(string)
+		id := s.data[i].Document.Metadata[index.DefaultKeyID].(string)
 
-		searchResponses[i] = SearchResponse{
+		searchResponses[i] = index.SearchResponse{
 			ID:       id,
 			Document: s.data[i].Document,
 			Score:    score,
 		}
 	}
 
-	if sviOptions.filter != nil {
-		searchResponses = sviOptions.filter.(SimpleVectorIndexFilterFn)(searchResponses)
+	if sviOptions.Filter != nil {
+		searchResponses = sviOptions.Filter.(SimpleVectorIndexFilterFn)(searchResponses)
 	}
 
-	return filterSearchResponses(searchResponses, sviOptions.topK), nil
+	return index.FilterSearchResponses(searchResponses, sviOptions.TopK), nil
 }
 
-func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
+func (s *Index) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
 	dotProduct := float64(0.0)
 	normA := float64(0.0)
 	normB := float64(0.0)
@@ -179,7 +180,7 @@ func (s *SimpleVectorIndex) cosineSimilarity(a embedder.Embedding, b embedder.Em
 	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
 }
 
-func (s *SimpleVectorIndex) cosineSimilarityBatch(a embedder.Embedding) []float64 {
+func (s *Index) cosineSimilarityBatch(a embedder.Embedding) []float64 {
 
 	scores := make([]float64, len(s.data))
 

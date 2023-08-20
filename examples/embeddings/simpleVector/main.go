@@ -6,23 +6,25 @@ import (
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
+	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 )
 
-// download https://frontiernerds.com/files/state_of_the_union.txt
+// download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
 
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 
-	docsVectorIndex := index.NewSimpleVectorIndex("docs", ".", openaiEmbedder)
+	docsVectorIndex := simplevectorindex.New("docs", ".", openaiEmbedder)
 	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
 
 	if indexIsEmpty {
-		err := ingestData(openaiEmbedder)
+		err := ingestData(docsVectorIndex, openaiEmbedder)
 		if err != nil {
 			panic(err)
 		}
@@ -32,7 +34,7 @@ func main() {
 	similarities, err := docsVectorIndex.SimilaritySearch(
 		context.Background(),
 		query,
-		index.WithTopK(3),
+		indexoption.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
@@ -72,7 +74,7 @@ func main() {
 	fmt.Println(output)
 }
 
-func ingestData(openaiEmbedder index.Embedder) error {
+func ingestData(docsVectorIndex *simplevectorindex.Index, openaiEmbedder index.Embedder) error {
 
 	fmt.Printf("Ingesting data...")
 
@@ -85,7 +87,7 @@ func ingestData(openaiEmbedder index.Embedder) error {
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
-	err = index.NewSimpleVectorIndex("docs", ".", openaiEmbedder).LoadFromDocuments(context.Background(), documentChunks)
+	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}

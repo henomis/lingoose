@@ -6,6 +6,7 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
+	"github.com/henomis/lingoose/types"
 )
 
 var (
@@ -13,8 +14,8 @@ var (
 )
 
 const (
-	defaultKeyID      = "id"
-	defaultKeyContent = "content"
+	DefaultKeyID      = "id"
+	DefaultKeyContent = "content"
 )
 
 type SearchResponse struct {
@@ -37,7 +38,7 @@ type Embedder interface {
 	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
-func filterSearchResponses(searchResponses SearchResponses, topK int) SearchResponses {
+func FilterSearchResponses(searchResponses SearchResponses, topK int) SearchResponses {
 	//sort by similarity score
 	sort.Slice(searchResponses, func(i, j int) bool {
 		return searchResponses[i].Score > searchResponses[j].Score
@@ -49,4 +50,12 @@ func filterSearchResponses(searchResponses SearchResponses, topK int) SearchResp
 	}
 
 	return searchResponses[:maxTopK]
+}
+
+func DeepCopyMetadata(metadata types.Meta) types.Meta {
+	metadataCopy := make(types.Meta)
+	for k, v := range metadata {
+		metadataCopy[k] = v
+	}
+	return metadataCopy
 }

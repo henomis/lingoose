@@ -36,6 +36,7 @@ type Cohere struct {
 	stop        []string
 }
 
+// NewCompletion returns a new completion LLM
 func NewCompletion() *Cohere {
 	return &Cohere{
 		client:      coherego.New(os.Getenv("COHERE_API_KEY")),
@@ -45,36 +46,43 @@ func NewCompletion() *Cohere {
 	}
 }
 
+// WithModel sets the model to use for the LLM
 func (c *Cohere) WithModel(model Model) *Cohere {
 	c.model = model
 	return c
 }
 
+// WithTemperature sets the temperature to use for the LLM
 func (c *Cohere) WithTemperature(temperature float64) *Cohere {
 	c.temperature = temperature
 	return c
 }
 
+// WithMaxTokens sets the max tokens to use for the LLM
 func (c *Cohere) WithMaxTokens(maxTokens int) *Cohere {
 	c.maxTokens = maxTokens
 	return c
 }
 
+// WithAPIKey sets the API key to use for the LLM
 func (c *Cohere) WithAPIKey(apiKey string) *Cohere {
 	c.client = coherego.New(apiKey)
 	return c
 }
 
+// WithVerbose sets the verbosity of the LLM
 func (c *Cohere) WithVerbose(verbose bool) *Cohere {
 	c.verbose = verbose
 	return c
 }
 
+// WithStop sets the stop sequences to use for the LLM
 func (o *Cohere) WithStop(stop []string) *Cohere {
 	o.stop = stop
 	return o
 }
 
+// Completion returns the completion for the given prompt
 func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) {
 
 	resp := &response.Generate{}
@@ -107,6 +115,7 @@ func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) 
 	return output, nil
 }
 
+// Chat is not implemented
 func (c *Cohere) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }

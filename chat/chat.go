@@ -56,6 +56,7 @@ func New(promptMessages ...PromptMessage) *Chat {
 	return chatPromptTemplate
 }
 
+// AddPromptMessages adds a list of chat prompt templates to the chat prompt template.
 func (c *Chat) AddPromptMessages(messages []PromptMessage) {
 	for _, message := range messages {
 		c.addMessagePromptTemplate(message)
@@ -92,6 +93,7 @@ func (p *Chat) ToMessages() (Messages, error) {
 	return messages, nil
 }
 
+// PromptMessages returns the chat prompt messages.
 func (c *Chat) PromptMessages() PromptMessages {
 	return c.promptMessages
 }

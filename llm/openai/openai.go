@@ -88,45 +88,54 @@ func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI 
 	}
 }
 
+// WithModel sets the model to use for the OpenAI instance.
 func (o *OpenAI) WithModel(model Model) *OpenAI {
 	o.model = model
 	return o
 }
 
+// WithTemperature sets the temperature to use for the OpenAI instance.
 func (o *OpenAI) WithTemperature(temperature float32) *OpenAI {
 	o.temperature = temperature
 	return o
 }
 
+// WithMaxTokens sets the max tokens to use for the OpenAI instance.
 func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
 	o.maxTokens = maxTokens
 	return o
 }
 
+// WithUsageCallback sets the usage callback to use for the OpenAI instance.
 func (o *OpenAI) WithCallback(callback OpenAIUsageCallback) *OpenAI {
 	o.usageCallback = callback
 	return o
 }
 
+// WithStop sets the stop sequences to use for the OpenAI instance.
 func (o *OpenAI) WithStop(stop []string) *OpenAI {
 	o.stop = stop
 	return o
 }
 
+// WithClient sets the client to use for the OpenAI instance.
 func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
 	o.openAIClient = client
 	return o
 }
 
+// WithVerbose sets the verbose flag to use for the OpenAI instance.
 func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 	o.verbose = verbose
 	return o
 }
 
+// CalledFunctionName returns the name of the function that was called.
 func (o *OpenAI) CalledFunctionName() *string {
 	return o.calledFunctionName
 }
 
+// FinishReason returns the LLM finish reason.
 func (o *OpenAI) FinishReason() string {
 	return o.finishReason
 }
@@ -149,41 +158,17 @@ func NewChat() *OpenAI {
 	)
 }
 
+// Completion returns a single completion for the given prompt.
 func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
-
-	response, err := o.openAIClient.CreateCompletion(
-		ctx,
-		openai.CompletionRequest{
-			Model:       string(o.model),
-			Prompt:      prompt,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
-	)
-
+	outputs, err := o.BatchCompletion(ctx, []string{prompt})
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		return "", err
 	}
 
-	if o.usageCallback != nil {
-		o.setUsageMetadata(response.Usage)
-	}
-
-	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
-	}
-
-	output := strings.TrimSpace(response.Choices[0].Text)
-	if o.verbose {
-		debugCompletion(prompt, output)
-	}
-
-	return output, nil
+	return outputs[0], nil
 }
 
+// BatchCompletion returns multiple completions for the given prompts.
 func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
 
 	response, err := o.openAIClient.CreateCompletion(
@@ -223,57 +208,12 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]strin
 	return outputs, nil
 }
 
+// CompletionStream returns a single completion stream for the given prompt.
 func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
-
-	stream, err := o.openAIClient.CreateCompletionStream(
-		ctx,
-		openai.CompletionRequest{
-			Model:       string(o.model),
-			Prompt:      prompt,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
-	}
-
-	defer stream.Close()
-
-	for {
-
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		if err != nil {
-			return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
-		}
-
-		if o.usageCallback != nil {
-			o.setUsageMetadata(response.Usage)
-		}
-
-		if len(response.Choices) == 0 {
-			return fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
-		}
-
-		output := response.Choices[0].Text
-		if o.verbose {
-			debugCompletion(prompt, output)
-		}
-
-		callbackFn(output)
-
-	}
-
-	return nil
+	return o.BatchCompletionStream(ctx, []OpenAIStreamCallback{callbackFn}, []string{prompt})
 }
 
+// BatchCompletionStream returns multiple completion streams for the given prompts.
 func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIStreamCallback, prompts []string) error {
 
 	stream, err := o.openAIClient.CreateCompletionStream(
@@ -328,6 +268,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIS
 	return nil
 }
 
+// Chat returns a single chat completion for the given prompt.
 func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	messages, err := buildMessages(prompt)
@@ -389,6 +330,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return content, nil
 }
 
+// ChatStream returns a single chat stream for the given prompt.
 func (o *OpenAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt *chat.Chat) error {
 
 	messages, err := buildMessages(prompt)
@@ -440,6 +382,7 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback
 	return nil
 }
 
+// SetStop sets the stop sequences for the completion.
 func (o *OpenAI) SetStop(stop []string) {
 	o.stop = stop
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/henomis/lingoose/textsplitter"
 )
 
-// download https://frontiernerds.com/files/state_of_the_union.txt
+// download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
 
