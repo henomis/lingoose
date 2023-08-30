@@ -92,7 +92,7 @@ func (s *Tube) executeLLM(ctx context.Context, input types.M) (string, error) {
 		return s.executeLLMChat(ctx, input)
 	}
 
-	return "", ErrInvalidLmmMode
+	return "", ErrInvalidLLMMode
 }
 
 func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {

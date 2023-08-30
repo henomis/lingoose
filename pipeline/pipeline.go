@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrDecoding       = errors.New("decoding input error")
-	ErrInvalidLmmMode = errors.New("invalid LLM mode")
+	ErrInvalidLLMMode = errors.New("invalid LLM mode")
 	ErrLLMExecution   = errors.New("llm execution error")
 )
 
