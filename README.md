@@ -1,4 +1,4 @@
-![image](https://lingoose.io/assets/img/lingoose-small.png)
+<p align="center"><img src="https://lingoose.io/assets/img/lingoose-small.png" alt="LINGOOSE"/></p>
 
 # 🪿 LinGoose
 
