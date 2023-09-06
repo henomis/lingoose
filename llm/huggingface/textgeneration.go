@@ -74,7 +74,9 @@ func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompts []st
 			output := strings.TrimLeft(t.GeneratedText, prompts[i])
 			output = strings.TrimSpace(output)
 			outputs[i] = output
-			debugCompletion(prompts[i], outputs[i])
+			if h.verbose {
+				debugCompletion(prompts[i], outputs[i])
+			}
 		}
 	}
 
