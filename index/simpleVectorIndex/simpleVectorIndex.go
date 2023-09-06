@@ -98,6 +98,10 @@ func (s Index) save() error {
 
 func (s *Index) load() error {
 
+	if len(s.data) > 0 {
+		return nil
+	}
+
 	content, err := os.ReadFile(s.database())
 	if err != nil {
 		return err
