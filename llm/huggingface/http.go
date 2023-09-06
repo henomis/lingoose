@@ -21,7 +21,7 @@ func (h *HuggingFace) doRequest(ctx context.Context, jsonBody []byte, model stri
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+h.token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

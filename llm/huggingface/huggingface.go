@@ -3,6 +3,7 @@ package huggingface
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 )
 
@@ -29,6 +30,7 @@ type HuggingFace struct {
 	topK        *int
 	topP        *float32
 	verbose     bool
+	httpClient  *http.Client
 }
 
 func New(model string, temperature float32, verbose bool) *HuggingFace {
@@ -38,6 +40,7 @@ func New(model string, temperature float32, verbose bool) *HuggingFace {
 		model:       model,
 		temperature: temperature,
 		verbose:     verbose,
+		httpClient:  http.DefaultClient,
 	}
 }
 
@@ -92,6 +95,12 @@ func (h *HuggingFace) WithTopP(topP float32) *HuggingFace {
 // WithMode sets the mode to use for the LLM
 func (h *HuggingFace) WithMode(mode HuggingFaceMode) *HuggingFace {
 	h.mode = mode
+	return h
+}
+
+// WithHTTPClient sets the http client to use for the LLM
+func (h *HuggingFace) WithHTTPClient(httpClient *http.Client) *HuggingFace {
+	h.httpClient = httpClient
 	return h
 }
 
