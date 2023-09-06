@@ -72,7 +72,9 @@ func (h *HuggingFace) conversationalCompletion(ctx context.Context, prompt strin
 		return "", err
 	}
 
-	debugCompletion(prompt, cresp.GeneratedText)
+	if h.verbose {
+		debugCompletion(prompt, cresp.GeneratedText)
+	}
 
 	return cresp.GeneratedText, nil
 }
