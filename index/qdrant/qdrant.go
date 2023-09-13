@@ -115,8 +115,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
+func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
 	qdrantOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -125,7 +124,7 @@ func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		opt(qdrantOptions)
 	}
 
-	matches, err := q.similaritySearch(ctx, query, qdrantOptions)
+	matches, err := q.similaritySearch(ctx, values, qdrantOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
@@ -135,12 +134,27 @@ func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
 }
 
-func (p *Index) similaritySearch(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
+func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
-	embeddings, err := p.embedder.Embed(ctx, []string{query})
-	if err != nil {
-		return nil, err
+	qdrantOptions := &option.Options{
+		TopK: defaultTopK,
 	}
+
+	for _, opt := range opts {
+		opt(qdrantOptions)
+	}
+
+	matches, err := q.query(ctx, query, qdrantOptions)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+	}
+
+	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
+
+	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
+}
+
+func (q *Index) similaritySearch(ctx context.Context, values []float64, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
 
 	if opts.Filter == nil {
 		opts.Filter = qdrantrequest.Filter{}
@@ -148,12 +162,12 @@ func (p *Index) similaritySearch(ctx context.Context, query string, opts *option
 
 	includeMetadata := true
 	res := &qdrantresponse.PointSearch{}
-	err = p.qdrantClient.PointSearch(
+	err := q.qdrantClient.PointSearch(
 		ctx,
 		&qdrantrequest.PointSearch{
-			CollectionName: p.collectionName,
+			CollectionName: q.collectionName,
 			Limit:          opts.TopK,
-			Vector:         embeddings[0],
+			Vector:         values,
 			WithPayload:    &includeMetadata,
 			Filter:         opts.Filter.(qdrantrequest.Filter),
 		},
@@ -164,6 +178,15 @@ func (p *Index) similaritySearch(ctx context.Context, query string, opts *option
 	}
 
 	return res.Result, nil
+}
+
+func (q *Index) query(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
+	embeddings, err := q.embedder.Embed(ctx, []string{query})
+	if err != nil {
+		return nil, err
+	}
+
+	return q.similaritySearch(ctx, embeddings[0], opts)
 }
 
 func (q *Index) createCollectionIfRequired(ctx context.Context) error {
@@ -299,10 +322,12 @@ func buildSearchResultsFromQdrantMatches(matches []qdrantresponse.PointSearchRes
 		}
 
 		searchResults[i] = index.SearchResult{
-			ID:       match.ID,
-			Metadata: metadata,
-			Values:   match.Vector,
-			Score:    match.Score,
+			Data: index.Data{
+				ID:       match.ID,
+				Metadata: metadata,
+				Values:   match.Vector,
+			},
+			Score: match.Score,
 		}
 	}
 

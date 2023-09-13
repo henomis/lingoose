@@ -49,7 +49,7 @@ func main() {
 			break
 		}
 
-		similarities, err := docsVectorIndex.SimilaritySearch(context.Background(), query, indexoption.WithTopK(3))
+		similarities, err := docsVectorIndex.Query(context.Background(), query, indexoption.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}

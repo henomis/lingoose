@@ -126,7 +126,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
+func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
 
 	pineconeOptions := &option.Options{
 		TopK: defaultTopK,
@@ -140,7 +140,7 @@ func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		pineconeOptions.Filter = map[string]string{}
 	}
 
-	matches, err := p.similaritySearch(ctx, query, pineconeOptions)
+	matches, err := p.similaritySearch(ctx, values, pineconeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
@@ -150,16 +150,44 @@ func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
 }
 
-func (p *Index) similaritySearch(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
+func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
-	err := p.getProjectID(ctx)
+	pineconeOptions := &option.Options{
+		TopK: defaultTopK,
+	}
+
+	for _, opt := range opts {
+		opt(pineconeOptions)
+	}
+
+	if pineconeOptions.Filter == nil {
+		pineconeOptions.Filter = map[string]string{}
+	}
+
+	matches, err := p.query(ctx, query, pineconeOptions)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
+	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
+
+	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
+}
+
+func (p *Index) query(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
+
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
+	}
+
+	return p.similaritySearch(ctx, embeddings[0], opts)
+}
+
+func (p *Index) similaritySearch(ctx context.Context, values []float64, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
+	err := p.getProjectID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	includeMetadata := true
@@ -170,7 +198,7 @@ func (p *Index) similaritySearch(ctx context.Context, query string, opts *option
 			IndexName:       p.indexName,
 			ProjectID:       *p.projectID,
 			TopK:            int32(opts.TopK),
-			Vector:          embeddings[0],
+			Vector:          values,
 			IncludeMetadata: &includeMetadata,
 			Namespace:       &p.namespace,
 			Filter:          opts.Filter.(map[string]string),
@@ -374,10 +402,12 @@ func buildSearchResultsFromPineconeMatches(matches []pineconeresponse.QueryMatch
 		}
 
 		searchResults[i] = index.SearchResult{
-			ID:       id,
-			Metadata: metadata,
-			Values:   match.Values,
-			Score:    score,
+			Data: index.Data{
+				ID:       id,
+				Metadata: metadata,
+				Values:   match.Values,
+			},
+			Score: score,
 		}
 	}
 

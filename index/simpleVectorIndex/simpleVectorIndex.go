@@ -140,7 +140,24 @@ func (s *Index) IsEmpty() (bool, error) {
 	return len(s.data) == 0, nil
 }
 
-func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
+func (s *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
+	sviOptions := &option.Options{
+		TopK: defaultTopK,
+	}
+
+	for _, opt := range opts {
+		opt(sviOptions)
+	}
+
+	err := s.load()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+	}
+
+	return s.similaritySearch(ctx, values, sviOptions)
+}
+
+func (s *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
 	sviOptions := &option.Options{
 		TopK: defaultTopK,
@@ -160,24 +177,35 @@ func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
-	scores := s.cosineSimilarityBatch(embeddings[0])
+	return s.similaritySearch(ctx, embeddings[0], sviOptions)
+}
+
+func (s *Index) similaritySearch(
+	ctx context.Context,
+	embedding embedder.Embedding,
+	opts *option.Options,
+) (index.SearchResults, error) {
+
+	scores := s.cosineSimilarityBatch(embedding)
 
 	searchResults := make([]index.SearchResult, len(scores))
 
 	for i, score := range scores {
 		searchResults[i] = index.SearchResult{
-			ID:       s.data[i].ID,
-			Values:   s.data[i].Values,
-			Metadata: s.data[i].Metadata,
-			Score:    score,
+			Data: index.Data{
+				ID:       s.data[i].ID,
+				Values:   s.data[i].Values,
+				Metadata: s.data[i].Metadata,
+			},
+			Score: score,
 		}
 	}
 
-	if sviOptions.Filter != nil {
-		searchResults = sviOptions.Filter.(SimpleVectorIndexFilterFn)(searchResults)
+	if opts.Filter != nil {
+		searchResults = opts.Filter.(SimpleVectorIndexFilterFn)(searchResults)
 	}
 
-	return index.FilterSearchResults(searchResults, sviOptions.TopK), nil
+	return index.FilterSearchResults(searchResults, opts.TopK), nil
 }
 
 func (s *Index) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {

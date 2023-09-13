@@ -47,7 +47,7 @@ func main() {
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	similarities, err := pineconeIndex.SimilaritySearch(
+	similarities, err := pineconeIndex.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),
