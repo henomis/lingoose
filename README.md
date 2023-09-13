@@ -67,7 +67,7 @@ import (
 )
 
 func main() {
-	docs, _ := loader.NewPDFToTextLoader("./kb").WithPDFToTextPath("/opt/homebrew/bin/pdftotext").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
+	docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
 	qapipeline.New(openai.NewChat().WithVerbose(true)).WithDocuments(&docs).WithRetriever(retriever.New(simplevectorindex.New("db", ".", openaiembedder.New(openaiembedder.AdaEmbeddingV2)))).Query(context.Background(), "What is the NATO purpose?")
 }
 
