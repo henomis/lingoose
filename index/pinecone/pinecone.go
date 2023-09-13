@@ -126,6 +126,31 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
+func (p *Index) Add(ctx context.Context, item *index.Data) error {
+	err := p.createIndexIfRequired(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+	}
+
+	if item.ID == "" {
+		id, err := uuid.NewUUID()
+		if err != nil {
+			return err
+		}
+		item.ID = id.String()
+	}
+
+	return p.vectorUpsert(ctx,
+		[]pineconerequest.Vector{
+			{
+				ID:       item.ID,
+				Values:   item.Values,
+				Metadata: item.Metadata,
+			},
+		},
+	)
+}
+
 func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
 
 	pineconeOptions := &option.Options{
