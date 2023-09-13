@@ -45,7 +45,7 @@ func main() {
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	similarities, err := qdrantIndex.SimilaritySearch(
+	similarities, err := qdrantIndex.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),

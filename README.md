@@ -71,10 +71,9 @@ func main() {
 	docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
 	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 	simplevectorindex.New("db", ".", openaiEmbedder).LoadFromDocuments(context.Background(), docs)
-	similarities, _ := simplevectorindex.New("db", ".", openaiEmbedder).SimilaritySearch(context.Background(), query, indexoption.WithTopK(3))
-	qapipeline.New(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, similarities.ToDocuments())
+	results, _ := simplevectorindex.New("db", ".", openaiEmbedder).Query(context.Background(), query, indexoption.WithTopK(3))
+	qapipeline.New(openai.NewChat().WithVerbose(true)).Run(context.Background(), query, results.ToDocuments())
 }
-
 ```
 
 This is the _famous_ 6-lines **lingoose** knowledge base chatbot. 🤖

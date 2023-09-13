@@ -31,7 +31,7 @@ func main() {
 	}
 
 	query := "Describe within a paragraph what is the purpose of the NATO Alliance."
-	similarities, err := docsVectorIndex.SimilaritySearch(
+	similarities, err := docsVectorIndex.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),
