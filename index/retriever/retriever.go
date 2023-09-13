@@ -19,10 +19,10 @@ const (
 )
 
 type Retriever struct {
-	index          Index
-	topK           int
-	documents      *[]document.Document
-	documentAreSet bool
+	index              Index
+	topK               int
+	documents          *[]document.Document
+	areDocumentsLoaded bool
 }
 
 func New(index Index, documents *[]document.Document) *Retriever {
@@ -44,11 +44,12 @@ func (r *Retriever) Query(ctx context.Context, query string) ([]document.Documen
 		return nil, fmt.Errorf("documents are not defined")
 	}
 
-	if !r.documentAreSet {
+	if !r.areDocumentsLoaded {
 		err := r.index.LoadFromDocuments(context.Background(), *r.documents)
 		if err != nil {
 			return nil, err
 		}
+		r.areDocumentsLoaded = true
 	}
 
 	results, err := r.index.Query(context.Background(), query, indexoption.WithTopK(r.topK))
