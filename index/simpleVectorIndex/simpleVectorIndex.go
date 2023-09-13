@@ -33,7 +33,7 @@ type Index struct {
 	embedder   index.Embedder
 }
 
-type SimpleVectorIndexFilterFn func([]index.SearchResponse) []index.SearchResponse
+type SimpleVectorIndexFilterFn func([]index.SearchResult) []index.SearchResult
 
 func New(name string, outputPath string, embedder index.Embedder) *Index {
 	simpleVectorIndex := &Index{
@@ -140,7 +140,7 @@ func (s *Index) IsEmpty() (bool, error) {
 	return len(s.data) == 0, nil
 }
 
-func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResponses, error) {
+func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
 	sviOptions := &option.Options{
 		TopK: defaultTopK,
@@ -162,24 +162,22 @@ func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 
 	scores := s.cosineSimilarityBatch(embeddings[0])
 
-	searchResponses := make([]index.SearchResponse, len(scores))
+	searchResults := make([]index.SearchResult, len(scores))
 
 	for i, score := range scores {
-		searchResponses[i] = index.SearchResponse{
-			ID: s.data[i].ID,
-			Document: document.Document{
-				Content:  s.data[i].Metadata[index.DefaultKeyContent].(string),
-				Metadata: s.data[i].Metadata,
-			},
-			Score: score,
+		searchResults[i] = index.SearchResult{
+			ID:       s.data[i].ID,
+			Values:   s.data[i].Values,
+			Metadata: s.data[i].Metadata,
+			Score:    score,
 		}
 	}
 
 	if sviOptions.Filter != nil {
-		searchResponses = sviOptions.Filter.(SimpleVectorIndexFilterFn)(searchResponses)
+		searchResults = sviOptions.Filter.(SimpleVectorIndexFilterFn)(searchResults)
 	}
 
-	return index.FilterSearchResponses(searchResponses, sviOptions.TopK), nil
+	return index.FilterSearchResults(searchResults, sviOptions.TopK), nil
 }
 
 func (s *Index) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {

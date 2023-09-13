@@ -57,11 +57,11 @@ func main() {
 	content := ""
 	for _, similarity := range similarities {
 		fmt.Printf("Similarity: %f\n", similarity.Score)
-		fmt.Printf("Document: %s\n", similarity.Document.Content)
-		fmt.Println("Metadata: ", similarity.Document.Metadata)
+		fmt.Printf("Document: %s\n", similarity.Content())
+		fmt.Println("Metadata: ", similarity.Metadata)
 		fmt.Println("ID: ", similarity.ID)
 		fmt.Println("----------")
-		content += similarity.Document.Content + "\n"
+		content += similarity.Content() + "\n"
 	}
 
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
