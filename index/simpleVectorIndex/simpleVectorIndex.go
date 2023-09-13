@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/henomis/lingoose/document"
@@ -138,6 +139,34 @@ func (s *Index) IsEmpty() (bool, error) {
 	}
 
 	return len(s.data) == 0, nil
+}
+
+func (s *Index) Add(ctx context.Context, item *index.Data) error {
+	err := s.load()
+	if err != nil {
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+	}
+
+	if item.ID == "" {
+		lastID := s.data[len(s.data)-1].ID
+		lastIDAsInt, err := strconv.Atoi(lastID)
+		if err != nil {
+			return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		}
+
+		item.ID = fmt.Sprintf("%d", lastIDAsInt+1)
+	}
+
+	s.data = append(
+		s.data,
+		data{
+			ID:       item.ID,
+			Values:   item.Values,
+			Metadata: item.Metadata,
+		},
+	)
+
+	return s.save()
 }
 
 func (s *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {

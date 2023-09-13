@@ -115,6 +115,31 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
+func (q *Index) Add(ctx context.Context, item *index.Data) error {
+	err := q.createCollectionIfRequired(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+	}
+
+	if item.ID == "" {
+		id, err := uuid.NewUUID()
+		if err != nil {
+			return err
+		}
+		item.ID = id.String()
+	}
+
+	return q.pointUpsert(ctx,
+		[]qdrantrequest.Point{
+			{
+				ID:      item.ID,
+				Vector:  item.Values,
+				Payload: item.Metadata,
+			},
+		},
+	)
+}
+
 func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
 	qdrantOptions := &option.Options{
 		TopK: defaultTopK,
