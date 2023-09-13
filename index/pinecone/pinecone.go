@@ -126,7 +126,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResponses, error) {
+func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
 	pineconeOptions := &option.Options{
 		TopK: defaultTopK,
@@ -145,9 +145,9 @@ func (p *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
-	searchResponses := buildSearchReponsesFromPineconeMatches(matches, p.includeContent)
+	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
 
-	return index.FilterSearchResponses(searchResponses, pineconeOptions.TopK), nil
+	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
 }
 
 func (p *Index) similaritySearch(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
@@ -353,8 +353,8 @@ func buildPineconeVectorsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatch, includeContent bool) index.SearchResponses {
-	searchResponses := make([]index.SearchResponse, len(matches))
+func buildSearchResultsFromPineconeMatches(matches []pineconeresponse.QueryMatch, includeContent bool) index.SearchResults {
+	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
 
@@ -373,7 +373,7 @@ func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatc
 			score = *match.Score
 		}
 
-		searchResponses[i] = index.SearchResponse{
+		searchResults[i] = index.SearchResult{
 			ID:       id,
 			Metadata: metadata,
 			Values:   match.Values,
@@ -381,5 +381,5 @@ func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatc
 		}
 	}
 
-	return searchResponses
+	return searchResults
 }

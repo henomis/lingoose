@@ -18,23 +18,23 @@ const (
 	DefaultKeyContent = "content"
 )
 
-type SearchResponse struct {
+type SearchResult struct {
 	ID       string
 	Values   []float64
 	Metadata types.Meta
 	Score    float64
 }
 
-func (s *SearchResponse) Content() string {
+func (s *SearchResult) Content() string {
 	return s.Metadata[DefaultKeyContent].(string)
 }
 
-type SearchResponses []SearchResponse
+type SearchResults []SearchResult
 
-func (s SearchResponses) ToDocuments() []document.Document {
+func (s SearchResults) ToDocuments() []document.Document {
 	documents := make([]document.Document, len(s))
-	for i, searchResponse := range s {
-		metadata := DeepCopyMetadata(searchResponse.Metadata)
+	for i, searchResult := range s {
+		metadata := DeepCopyMetadata(searchResult.Metadata)
 		content := metadata[DefaultKeyContent].(string)
 		delete(metadata, DefaultKeyContent)
 
@@ -50,18 +50,18 @@ type Embedder interface {
 	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
-func FilterSearchResponses(searchResponses SearchResponses, topK int) SearchResponses {
+func FilterSearchResults(searchResults SearchResults, topK int) SearchResults {
 	//sort by similarity score
-	sort.Slice(searchResponses, func(i, j int) bool {
-		return searchResponses[i].Score > searchResponses[j].Score
+	sort.Slice(searchResults, func(i, j int) bool {
+		return searchResults[i].Score > searchResults[j].Score
 	})
 
 	maxTopK := topK
-	if maxTopK > len(searchResponses) {
-		maxTopK = len(searchResponses)
+	if maxTopK > len(searchResults) {
+		maxTopK = len(searchResults)
 	}
 
-	return searchResponses[:maxTopK]
+	return searchResults[:maxTopK]
 }
 
 func DeepCopyMetadata(metadata types.Meta) types.Meta {

@@ -115,7 +115,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 }
 
-func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResponses, error) {
+func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
 
 	qdrantOptions := &option.Options{
 		TopK: defaultTopK,
@@ -130,9 +130,9 @@ func (q *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
-	searchResponses := buildSearchReponsesFromQdrantMatches(matches, q.includeContent)
+	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
 
-	return index.FilterSearchResponses(searchResponses, qdrantOptions.TopK), nil
+	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
 }
 
 func (p *Index) similaritySearch(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
@@ -288,8 +288,8 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) index.SearchResponses {
-	searchResponses := make([]index.SearchResponse, len(matches))
+func buildSearchResultsFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) index.SearchResults {
+	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
 
@@ -298,7 +298,7 @@ func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchRe
 			delete(metadata, index.DefaultKeyContent)
 		}
 
-		searchResponses[i] = index.SearchResponse{
+		searchResults[i] = index.SearchResult{
 			ID:       match.ID,
 			Metadata: metadata,
 			Values:   match.Vector,
@@ -306,5 +306,5 @@ func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchRe
 		}
 	}
 
-	return searchResponses
+	return searchResults
 }
