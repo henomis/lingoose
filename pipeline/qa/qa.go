@@ -2,6 +2,7 @@ package qapipeline
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/document"
@@ -18,9 +19,14 @@ const (
 	qaTubeUserPromptTemplate = "Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}"
 )
 
+type Retriever interface {
+	Query(context.Context, string) ([]document.Document, error)
+}
+
 type QAPipeline struct {
 	llmEngine pipeline.LlmEngine
 	pipeline  *pipeline.Pipeline
+	retriever Retriever
 }
 
 func New(llmEngine pipeline.LlmEngine) *QAPipeline {
@@ -49,6 +55,7 @@ func New(llmEngine pipeline.LlmEngine) *QAPipeline {
 	return &QAPipeline{
 		llmEngine: llmEngine,
 		pipeline:  pipeline.New(tube),
+		retriever: nil,
 	}
 }
 
@@ -64,6 +71,24 @@ func (p *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
 	return &QAPipeline{
 		pipeline: pipeline.New(tube),
 	}
+}
+
+func (p *QAPipeline) WithRetriever(retriever Retriever) *QAPipeline {
+	p.retriever = retriever
+	return p
+}
+
+func (q *QAPipeline) Query(ctx context.Context, query string) (types.M, error) {
+	if q.retriever == nil {
+		return nil, fmt.Errorf("retriever is not defined")
+	}
+
+	docs, err := q.retriever.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return q.Run(ctx, query, docs)
 }
 
 func (t *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
