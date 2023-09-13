@@ -359,11 +359,7 @@ func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatc
 	for i, match := range matches {
 
 		metadata := index.DeepCopyMetadata(match.Metadata)
-
-		content := ""
-		// extract document content from vector metadata
-		if includeContent {
-			content = metadata[index.DefaultKeyContent].(string)
+		if !includeContent {
 			delete(metadata, index.DefaultKeyContent)
 		}
 
@@ -378,12 +374,10 @@ func buildSearchReponsesFromPineconeMatches(matches []pineconeresponse.QueryMatc
 		}
 
 		searchResponses[i] = index.SearchResponse{
-			ID: id,
-			Document: document.Document{
-				Metadata: metadata,
-				Content:  content,
-			},
-			Score: score,
+			ID:       id,
+			Metadata: metadata,
+			Values:   match.Values,
+			Score:    score,
 		}
 	}
 

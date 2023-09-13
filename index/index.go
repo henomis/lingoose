@@ -20,7 +20,8 @@ const (
 
 type SearchResponse struct {
 	ID       string
-	Document document.Document
+	Values   []float64
+	Metadata types.Meta
 	Score    float64
 }
 
@@ -29,7 +30,14 @@ type SearchResponses []SearchResponse
 func (s SearchResponses) ToDocuments() []document.Document {
 	documents := make([]document.Document, len(s))
 	for i, searchResponse := range s {
-		documents[i] = searchResponse.Document
+		metadata := DeepCopyMetadata(searchResponse.Metadata)
+		content := metadata[DefaultKeyContent].(string)
+		delete(metadata, DefaultKeyContent)
+
+		documents[i] = document.Document{
+			Content:  content,
+			Metadata: metadata,
+		}
 	}
 	return documents
 }

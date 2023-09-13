@@ -294,21 +294,15 @@ func buildSearchReponsesFromQdrantMatches(matches []qdrantresponse.PointSearchRe
 	for i, match := range matches {
 
 		metadata := index.DeepCopyMetadata(match.Payload)
-
-		content := ""
-		// extract document content from vector metadata
-		if includeContent {
-			content = metadata[index.DefaultKeyContent].(string)
+		if !includeContent {
 			delete(metadata, index.DefaultKeyContent)
 		}
 
 		searchResponses[i] = index.SearchResponse{
-			ID: match.ID,
-			Document: document.Document{
-				Metadata: metadata,
-				Content:  content,
-			},
-			Score: match.Score,
+			ID:       match.ID,
+			Metadata: metadata,
+			Values:   match.Vector,
+			Score:    match.Score,
 		}
 	}
 
