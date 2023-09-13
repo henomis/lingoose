@@ -25,6 +25,10 @@ type SearchResponse struct {
 	Score    float64
 }
 
+func (s *SearchResponse) Content() string {
+	return s.Metadata[DefaultKeyContent].(string)
+}
+
 type SearchResponses []SearchResponse
 
 func (s SearchResponses) ToDocuments() []document.Document {

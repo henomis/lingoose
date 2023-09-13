@@ -58,10 +58,10 @@ func main() {
 
 		for _, similarity := range similarities {
 			fmt.Printf("Similarity: %f\n", similarity.Score)
-			fmt.Printf("Document: %s\n", similarity.Document.Content)
-			fmt.Println("Metadata: ", similarity.Document.Metadata)
+			fmt.Printf("Document: %s\n", similarity.Content())
+			fmt.Println("Metadata: ", similarity.Metadata)
 			fmt.Println("----------")
-			content += similarity.Document.Content + "\n"
+			content += similarity.Content() + "\n"
 		}
 
 		systemPrompt := prompt.New("You are an helpful assistant. Answer to the questions using only " +
