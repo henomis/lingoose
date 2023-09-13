@@ -374,10 +374,12 @@ func buildSearchResultsFromPineconeMatches(matches []pineconeresponse.QueryMatch
 		}
 
 		searchResults[i] = index.SearchResult{
-			ID:       id,
-			Metadata: metadata,
-			Values:   match.Values,
-			Score:    score,
+			Data: index.Data{
+				ID:       id,
+				Metadata: metadata,
+				Values:   match.Values,
+			},
+			Score: score,
 		}
 	}
 

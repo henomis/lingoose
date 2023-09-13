@@ -299,10 +299,12 @@ func buildSearchResultsFromQdrantMatches(matches []qdrantresponse.PointSearchRes
 		}
 
 		searchResults[i] = index.SearchResult{
-			ID:       match.ID,
-			Metadata: metadata,
-			Values:   match.Vector,
-			Score:    match.Score,
+			Data: index.Data{
+				ID:       match.ID,
+				Metadata: metadata,
+				Values:   match.Vector,
+			},
+			Score: match.Score,
 		}
 	}
 

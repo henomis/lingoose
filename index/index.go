@@ -18,11 +18,15 @@ const (
 	DefaultKeyContent = "content"
 )
 
-type SearchResult struct {
+type Data struct {
 	ID       string
 	Values   []float64
 	Metadata types.Meta
-	Score    float64
+}
+
+type SearchResult struct {
+	Data
+	Score float64
 }
 
 func (s *SearchResult) Content() string {

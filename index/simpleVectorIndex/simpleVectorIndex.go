@@ -166,10 +166,12 @@ func (s *Index) SimilaritySearch(ctx context.Context, query string, opts ...opti
 
 	for i, score := range scores {
 		searchResults[i] = index.SearchResult{
-			ID:       s.data[i].ID,
-			Values:   s.data[i].Values,
-			Metadata: s.data[i].Metadata,
-			Score:    score,
+			Data: index.Data{
+				ID:       s.data[i].ID,
+				Values:   s.data[i].Values,
+				Metadata: s.data[i].Metadata,
+			},
+			Score: score,
 		}
 	}
 
