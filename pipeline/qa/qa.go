@@ -20,14 +20,13 @@ const (
 )
 
 type Retriever interface {
-	Query(context.Context, string, []document.Document) ([]document.Document, error)
+	Query(context.Context, string) ([]document.Document, error)
 }
 
 type QAPipeline struct {
 	llmEngine pipeline.LlmEngine
 	pipeline  *pipeline.Pipeline
 	retriever Retriever
-	documents *[]document.Document
 }
 
 func New(llmEngine pipeline.LlmEngine) *QAPipeline {
@@ -79,21 +78,12 @@ func (p *QAPipeline) WithRetriever(retriever Retriever) *QAPipeline {
 	return p
 }
 
-func (p *QAPipeline) WithDocuments(documents *[]document.Document) *QAPipeline {
-	p.documents = documents
-	return p
-}
-
 func (q *QAPipeline) Query(ctx context.Context, query string) (types.M, error) {
 	if q.retriever == nil {
 		return nil, fmt.Errorf("retriever is not defined")
 	}
 
-	if q.documents == nil {
-		return nil, fmt.Errorf("documents are not defined")
-	}
-
-	docs, err := q.retriever.Query(ctx, query, *q.documents)
+	docs, err := q.retriever.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

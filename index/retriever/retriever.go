@@ -2,6 +2,7 @@ package retriever
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/index"
@@ -18,14 +19,17 @@ const (
 )
 
 type Retriever struct {
-	index Index
-	topK  int
+	index          Index
+	topK           int
+	documents      *[]document.Document
+	documentAreSet bool
 }
 
-func New(index Index) *Retriever {
+func New(index Index, documents *[]document.Document) *Retriever {
 	return &Retriever{
-		index: index,
-		topK:  defautTopK,
+		index:     index,
+		topK:      defautTopK,
+		documents: documents,
 	}
 }
 
@@ -34,10 +38,17 @@ func (r *Retriever) WithTopK(topK int) *Retriever {
 	return r
 }
 
-func (r *Retriever) Query(ctx context.Context, query string, documents []document.Document) ([]document.Document, error) {
-	err := r.index.LoadFromDocuments(context.Background(), documents)
-	if err != nil {
-		return nil, err
+func (r *Retriever) Query(ctx context.Context, query string) ([]document.Document, error) {
+
+	if r.documents == nil {
+		return nil, fmt.Errorf("documents are not defined")
+	}
+
+	if !r.documentAreSet {
+		err := r.index.LoadFromDocuments(context.Background(), *r.documents)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	results, err := r.index.Query(context.Background(), query, indexoption.WithTopK(r.topK))
