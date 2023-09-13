@@ -52,7 +52,7 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
-	documentIndex := 0
+	id := 0
 	for i := 0; i < len(documents); i += defaultBatchSize {
 
 		end := i + defaultBatchSize
@@ -71,8 +71,8 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 		}
 
 		for j, document := range documents[i:end] {
-			s.data = append(s.data, buildDataFromEmbeddingAndDocument(documentIndex, embeddings[j], document))
-			documentIndex++
+			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id, embeddings[j], document))
+			id++
 		}
 
 	}
@@ -86,14 +86,14 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 }
 
 func buildDataFromEmbeddingAndDocument(
-	i int,
+	id int,
 	embedding embedder.Embedding,
 	document document.Document,
 ) data {
 	metadata := index.DeepCopyMetadata(document.Metadata)
 	metadata[index.DefaultKeyContent] = document.Content
 	return data{
-		ID:       fmt.Sprintf("%d", i),
+		ID:       fmt.Sprintf("%d", id),
 		Values:   embedding,
 		Metadata: metadata,
 	}
