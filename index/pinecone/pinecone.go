@@ -129,9 +129,9 @@ func (p *Index) Add(ctx context.Context, item *index.Data) error {
 	}
 
 	if item.ID == "" {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return err
+		id, errUUID := uuid.NewUUID()
+		if errUUID != nil {
+			return errUUID
 		}
 		item.ID = id.String()
 	}

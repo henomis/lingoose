@@ -45,9 +45,9 @@ func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error)
 
 	err = filepath.Walk(d.dirname, func(path string, info os.FileInfo, err error) error {
 		if err == nil && regExp.MatchString(info.Name()) {
-			d, err := NewTextLoader(path, nil).Load(ctx)
-			if err != nil {
-				return err
+			d, errLoad := NewTextLoader(path, nil).Load(ctx)
+			if errLoad != nil {
+				return errLoad
 			}
 
 			docs = append(docs, d...)

@@ -27,14 +27,14 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 	// Loop through tables and retrieve schema
 	for rows.Next() {
 		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return "", err
+		if errScan := rows.Scan(&tableName); errScan != nil {
+			return "", errScan
 		}
 
 		// Retrieve column information
-		cols, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
-		if err != nil {
-			return "", err
+		cols, errQuery := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
+		if errQuery != nil {
+			return "", errQuery
 		}
 		defer cols.Close()
 
@@ -51,8 +51,8 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 				defaultVal sql.NullString
 				primaryKey int
 			)
-			if err := cols.Scan(&colNum, &colName, &colType, &notNull, &defaultVal, &primaryKey); err != nil {
-				return "", err
+			if errScan := cols.Scan(&colNum, &colName, &colType, &notNull, &defaultVal, &primaryKey); errScan != nil {
+				return "", errScan
 			}
 
 			// Build column definition
@@ -72,9 +72,9 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 		}
 
 		// Retrieve foreign key information
-		fks, err := db.Query(fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName))
-		if err != nil {
-			return "", err
+		fks, errQuery := db.Query(fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName))
+		if errQuery != nil {
+			return "", errQuery
 		}
 		defer fks.Close()
 
@@ -92,8 +92,8 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 				match         string
 				foreignKeyDef string
 			)
-			if err := fks.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
-				return "", err
+			if errScan := fks.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); errScan != nil {
+				return "", errScan
 			}
 
 			foreignKeyDef = fmt.Sprintf("  FOREIGN KEY (%s) REFERENCES %s(%s)", from, table, to)

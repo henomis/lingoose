@@ -159,11 +159,11 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 
 	// Marshal the function result to JSON
 	if len(result) > 0 {
-		jsonData, err := json.Marshal(result[0].Interface())
-		if err != nil {
-			return "", fmt.Errorf("error marshaling result: %s", err)
+		jsonResultData, errMarshal := json.Marshal(result[0].Interface())
+		if errMarshal != nil {
+			return "", fmt.Errorf("error marshaling result: %s", errMarshal)
 		}
-		return string(jsonData), nil
+		return string(jsonResultData), nil
 	}
 
 	return "", nil

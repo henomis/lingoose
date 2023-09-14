@@ -92,9 +92,9 @@ func (p *PDFLoader) loadDir(ctx context.Context) ([]document.Document, error) {
 
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
-			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
-			if err != nil {
-				return err
+			d, errLoad := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
+			if errLoad != nil {
+				return errLoad
 			}
 
 			docs = append(docs, d...)

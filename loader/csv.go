@@ -85,12 +85,12 @@ func (c *CSVLoader) readCSV() ([]document.Document, error) {
 	var titles []string
 
 	for {
-		record, err := reader.Read()
-		if err == io.EOF {
+		record, errRead := reader.Read()
+		if errRead == io.EOF {
 			break
 		}
-		if err != nil {
-			return nil, err
+		if errRead != nil {
+			return nil, errRead
 		}
 
 		if titles == nil {

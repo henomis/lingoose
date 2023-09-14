@@ -64,15 +64,15 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 			texts = append(texts, document.Content)
 		}
 
-		embeddings, err := s.embedder.Embed(ctx, texts)
-		if err != nil {
-			return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		embeddings, errEmbed := s.embedder.Embed(ctx, texts)
+		if errEmbed != nil {
+			return fmt.Errorf("%s: %w", index.ErrInternal, errEmbed)
 		}
 
 		for j, document := range documents[i:end] {
-			id, err := uuid.NewUUID()
-			if err != nil {
-				return err
+			id, errUUID := uuid.NewUUID()
+			if errUUID != nil {
+				return errUUID
 			}
 			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id.String(), embeddings[j], document))
 		}
@@ -147,9 +147,9 @@ func (s *Index) Add(ctx context.Context, item *index.Data) error {
 	}
 
 	if item.ID == "" {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return err
+		id, errUUID := uuid.NewUUID()
+		if errUUID != nil {
+			return errUUID
 		}
 		item.ID = id.String()
 	}

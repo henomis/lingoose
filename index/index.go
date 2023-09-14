@@ -39,7 +39,10 @@ func (s SearchResults) ToDocuments() []document.Document {
 	documents := make([]document.Document, len(s))
 	for i, searchResult := range s {
 		metadata := DeepCopyMetadata(searchResult.Metadata)
-		content := metadata[DefaultKeyContent].(string)
+		content, ok := metadata[DefaultKeyContent].(string)
+		if !ok {
+			content = ""
+		}
 		delete(metadata, DefaultKeyContent)
 
 		documents[i] = document.Document{

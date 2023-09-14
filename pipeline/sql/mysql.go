@@ -28,14 +28,14 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 	// Loop through tables and retrieve schema
 	for rows.Next() {
 		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return "", err
+		if errQuery := rows.Scan(&tableName); errQuery != nil {
+			return "", errQuery
 		}
 
 		// Retrieve column information
-		cols, err := db.Query(fmt.Sprintf("SHOW COLUMNS FROM %s", tableName))
-		if err != nil {
-			return "", err
+		cols, errQuery := db.Query(fmt.Sprintf("SHOW COLUMNS FROM %s", tableName))
+		if errQuery != nil {
+			return "", errQuery
 		}
 		defer cols.Close()
 
@@ -52,8 +52,8 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 				def   sql.NullString
 				extra sql.NullString
 			)
-			if err := cols.Scan(&field, &typ, &null, &key, &def, &extra); err != nil {
-				return "", err
+			if errScan := cols.Scan(&field, &typ, &null, &key, &def, &extra); errScan != nil {
+				return "", errScan
 			}
 
 			// Build column definition
@@ -82,9 +82,9 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 
 		// Retrieve foreign key information
 		//nolint:lll
-		fks, err := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
-		if err != nil {
-			return "", err
+		fks, errQuery := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
+		if errQuery != nil {
+			return "", errQuery
 		}
 		defer fks.Close()
 
@@ -97,8 +97,8 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 				referencedTableName  string
 				referencedColumnName string
 			)
-			if err := fks.Scan(&constraintName, &columnName, &referencedTableName, &referencedColumnName); err != nil {
-				return "", err
+			if errScan := fks.Scan(&constraintName, &columnName, &referencedTableName, &referencedColumnName); errScan != nil {
+				return "", errScan
 			}
 
 			fkDef := fmt.Sprintf("  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",

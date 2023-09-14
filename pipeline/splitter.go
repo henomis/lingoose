@@ -66,8 +66,8 @@ func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 				tube = tube.WithDecoder(s.decoder)
 			}
 
-			output, err := tube.Run(ctx, splittedInput)
-			if err != nil {
+			output, errRun := tube.Run(ctx, splittedInput)
+			if errRun != nil {
 				return
 			}
 

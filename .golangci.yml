@@ -15,11 +15,145 @@
 run:
   deadline: 5m
 
+
+# This file contains only configs which differ from defaults.
+# All possible options can be found here https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
+linters-settings:
+  cyclop:
+    # The maximal code complexity to report.
+    # Default: 10
+    max-complexity: 30
+    # The maximal average package complexity.
+    # If it's higher than 0.0 (float) the check is enabled
+    # Default: 0.0
+    package-average: 10.0
+
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    check-type-assertions: true
+
+  funlen:
+    # Checks the number of lines in a function.
+    # If lower than 0, disable the check.
+    # Default: 60
+    lines: 100
+    # Checks the number of statements in a function.
+    # If lower than 0, disable the check.
+    # Default: 40
+    statements: 50
+
+  gocognit:
+    # Minimal code complexity to report
+    # Default: 30 (but we recommend 10-20)
+    min-complexity: 20
+
+  gocritic:
+    # Settings passed to gocritic.
+    # The settings key is the name of a supported gocritic checker.
+    # The list of supported checkers can be find in https://go-critic.github.io/overview.
+    settings:
+      captLocal:
+        # Whether to restrict checker to params only.
+        # Default: true
+        paramsOnly: false
+      underef:
+        # Whether to skip (*x).method() calls where x is a pointer receiver.
+        # Default: true
+        skipRecvDeref: false
+
+  gomnd:
+    # List of function patterns to exclude from analysis.
+    # Values always ignored: `time.Date`
+    # Default: []
+    ignored-functions:
+      - os.Chmod
+      - os.Mkdir
+      - os.MkdirAll
+      - os.OpenFile
+      - os.WriteFile
+      - prometheus.ExponentialBuckets
+      - prometheus.ExponentialBucketsRange
+      - prometheus.LinearBuckets
+      - strconv.FormatFloat
+      - strconv.FormatInt
+      - strconv.FormatUint
+      - strconv.ParseFloat
+      - strconv.ParseInt
+      - strconv.ParseUint
+
+  gomodguard:
+    blocked:
+      # List of blocked modules.
+      # Default: []
+      modules:
+        - github.com/golang/protobuf:
+            recommendations:
+              - google.golang.org/protobuf
+            reason: "see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules"
+        - github.com/satori/go.uuid:
+            recommendations:
+              - github.com/google/uuid
+            reason: "satori's package is not maintained"
+        - github.com/gofrs/uuid:
+            recommendations:
+              - github.com/google/uuid
+            reason: "see recommendation from dev-infra team: https://confluence.gtforge.com/x/gQI6Aw"
+
+  govet:
+    # Enable all analyzers.
+    # Default: false
+    enable-all: true
+    # Disable analyzers by name.
+    # Run `go tool vet help` to see all analyzers.
+    # Default: []
+    disable:
+      - fieldalignment # too strict
+    # Settings per analyzer.
+    settings:
+      shadow:
+        # Whether to be strict about shadowing; can be noisy.
+        # Default: false
+        strict: true
+
+  nakedret:
+    # Make an issue if func has more lines of code than this setting, and it has naked returns.
+    # Default: 30
+    max-func-lines: 0
+
+  nolintlint:
+    # Exclude following linters from requiring an explanation.
+    # Default: []
+    allow-no-explanation: [ funlen, gocognit, lll ]
+    # Enable to require an explanation of nonzero length after each nolint directive.
+    # Default: false
+    require-explanation: true
+    # Enable to require nolint directives to mention the specific linter being suppressed.
+    # Default: false
+    require-specific: true
+
+  rowserrcheck:
+    # database/sql is always checked
+    # Default: []
+    packages:
+      - github.com/jmoiron/sqlx
+
+  tenv:
+    # The option `all` will run against whole test files (`_test.go`) regardless of method/function signatures.
+    # Otherwise, only methods that take `*testing.T`, `*testing.B`, and `testing.TB` as arguments are checked.
+    # Default: false
+    all: true
+
+  varcheck:
+    # Check usage of exported fields and variables.
+    # Default: false
+    exported-fields: false # default false # TODO: enable after fixing false positives
+
 linters:
   disable-all: true
   enable:
     #- bodyclose
-    # - deadcode ! deprecated since v1.49.0; replaced by 'unused'
     #- depguard
     #- dogsled
     #- dupl
@@ -38,7 +172,7 @@ linters:
     #- gomnd
     #- goprintffuncname
     #- gosec
-    #- gosimple
+    - gosimple
     - govet
     - ineffassign
     # - interfacer
@@ -51,13 +185,13 @@ linters:
     #- nolintlint
     #- rowserrcheck
     #- scopelint
-    #- staticcheck
-    #- structcheck ! deprecated since v1.49.0; replaced by 'unused'
+    - staticcheck
     #- stylecheck
-    #- typecheck
+    - typecheck
     - unconvert
     #- unparam
     - unused
-    # - varcheck ! deprecated since v1.49.0; replaced by 'unused'
     - whitespace
+    - asciicheck
+    - bidichk
   fast: false

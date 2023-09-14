@@ -113,8 +113,8 @@ func (d *DallE) transformToFile(ctx context.Context, input string) (any, error) 
 	}
 	defer file.Close()
 
-	if err := png.Encode(file, imgData.(image.Image)); err != nil {
-		return nil, err
+	if errEncode := png.Encode(file, imgData.(image.Image)); errEncode != nil {
+		return nil, errEncode
 	}
 
 	return nil, nil

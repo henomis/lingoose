@@ -79,14 +79,14 @@ func (p *PubMedLoader) load(ctx context.Context, pubMedID string) (*document.Doc
 		return nil, err
 	}
 
-	var pubMedDocument pubMedDocument
-	err = json.Unmarshal(jsonContent, &pubMedDocument)
+	var pubMedDoc pubMedDocument
+	err = json.Unmarshal(jsonContent, &pubMedDoc)
 	if err != nil {
 		return nil, err
 	}
 
 	content := ""
-	for _, document := range pubMedDocument.Documents {
+	for _, document := range pubMedDoc.Documents {
 		for _, passage := range document.Passages {
 			content += passage.Text
 		}

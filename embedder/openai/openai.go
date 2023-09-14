@@ -173,9 +173,9 @@ func (o *OpenAIEmbedder) chunkText(text string, maxTokens int) ([]string, error)
 			end = len(tokens)
 		}
 
-		textChunk, err := o.tokensToText(tokens[i:end])
-		if err != nil {
-			return nil, err
+		textChunk, errToken := o.tokensToText(tokens[i:end])
+		if errToken != nil {
+			return nil, errToken
 		}
 
 		textChunks = append(textChunks, textChunk)

@@ -259,13 +259,13 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 	defer stream.Close()
 
 	for {
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
+		response, errRecv := stream.Recv()
+		if errors.Is(errRecv, io.EOF) {
 			break
 		}
 
-		if err != nil {
-			return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		if errRecv != nil {
+			return fmt.Errorf("%s: %w", ErrOpenAICompletion, errRecv)
 		}
 
 		if o.usageCallback != nil {
@@ -375,8 +375,8 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prom
 	}
 
 	for {
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
+		response, errRecv := stream.Recv()
+		if errors.Is(errRecv, io.EOF) {
 			break
 		}
 

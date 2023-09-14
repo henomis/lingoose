@@ -148,8 +148,8 @@ func convertVTTtoPlainText(filename string) (string, error) {
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return "", err
+	if errScanner := scanner.Err(); errScanner != nil {
+		return "", errScanner
 	}
 
 	return plainText, nil
