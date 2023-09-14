@@ -52,13 +52,13 @@ func (e *Embedder) WithModel(model EmbedderModel) *Embedder {
 }
 
 // Embed returns the embeddings for the given texts
-func (h *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	resp := &response.Embed{}
-	err := h.client.Embed(
+	err := e.client.Embed(
 		ctx,
 		&request.Embed{
 			Texts: texts,
-			Model: &h.model,
+			Model: &e.model,
 		},
 		resp,
 	)

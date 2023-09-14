@@ -52,9 +52,13 @@ type llmWithStop interface {
 	SetStop([]string)
 }
 
-type SqlDDLFn func() (string, error)
+type SQLDDLFn func() (string, error)
 
-func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSourceName string) (*pipeline.Pipeline, error) {
+func New(
+	llmEngine pipeline.LlmEngine,
+	dataSourceType DataSourceType,
+	dataSourceName string,
+) (*pipeline.Pipeline, error) {
 
 	memory := types.M{}
 
@@ -89,7 +93,7 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 	// ********** QUERY TUBE ************//
 	query := pipeline.NewTube(queryLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preQueryCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	preQueryCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		if q, ok := input[questionKey].(string); ok {
 			memory[questionKey] = q
 		}
@@ -97,7 +101,7 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 		return preQueryCBFn(input, sqlDDL)
 	})
 
-	postQueryCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	postQueryCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		return postQueryCBFn(output, db, sqlDDL, memory)
 	})
 	// ********** END QUERY TUBE ************//
@@ -113,11 +117,11 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 
 	refine := pipeline.NewTube(refineLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preRefineCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	preRefineCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		return preRefineCBFn(input, sqlDDL, memory)
 	})
 
-	postRefineCBFn := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	postRefineCBFn := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		return postRefineCBFn(output, db, sqlDDL, memory)
 	})
 
@@ -135,11 +139,11 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 
 	describe := pipeline.NewTube(describeLLM)
 
-	preDescribeCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	preDescribeCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		return preDescribeCBFn(input, sqlDDL, memory)
 	})
 
-	postDescribeCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	postDescribeCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		output[sqlQueryKey] = memory[sqlQueryKey]
 		output[sqlResultKey] = memory[sqlResultKey]
 		return output, nil
@@ -147,7 +151,9 @@ func New(llmEngine pipeline.LlmEngine, dataSourceType DataSourceType, dataSource
 
 	// ********** END DESCRIBE ************//
 
-	sqlPipeline := pipeline.New(query, refine, describe).WithPreCallbacks(preQueryCB, preRefineCB, preDescribeCB).WithPostCallbacks(postQueryCB, postRefineCBFn, postDescribeCB)
+	sqlPipeline := pipeline.New(query, refine, describe).
+		WithPreCallbacks(preQueryCB, preRefineCB, preDescribeCB).
+		WithPostCallbacks(postQueryCB, postRefineCBFn, postDescribeCB)
 
 	return sqlPipeline, nil
 
@@ -181,7 +187,7 @@ func preDescribeCBFn(input types.M, sqlDDL string, memory types.M) (types.M, err
 }
 
 func postQueryCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (types.M, error) {
-
+	_ = sqlDDL
 	sqlQueryMatches, ok := output[types.DefaultOutputKey].([]string)
 	if !ok || len(sqlQueryMatches) != 1 {
 		return output, nil
@@ -192,7 +198,7 @@ func postQueryCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (t
 	output[sqlQueryKey] = sqlQuery
 	memory[sqlQueryKey] = sqlQuery
 
-	sqlResult, err := getSqlResult(db, sqlQuery)
+	sqlResult, err := getSQLResult(db, sqlQuery)
 
 	memory[sqlResultKey] = sqlResult
 
@@ -208,14 +214,14 @@ func postQueryCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (t
 }
 
 func postRefineCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (types.M, error) {
-
+	_ = sqlDDL
 	sqlQueryMatches, ok := output[types.DefaultOutputKey].([]string)
 	if !ok || len(sqlQueryMatches) != 1 {
 		return output, nil
 	}
 	sqlQuery := sqlQueryMatches[0]
 
-	sqlResult, err := getSqlResult(db, sqlQuery)
+	sqlResult, err := getSQLResult(db, sqlQuery)
 
 	output[sqlResultKey] = sqlResult
 	output[sqlQueryKey] = sqlQuery
@@ -232,7 +238,7 @@ func postRefineCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (
 	return output, nil
 }
 
-func getSqlResult(db *sql.DB, query string) (string, error) {
+func getSQLResult(db *sql.DB, query string) (string, error) {
 
 	rows, err := db.Query(query)
 	if err != nil {

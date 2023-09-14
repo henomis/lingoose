@@ -89,7 +89,11 @@ func (o *OpenAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.
 	return embeddings, nil
 }
 
-func (o *OpenAIEmbedder) concurrentEmbed(ctx context.Context, texts []string, maxTokens int) ([]embedder.Embedding, error) {
+func (o *OpenAIEmbedder) concurrentEmbed(
+	ctx context.Context,
+	texts []string,
+	maxTokens int,
+) ([]embedder.Embedding, error) {
 
 	type indexedEmbeddings struct {
 		index     int
@@ -115,7 +119,7 @@ func (o *OpenAIEmbedder) concurrentEmbed(ctx context.Context, texts []string, ma
 
 	}
 
-	var err error = nil
+	var err error
 	for i := 0; i < len(texts); i++ {
 		embedding := <-embeddingsChan
 		if embedding.err != nil {
@@ -187,7 +191,10 @@ func (o *OpenAIEmbedder) chunkText(text string, maxTokens int) ([]string, error)
 	return textChunks, nil
 }
 
-func (o *OpenAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []string) ([]embedder.Embedding, []float64, error) {
+func (o *OpenAIEmbedder) getEmebeddingsForChunks(
+	ctx context.Context,
+	chunks []string,
+) ([]embedder.Embedding, []float64, error) {
 
 	chunkLens := []float64{}
 
@@ -204,13 +211,13 @@ func (o *OpenAIEmbedder) getEmebeddingsForChunks(ctx context.Context, chunks []s
 
 }
 
-func (t *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+func (o *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 
-	resp, err := t.openAIClient.CreateEmbeddings(
+	resp, err := o.openAIClient.CreateEmbeddings(
 		ctx,
 		openai.EmbeddingRequest{
 			Input: texts,
-			Model: openai.EmbeddingModel(t.model),
+			Model: openai.EmbeddingModel(o.model),
 		},
 	)
 	if err != nil {

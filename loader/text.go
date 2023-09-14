@@ -29,7 +29,7 @@ func (t *TextLoader) WithTextSplitter(textSplitter TextSplitter) *TextLoader {
 }
 
 func (t *TextLoader) Load(ctx context.Context) ([]document.Document, error) {
-
+	_ = ctx
 	err := t.validate()
 	if err != nil {
 		return nil, err

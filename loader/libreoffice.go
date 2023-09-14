@@ -73,6 +73,7 @@ func (l *LibreOfficeLoader) loadFile(ctx context.Context) ([]document.Document, 
 
 	libreOfficeArgs := append(l.libreOfficeArgs, l.filename)
 
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, l.libreOfficePath, libreOfficeArgs...).Output()
 	if err != nil {
 		return nil, err

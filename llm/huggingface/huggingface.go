@@ -13,15 +13,15 @@ const (
 	ErrHuggingFaceCompletion = "huggingface completion error"
 )
 
-type HuggingFaceMode int
+type Mode int
 
 const (
-	HuggingFaceModeCoversational HuggingFaceMode = iota
-	HuggingFaceModeTextGeneration
+	ModeCoversational Mode = iota
+	ModeTextGeneration
 )
 
 type HuggingFace struct {
-	mode        HuggingFaceMode
+	mode        Mode
 	token       string
 	model       string
 	temperature float32
@@ -35,7 +35,7 @@ type HuggingFace struct {
 
 func New(model string, temperature float32, verbose bool) *HuggingFace {
 	return &HuggingFace{
-		mode:        HuggingFaceModeCoversational,
+		mode:        ModeCoversational,
 		token:       os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 		model:       model,
 		temperature: temperature,
@@ -93,7 +93,7 @@ func (h *HuggingFace) WithTopP(topP float32) *HuggingFace {
 }
 
 // WithMode sets the mode to use for the LLM
-func (h *HuggingFace) WithMode(mode HuggingFaceMode) *HuggingFace {
+func (h *HuggingFace) WithMode(mode Mode) *HuggingFace {
 	h.mode = mode
 	return h
 }
@@ -111,12 +111,12 @@ func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, er
 	var outputs []string
 	var err error
 	switch h.mode {
-	case HuggingFaceModeTextGeneration:
+	case ModeTextGeneration:
 		outputs, err = h.textgenerationCompletion(ctx, []string{prompt})
 		if err == nil {
 			output = outputs[0]
 		}
-	case HuggingFaceModeCoversational:
+	case ModeCoversational:
 		fallthrough
 	default:
 		output, err = h.conversationalCompletion(ctx, prompt)
@@ -135,9 +135,9 @@ func (h *HuggingFace) BatchCompletion(ctx context.Context, prompts []string) ([]
 	var outputs []string
 	var err error
 	switch h.mode {
-	case HuggingFaceModeTextGeneration:
+	case ModeTextGeneration:
 		outputs, err = h.textgenerationCompletion(ctx, prompts)
-	case HuggingFaceModeCoversational:
+	case ModeCoversational:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("batch completion not supported for conversational mode")

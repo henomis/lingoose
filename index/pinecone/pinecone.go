@@ -209,7 +209,11 @@ func (p *Index) query(ctx context.Context, query string, opts *option.Options) (
 	return p.similaritySearch(ctx, embeddings[0], opts)
 }
 
-func (p *Index) similaritySearch(ctx context.Context, values []float64, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
+func (p *Index) similaritySearch(
+	ctx context.Context,
+	values []float64,
+	opts *option.Options,
+) ([]pineconeresponse.QueryMatch, error) {
 	err := p.getProjectID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -406,7 +410,10 @@ func buildPineconeVectorsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchResultsFromPineconeMatches(matches []pineconeresponse.QueryMatch, includeContent bool) index.SearchResults {
+func buildSearchResultsFromPineconeMatches(
+	matches []pineconeresponse.QueryMatch,
+	includeContent bool,
+) index.SearchResults {
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {

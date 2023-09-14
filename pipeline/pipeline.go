@@ -35,12 +35,12 @@ type Pipe interface {
 	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
-type PipelineCallback func(ctx context.Context, values types.M) (types.M, error)
+type Callback func(ctx context.Context, values types.M) (types.M, error)
 
 type Pipeline struct {
 	pipes         map[int]Pipe
-	preCallbacks  map[int]PipelineCallback
-	postCallbacks map[int]PipelineCallback
+	preCallbacks  map[int]Callback
+	postCallbacks map[int]Callback
 }
 
 func New(pipes ...Pipe) *Pipeline {
@@ -55,9 +55,9 @@ func New(pipes ...Pipe) *Pipeline {
 	}
 }
 
-func (p *Pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *Pipeline {
+func (p *Pipeline) WithPreCallbacks(callbacks ...Callback) *Pipeline {
 
-	p.preCallbacks = make(map[int]PipelineCallback)
+	p.preCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.preCallbacks[i] = callback
 	}
@@ -65,9 +65,9 @@ func (p *Pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *Pipeline {
 	return p
 }
 
-func (p *Pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *Pipeline {
+func (p *Pipeline) WithPostCallbacks(callbacks ...Callback) *Pipeline {
 
-	p.postCallbacks = make(map[int]PipelineCallback)
+	p.postCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.postCallbacks[i] = callback
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//nolint:lll
 const sqliteDataSourcePromptTemplate = `
 You are a SQLite expert. Given an input question, first create a syntactically correct SQLite query to run, then look at the results of the query and return the answer to the input question.
 Unless the user specifies in the question a specific number of examples to obtain, query for at most {{.top_k}} results using the LIMIT clause as per SQLite. You can order the results to return the most informative data in the database.

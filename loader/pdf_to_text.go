@@ -71,6 +71,7 @@ func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
 }
 
 func (p *PDFLoader) loadFile(ctx context.Context) ([]document.Document, error) {
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, p.pdfToTextPath, p.path, "-").Output()
 	if err != nil {
 		return nil, err

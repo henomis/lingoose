@@ -92,18 +92,18 @@ func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 	return nil
 }
 
-func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
+func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
 
-	err := p.createCollectionIfRequired(ctx)
+	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
 		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
 	res := &qdrantresponse.CollectionCollectInfo{}
-	err = p.qdrantClient.CollectionCollectInfo(
+	err = q.qdrantClient.CollectionCollectInfo(
 		ctx,
 		&qdrantrequest.CollectionCollectInfo{
-			CollectionName: p.collectionName,
+			CollectionName: q.collectionName,
 		},
 		res,
 	)
@@ -179,7 +179,11 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
 }
 
-func (q *Index) similaritySearch(ctx context.Context, values []float64, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
+func (q *Index) similaritySearch(
+	ctx context.Context,
+	values []float64,
+	opts *option.Options,
+) ([]qdrantresponse.PointSearchResult, error) {
 
 	if opts.Filter == nil {
 		opts.Filter = qdrantrequest.Filter{}
@@ -205,7 +209,11 @@ func (q *Index) similaritySearch(ctx context.Context, values []float64, opts *op
 	return res.Result, nil
 }
 
-func (q *Index) query(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
+func (q *Index) query(
+	ctx context.Context,
+	query string,
+	opts *option.Options,
+) ([]qdrantresponse.PointSearchResult, error) {
 	embeddings, err := q.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
@@ -336,7 +344,10 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchResultsFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) index.SearchResults {
+func buildSearchResultsFromQdrantMatches(
+	matches []qdrantresponse.PointSearchResult,
+	includeContent bool,
+) index.SearchResults {
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {

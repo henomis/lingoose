@@ -63,16 +63,16 @@ func (c *Chat) AddPromptMessages(messages []PromptMessage) {
 	}
 }
 
-func (p *Chat) addMessagePromptTemplate(message PromptMessage) {
-	p.promptMessages = append(p.promptMessages, message)
+func (c *Chat) addMessagePromptTemplate(message PromptMessage) {
+	c.promptMessages = append(c.promptMessages, message)
 }
 
 // ToMessages converts the chat prompt template to a list of messages.
-func (p *Chat) ToMessages() (Messages, error) {
+func (c *Chat) ToMessages() (Messages, error) {
 	var messages Messages
 	var err error
 
-	for _, messagePromptTemplate := range p.promptMessages {
+	for _, messagePromptTemplate := range c.promptMessages {
 		var message Message
 		message.Type = messagePromptTemplate.Type
 		message.Name = messagePromptTemplate.Name

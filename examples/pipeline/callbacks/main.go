@@ -31,13 +31,13 @@ func main() {
 		},
 	)
 
-	translatePreCallback := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	translatePreCallback := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		input["language"] = languages[iterator]
 		input["sentence"] = sentence
 		return input, nil
 	})
 
-	expandPostCallback := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	expandPostCallback := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		iterator++
 		if iterator >= len(languages) {
 			pipeline.SetNextTubeExit(output)

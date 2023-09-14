@@ -36,13 +36,14 @@ func (c *CSVLoader) WithSeparator(separator rune) *CSVLoader {
 	return c
 }
 
-func (t *CSVLoader) WithTextSplitter(textSplitter TextSplitter) *CSVLoader {
+//nolint:revive
+func (c *CSVLoader) WithTextSplitter(textSplitter TextSplitter) *CSVLoader {
 	// can't split csv
-	return t
+	return c
 }
 
 func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
-
+	_ = ctx
 	err := c.validate()
 	if err != nil {
 		return nil, err

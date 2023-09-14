@@ -60,15 +60,17 @@ func (c *CohereRerank) WithModel(model CohereRerankModel) *CohereRerank {
 	return c
 }
 
-func (c *CohereRerank) Rerank(ctx context.Context, query string, documents []document.Document) ([]document.Document, error) {
-
+func (c *CohereRerank) Rerank(
+	ctx context.Context,
+	query string, documents []document.Document,
+) ([]document.Document, error) {
 	if c.topN == defaultCohereRerankTopN {
 		c.topN = len(documents)
 	}
 
 	resp := &response.Rerank{}
 	err := c.client.Rerank(
-		context.Background(),
+		ctx,
 		&request.Rerank{
 			ReturnDocuments: false,
 			MaxChunksPerDoc: &c.maxChunksPerDoc,
@@ -93,7 +95,10 @@ func (c *CohereRerank) documentsToStringSlice(documents []document.Document) []s
 	return strings
 }
 
-func (c *CohereRerank) rerankDocuments(documents []document.Document, results []model.RerankResult) []document.Document {
+func (c *CohereRerank) rerankDocuments(
+	documents []document.Document,
+	results []model.RerankResult,
+) []document.Document {
 
 	rerankedDocuments := make([]document.Document, 0)
 	for _, result := range results {

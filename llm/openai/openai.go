@@ -57,8 +57,8 @@ const (
 	GPT3Babbage             Model = openai.GPT3Babbage
 )
 
-type OpenAIUsageCallback func(types.Meta)
-type OpenAIStreamCallback func(string)
+type UsageCallback func(types.Meta)
+type StreamCallback func(string)
 
 type OpenAI struct {
 	openAIClient           *openai.Client
@@ -67,7 +67,7 @@ type OpenAI struct {
 	maxTokens              int
 	stop                   []string
 	verbose                bool
-	usageCallback          OpenAIUsageCallback
+	usageCallback          UsageCallback
 	functions              map[string]Function
 	functionsMaxIterations uint
 	calledFunctionName     *string
@@ -109,7 +109,7 @@ func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
 }
 
 // WithUsageCallback sets the usage callback to use for the OpenAI instance.
-func (o *OpenAI) WithCallback(callback OpenAIUsageCallback) *OpenAI {
+func (o *OpenAI) WithCallback(callback UsageCallback) *OpenAI {
 	o.usageCallback = callback
 	return o
 }
@@ -168,7 +168,7 @@ func NewChat() *OpenAI {
 
 // Completion returns a single completion for the given prompt.
 func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
-	var cacheResult *cache.CacheResult
+	var cacheResult *cache.Result
 	var err error
 
 	if o.cache != nil {
@@ -236,12 +236,12 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]strin
 }
 
 // CompletionStream returns a single completion stream for the given prompt.
-func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt string) error {
-	return o.BatchCompletionStream(ctx, []OpenAIStreamCallback{callbackFn}, []string{prompt})
+func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn StreamCallback, prompt string) error {
+	return o.BatchCompletionStream(ctx, []StreamCallback{callbackFn}, []string{prompt})
 }
 
 // BatchCompletionStream returns multiple completion streams for the given prompts.
-func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []OpenAIStreamCallback, prompts []string) error {
+func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamCallback, prompts []string) error {
 
 	stream, err := o.openAIClient.CreateCompletionStream(
 		ctx,
@@ -358,7 +358,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 }
 
 // ChatStream returns a single chat stream for the given prompt.
-func (o *OpenAI) ChatStream(ctx context.Context, callbackFn OpenAIStreamCallback, prompt *chat.Chat) error {
+func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
 
 	messages, err := buildMessages(prompt)
 	if err != nil {

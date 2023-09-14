@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//nolint:lll
 const mysqlDataSourcePromptTemplate = "\n" +
 	"You are a MySQL expert. Given an input question, first create a syntactically correct MySQL query to run, then look at the results of the query and return the answer to the input question.\n" +
 	"Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. You can order the results to return the most informative data in the database.\n" +
@@ -17,6 +18,7 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 	var schema string
 
 	// Retrieve table names
+	//nolint:lll
 	rows, err := db.Query(fmt.Sprintf("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'", dbName))
 	if err != nil {
 		return "", err
@@ -79,6 +81,7 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 		}
 
 		// Retrieve foreign key information
+		//nolint:lll
 		fks, err := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
 		if err != nil {
 			return "", err
@@ -98,7 +101,8 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 				return "", err
 			}
 
-			fkDef := fmt.Sprintf("  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)", constraintName, columnName, referencedTableName, referencedColumnName)
+			fkDef := fmt.Sprintf("  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",
+				constraintName, columnName, referencedTableName, referencedColumnName)
 			fkDefs = append(fkDefs, fkDef)
 		}
 

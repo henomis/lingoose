@@ -34,7 +34,7 @@ type Index struct {
 	embedder   index.Embedder
 }
 
-type SimpleVectorIndexFilterFn func([]index.SearchResult) []index.SearchResult
+type FilterFn func([]index.SearchResult) []index.SearchResult
 
 func New(name string, outputPath string, embedder index.Embedder) *Index {
 	simpleVectorIndex := &Index{
@@ -109,7 +109,7 @@ func (s Index) save() error {
 		return err
 	}
 
-	return os.WriteFile(s.database(), jsonContent, 0644)
+	return os.WriteFile(s.database(), jsonContent, 0600)
 }
 
 func (s *Index) load() error {
@@ -144,6 +144,7 @@ func (s *Index) IsEmpty() (bool, error) {
 }
 
 func (s *Index) Add(ctx context.Context, item *index.Data) error {
+	_ = ctx
 	err := s.load()
 	if err != nil {
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -214,7 +215,7 @@ func (s *Index) similaritySearch(
 	embedding embedder.Embedding,
 	opts *option.Options,
 ) (index.SearchResults, error) {
-
+	_ = ctx
 	scores := s.cosineSimilarityBatch(embedding)
 
 	searchResults := make([]index.SearchResult, len(scores))
@@ -231,7 +232,7 @@ func (s *Index) similaritySearch(
 	}
 
 	if opts.Filter != nil {
-		searchResults = opts.Filter.(SimpleVectorIndexFilterFn)(searchResults)
+		searchResults = opts.Filter.(FilterFn)(searchResults)
 	}
 
 	return index.FilterSearchResults(searchResults, opts.TopK), nil

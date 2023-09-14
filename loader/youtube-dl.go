@@ -93,6 +93,7 @@ func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, e
 		y.path,
 	}
 
+	//nolint:gosec
 	cmd := exec.CommandContext(ctx, y.youtubeDlPath, args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

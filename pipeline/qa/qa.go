@@ -18,6 +18,7 @@ const (
 	Don't add any information that is not in the context.
 	If you don't know the answer, just say 'I don't know'.`
 
+	//nolint:lll
 	qaTubeUserPromptTemplate = "Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}"
 )
 
@@ -61,9 +62,9 @@ func New(llmEngine pipeline.LlmEngine) *QAPipeline {
 	}
 }
 
-func (p *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
+func (q *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
 	llm := pipeline.Llm{
-		LlmEngine: p.llmEngine,
+		LlmEngine: q.llmEngine,
 		LlmMode:   pipeline.LlmModeChat,
 		Chat:      chat,
 	}
@@ -93,14 +94,14 @@ func (q *QAPipeline) Query(ctx context.Context, query string, opts ...indexoptio
 	return q.Run(ctx, query, docs.ToDocuments())
 }
 
-func (t *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
+func (q *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
 
 	content := ""
 	for _, document := range documents {
 		content += document.Content + "\n"
 	}
 
-	return t.pipeline.Run(
+	return q.pipeline.Run(
 		ctx,
 		types.M{
 			"query":   query,

@@ -25,6 +25,7 @@ func New(text string) *Prompt {
 }
 
 func (p *Prompt) Format(input types.M) error {
+	_ = input
 	return nil
 }
 

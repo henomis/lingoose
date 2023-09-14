@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultSeparators     []string    = []string{"\n\n", "\n", " ", ""}
+	defaultSeparators                 = []string{"\n\n", "\n", " ", ""}
 	defaultLengthFunction LenFunction = func(s string) int { return len(s) }
 )
 
@@ -33,7 +33,9 @@ func (r *RecursiveCharacterTextSplitter) WithSeparators(separators []string) *Re
 	return r
 }
 
-func (r *RecursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) *RecursiveCharacterTextSplitter {
+func (r *RecursiveCharacterTextSplitter) WithLengthFunction(
+	lengthFunction LenFunction,
+) *RecursiveCharacterTextSplitter {
 	r.lengthFunction = lengthFunction
 	return r
 }

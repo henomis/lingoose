@@ -25,7 +25,11 @@ type WhisperPrompt struct {
 	audioResponseFormat AudioResponseFormat
 }
 
-func NewPromptFromAudioFile(ctx context.Context, filePath string, audioResponseFormat AudioResponseFormat) (*WhisperPrompt, error) {
+func NewPromptFromAudioFile(
+	ctx context.Context,
+	filePath string,
+	audioResponseFormat AudioResponseFormat,
+) (*WhisperPrompt, error) {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	if openAIKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY not set")
@@ -45,6 +49,7 @@ func (p *WhisperPrompt) WithClient(client *openai.Client) *WhisperPrompt {
 }
 
 func (p *WhisperPrompt) Format(input types.M) error {
+	_ = input
 	return nil
 }
 

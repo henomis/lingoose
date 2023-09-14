@@ -1,3 +1,4 @@
+// nolint
 // Package llmmock provides a mock implementation of the LLM interface.
 package llmmock
 
@@ -62,9 +63,9 @@ func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return output, nil
 }
 
-type JsonLllMock struct{}
+type JSONLllMock struct{}
 
-func (l *JsonLllMock) Completion(ctx context.Context, prompt string) (string, error) {
+func (l *JSONLllMock) Completion(ctx context.Context, prompt string) (string, error) {
 	fmt.Printf("User: %s\n", prompt)
 
 	rand.Seed(time.Now().UnixNano())
@@ -83,7 +84,9 @@ func (l *JsonLllMock) Completion(ctx context.Context, prompt string) (string, er
 // this function has been generate by AI! ;)
 func getRandomStrings(number int) []string {
 
-	data := []string{"air", "fly", "ball", "kite", "tree", "grass", "house", "ocean", "river", "lake", "road", "bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer", "window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
+	data := []string{"air", "fly", "ball", "kite", "tree", "grass", "house", "ocean", "river", "lake", "road",
+		"bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer",
+		"window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -96,7 +99,7 @@ func getRandomStrings(number int) []string {
 	return result
 }
 
-func (l *JsonLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+func (l *JSONLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	messages, err := prompt.ToMessages()
 	if err != nil {

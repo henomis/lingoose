@@ -43,11 +43,10 @@ func (l *LlamaCppEmbedder) WithArgs(llamacppArgs []string) *LlamaCppEmbedder {
 }
 
 // Embed returns the embeddings for the given texts
-func (o *LlamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-
+func (l *LlamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	embeddings := make([]embedder.Embedding, len(texts))
 	for i, text := range texts {
-		embedding, err := o.embed(ctx, text)
+		embedding, err := l.embed(ctx, text)
 		if err != nil {
 			return nil, err
 		}
@@ -66,6 +65,7 @@ func (l *LlamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Emb
 	llamacppArgs := []string{"-m", l.modelPath, "-p", text}
 	llamacppArgs = append(llamacppArgs, l.llamacppArgs...)
 
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, l.llamacppPath, llamacppArgs...).Output()
 	if err != nil {
 		return nil, err

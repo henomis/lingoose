@@ -11,7 +11,7 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type whisperCppLoader struct {
+type WhisperCppLoader struct {
 	loader Loader
 
 	ffmpegPath          string
@@ -24,8 +24,8 @@ type whisperCppLoader struct {
 
 var whisperSanitizeRegexp = regexp.MustCompile(`\[.*?\]`)
 
-func NewWhisperCppLoader(filename string) *whisperCppLoader {
-	return &whisperCppLoader{
+func NewWhisperCppLoader(filename string) *WhisperCppLoader {
+	return &WhisperCppLoader{
 		filename:            filename,
 		ffmpegPath:          "/usr/bin/ffmpeg",
 		ffmpegArgs:          []string{"-nostdin", "-f", "wav", "-ar", "16000", "-ac", "1", "-acodec", "pcm_s16le", "-"},
@@ -35,32 +35,32 @@ func NewWhisperCppLoader(filename string) *whisperCppLoader {
 	}
 }
 
-func (w *whisperCppLoader) WithTextSplitter(textSplitter TextSplitter) *whisperCppLoader {
+func (w *WhisperCppLoader) WithTextSplitter(textSplitter TextSplitter) *WhisperCppLoader {
 	w.loader.textSplitter = textSplitter
 	return w
 }
 
-func (w *whisperCppLoader) WithFfmpegPath(ffmpegPath string) *whisperCppLoader {
+func (w *WhisperCppLoader) WithFfmpegPath(ffmpegPath string) *WhisperCppLoader {
 	w.ffmpegPath = ffmpegPath
 	return w
 }
 
-func (w *whisperCppLoader) WithWhisperCppPath(whisperCppPath string) *whisperCppLoader {
+func (w *WhisperCppLoader) WithWhisperCppPath(whisperCppPath string) *WhisperCppLoader {
 	w.whisperCppPath = whisperCppPath
 	return w
 }
 
-func (w *whisperCppLoader) WithModel(whisperCppModelPath string) *whisperCppLoader {
+func (w *WhisperCppLoader) WithModel(whisperCppModelPath string) *WhisperCppLoader {
 	w.whisperCppModelPath = whisperCppModelPath
 	return w
 }
 
-func (w *whisperCppLoader) WithArgs(whisperCppArgs []string) *whisperCppLoader {
+func (w *WhisperCppLoader) WithArgs(whisperCppArgs []string) *WhisperCppLoader {
 	w.whisperCppArgs = whisperCppArgs
 	return w
 }
 
-func (w *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
+func (w *WhisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	err := isFile(w.ffmpegPath)
 	if err != nil {
@@ -98,15 +98,17 @@ func (w *whisperCppLoader) Load(ctx context.Context) ([]document.Document, error
 	return documents, nil
 }
 
-func (w *whisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
+func (w *WhisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
 
 	ffmpegArgs := []string{"-i", w.filename}
 	ffmpegArgs = append(ffmpegArgs, w.ffmpegArgs...)
+	//nolint:gosec
 	ffmpeg := exec.CommandContext(ctx, w.ffmpegPath, ffmpegArgs...)
 
 	whisperCppArgs := []string{"-m", w.whisperCppModelPath, "-nt", "-f", "-"}
 	whisperCppArgs = append(w.whisperCppArgs, whisperCppArgs...)
 
+	//nolint:gosec
 	whispercpp := exec.CommandContext(ctx, w.whisperCppPath, whisperCppArgs...)
 
 	pipeReader, pipeWriter := io.Pipe()

@@ -62,7 +62,7 @@ func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
-	responseBytes, err := hfMediaHttpCall(ctx, h.token, h.model, h.mediaFile)
+	responseBytes, err := hfMediaHTTPCall(ctx, h.token, h.model, h.mediaFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
@@ -96,7 +96,7 @@ func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
-func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
+func hfMediaHTTPCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
 	buf, err := os.ReadFile(mediaFile)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 		return nil, err
 	}
 
-	err = hfCheckHttpResponse(respBody)
+	err = hfCheckHTTPResponse(respBody)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 	return respBody, nil
 }
 
-func hfCheckHttpResponse(respJSON []byte) error {
+func hfCheckHTTPResponse(respJSON []byte) error {
 
 	type apiError struct {
 		Error string `json:"error,omitempty"`

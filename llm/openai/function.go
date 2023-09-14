@@ -115,7 +115,7 @@ func structAsJSONSchema(v interface{}) (map[string]interface{}, error) {
 	return jsonSchema, nil
 }
 
-func callFnWithArgumentAsJson(fn interface{}, argumentAsJson string) (string, error) {
+func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, error) {
 	// Get the type of the input function
 	fnType := reflect.TypeOf(fn)
 
@@ -135,7 +135,7 @@ func callFnWithArgumentAsJson(fn interface{}, argumentAsJson string) (string, er
 
 	// Unmarshal the JSON string into an interface{} value
 	var argValue interface{}
-	err := json.Unmarshal([]byte(argumentAsJson), &argValue)
+	err := json.Unmarshal([]byte(argumentAsJSON), &argValue)
 	if err != nil {
 		return "", fmt.Errorf("error unmarshaling argument: %s", err)
 	}
@@ -176,7 +176,7 @@ func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, e
 		return "", fmt.Errorf("%s: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
 	}
 
-	resultAsJSON, err := callFnWithArgumentAsJson(fn.Fn, response.Choices[0].Message.FunctionCall.Arguments)
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, response.Choices[0].Message.FunctionCall.Arguments)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
 	}

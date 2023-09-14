@@ -62,22 +62,22 @@ func (t *Template) Format(input types.M) error {
 	return nil
 }
 
-func (p *Template) String() string {
-	return p.value
+func (t *Template) String() string {
+	return t.value
 }
 
-func (p *Template) initTemplateEngine() error {
+func (t *Template) initTemplateEngine() error {
 
-	if p.templateEngine != nil {
+	if t.templateEngine != nil {
 		return nil
 	}
 
-	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(p.template)
+	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(t.template)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
 	}
 
-	p.templateEngine = templateEngine
+	t.templateEngine = templateEngine
 
 	return nil
 }

@@ -57,7 +57,7 @@ func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, er
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
 
-	responseBytes, err := hfMediaHttpCall(ctx, h.token, h.model, h.mediaFile)
+	responseBytes, err := hfMediaHTTPCall(ctx, h.token, h.model, h.mediaFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
 	}
