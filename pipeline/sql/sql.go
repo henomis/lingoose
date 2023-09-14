@@ -241,6 +241,9 @@ func getSQLResult(db *sql.DB, query string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if err = rows.Err(); err != nil {
+		return "", err
+	}
 	defer rows.Close()
 
 	content := ""

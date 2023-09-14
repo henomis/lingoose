@@ -24,6 +24,10 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = rows.Err()
+	if err != nil {
+		return "", err
+	}
 	defer rows.Close()
 
 	// Loop through tables and retrieve schema
@@ -37,6 +41,9 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 		cols, errQuery := db.Query(fmt.Sprintf("SHOW COLUMNS FROM %s", tableName))
 		if errQuery != nil {
 			return "", errQuery
+		}
+		if errRows := cols.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer cols.Close()
 
@@ -86,6 +93,9 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 		fks, errQuery := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
 		if errQuery != nil {
 			return "", errQuery
+		}
+		if errRows := fks.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer fks.Close()
 

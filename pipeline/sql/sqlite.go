@@ -23,6 +23,10 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	err = rows.Err()
+	if err != nil {
+		return "", err
+	}
 	defer rows.Close()
 
 	// Loop through tables and retrieve schema
@@ -36,6 +40,9 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 		cols, errQuery := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
 		if errQuery != nil {
 			return "", errQuery
+		}
+		if errRows := cols.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer cols.Close()
 
@@ -76,6 +83,9 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 		fks, errQuery := db.Query(fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName))
 		if errQuery != nil {
 			return "", errQuery
+		}
+		if errRows := fks.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer fks.Close()
 
