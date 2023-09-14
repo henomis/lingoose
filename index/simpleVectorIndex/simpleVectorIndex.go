@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/lingoose/index"
@@ -53,7 +53,6 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
 	}
 
-	id := 0
 	for i := 0; i < len(documents); i += defaultBatchSize {
 
 		end := i + defaultBatchSize
@@ -72,8 +71,11 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 		}
 
 		for j, document := range documents[i:end] {
-			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id, embeddings[j], document))
-			id++
+			id, err := uuid.NewUUID()
+			if err != nil {
+				return err
+			}
+			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id.String(), embeddings[j], document))
 		}
 
 	}
@@ -87,14 +89,14 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 }
 
 func buildDataFromEmbeddingAndDocument(
-	id int,
+	id string,
 	embedding embedder.Embedding,
 	document document.Document,
 ) data {
 	metadata := index.DeepCopyMetadata(document.Metadata)
 	metadata[index.DefaultKeyContent] = document.Content
 	return data{
-		ID:       fmt.Sprintf("%d", id),
+		ID:       id,
 		Values:   embedding,
 		Metadata: metadata,
 	}
@@ -148,13 +150,11 @@ func (s *Index) Add(ctx context.Context, item *index.Data) error {
 	}
 
 	if item.ID == "" {
-		lastID := s.data[len(s.data)-1].ID
-		lastIDAsInt, err := strconv.Atoi(lastID)
+		id, err := uuid.NewUUID()
 		if err != nil {
-			return fmt.Errorf("%s: %w", index.ErrInternal, err)
+			return err
 		}
-
-		item.ID = fmt.Sprintf("%d", lastIDAsInt+1)
+		item.ID = id.String()
 	}
 
 	s.data = append(

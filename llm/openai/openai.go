@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
@@ -71,6 +72,7 @@ type OpenAI struct {
 	functionsMaxIterations uint
 	calledFunctionName     *string
 	finishReason           string
+	cache                  *cache.Cache
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
@@ -130,6 +132,12 @@ func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 	return o
 }
 
+// WithCache sets the cache to use for the OpenAI instance.
+func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
+	o.cache = cache
+	return o
+}
+
 // CalledFunctionName returns the name of the function that was called.
 func (o *OpenAI) CalledFunctionName() *string {
 	return o.calledFunctionName
@@ -160,9 +168,28 @@ func NewChat() *OpenAI {
 
 // Completion returns a single completion for the given prompt.
 func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
+	var cacheResult *cache.CacheResult
+	var err error
+
+	if o.cache != nil {
+		cacheResult, err = o.cache.Get(ctx, prompt)
+		if err == nil {
+			return strings.Join(cacheResult.Answer, "\n"), nil
+		} else if err != cache.ErrCacheMiss {
+			return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		}
+	}
+
 	outputs, err := o.BatchCompletion(ctx, []string{prompt})
 	if err != nil {
 		return "", err
+	}
+
+	if o.cache != nil {
+		err = o.cache.Set(ctx, cacheResult.Embedding, outputs[0])
+		if err != nil {
+			return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		}
 	}
 
 	return outputs[0], nil
