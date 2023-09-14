@@ -54,7 +54,6 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 	}
 
 	for i := 0; i < len(documents); i += defaultBatchSize {
-
 		end := i + defaultBatchSize
 		if end > len(documents) {
 			end = len(documents)
@@ -77,7 +76,6 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 			}
 			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id.String(), embeddings[j], document))
 		}
-
 	}
 
 	err = s.save()
@@ -103,7 +101,6 @@ func buildDataFromEmbeddingAndDocument(
 }
 
 func (s Index) save() error {
-
 	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
 		return err
@@ -134,7 +131,6 @@ func (s *Index) database() string {
 }
 
 func (s *Index) IsEmpty() (bool, error) {
-
 	err := s.load()
 	if err != nil {
 		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -188,7 +184,6 @@ func (s *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 }
 
 func (s *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
 	sviOptions := &option.Options{
 		TopK: defaultTopK,
 	}

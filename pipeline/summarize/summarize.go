@@ -15,7 +15,6 @@ type Loader interface {
 }
 
 func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
-
 	docs := []document.Document{}
 	iterator := 0
 	remainigDocs := 0
@@ -80,5 +79,4 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 		WithPreCallbacks(preSummaryCB, preRefineCB).WithPostCallbacks(postSummaryCB, postRefineCB)
 
 	return summarizePipeline
-
 }

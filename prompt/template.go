@@ -17,7 +17,6 @@ type Template struct {
 }
 
 func NewPromptTemplate(text string) *Template {
-
 	promptTemplate := &Template{
 		input:    types.M{},
 		template: text,
@@ -33,7 +32,6 @@ func (t *Template) WithInputs(inputs interface{}) *Template {
 
 // Format formats the prompt using the template engine and the provided inputs.
 func (t *Template) Format(input types.M) error {
-
 	err := t.initTemplateEngine()
 	if err != nil {
 		return ErrTemplateEngine
@@ -67,7 +65,6 @@ func (t *Template) String() string {
 }
 
 func (t *Template) initTemplateEngine() error {
-
 	if t.templateEngine != nil {
 		return nil
 	}

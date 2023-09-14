@@ -8,7 +8,6 @@ import (
 )
 
 func Test_openAIEmbedder_splitText(t *testing.T) {
-
 	type fields struct {
 		openAIClient *openai.Client
 		model        Model

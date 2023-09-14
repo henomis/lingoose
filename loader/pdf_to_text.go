@@ -42,7 +42,6 @@ func (p *PDFLoader) WithTextSplitter(textSplitter TextSplitter) *PDFLoader {
 }
 
 func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	_, err := os.Stat(p.pdfToTextPath)
 	if err != nil {
 		return nil, ErrPdfToTextNotFound
@@ -93,7 +92,6 @@ func (p *PDFLoader) loadDir(ctx context.Context) ([]document.Document, error) {
 
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
-
 			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
 			if err != nil {
 				return err

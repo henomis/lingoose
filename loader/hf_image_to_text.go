@@ -56,7 +56,6 @@ func (h *HFImageToText) WithTextSplitter(textSplitter TextSplitter) *HFImageToTe
 }
 
 func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(h.mediaFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
@@ -132,7 +131,6 @@ func hfMediaHTTPCall(ctx context.Context, token, model, mediaFile string) ([]byt
 }
 
 func hfCheckHTTPResponse(respJSON []byte) error {
-
 	type apiError struct {
 		Error string `json:"error,omitempty"`
 	}

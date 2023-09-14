@@ -14,7 +14,6 @@ type TextSplitter struct {
 }
 
 func (t *TextSplitter) mergeSplits(splits []string, separator string) []string {
-
 	docs := make([]string, 0)
 	currentDoc := make([]string, 0)
 	total := 0

@@ -59,7 +59,6 @@ func New(
 	dataSourceType DataSourceType,
 	dataSourceName string,
 ) (*pipeline.Pipeline, error) {
-
 	memory := types.M{}
 
 	if !llmImplementsSetStop(llmEngine) {
@@ -156,7 +155,6 @@ func New(
 		WithPostCallbacks(postQueryCB, postRefineCBFn, postDescribeCB)
 
 	return sqlPipeline, nil
-
 }
 
 func llmImplementsSetStop(llmEngine pipeline.LlmEngine) bool {
@@ -239,7 +237,6 @@ func postRefineCBFn(output types.M, db *sql.DB, sqlDDL string, memory types.M) (
 }
 
 func getSQLResult(db *sql.DB, query string) (string, error) {
-
 	rows, err := db.Query(query)
 	if err != nil {
 		return "", err
@@ -274,13 +271,11 @@ func getSQLResult(db *sql.DB, query string) (string, error) {
 
 		row := ""
 		for _, col := range values {
-
 			if row != "" {
 				row += "|" + string(col)
 			} else {
 				row += string(col)
 			}
-
 		}
 
 		content += "\n" + row
@@ -290,7 +285,6 @@ func getSQLResult(db *sql.DB, query string) (string, error) {
 }
 
 func openDatabase(dataSourceType DataSourceType, dataSourceName string) (*sql.DB, error) {
-
 	db, err := sql.Open(string(dataSourceType), dataSourceName)
 	if err != nil {
 		return nil, err
@@ -305,11 +299,9 @@ func openDatabase(dataSourceType DataSourceType, dataSourceName string) (*sql.DB
 }
 
 func getDDL(db *sql.DB, dataSourceType DataSourceType, dataSourceName string) (string, error) {
-
 	if dataSourceType == DataSourceSqlite {
 		return getSqliteSchema(db)
 	} else if dataSourceType == DataSourceMySQL {
-
 		dataSourceNameParts := strings.Split(dataSourceName, "/")
 		if len(dataSourceNameParts) < 1 {
 			return "", fmt.Errorf("invalid mysql data source name %s", dataSourceName)
@@ -320,11 +312,9 @@ func getDDL(db *sql.DB, dataSourceType DataSourceType, dataSourceName string) (s
 	} else {
 		return "", fmt.Errorf("unsupported datasource %s", dataSourceType)
 	}
-
 }
 
 func getPromptTemplate(dataSourceType DataSourceType) (string, error) {
-
 	if dataSourceType == DataSourceSqlite {
 		return dataSourceTypePromptTemplate[DataSourceSqlite], nil
 	} else if dataSourceType == DataSourceMySQL {
@@ -332,5 +322,4 @@ func getPromptTemplate(dataSourceType DataSourceType) (string, error) {
 	} else {
 		return "", fmt.Errorf("unsupported database scheme %s", dataSourceType)
 	}
-
 }

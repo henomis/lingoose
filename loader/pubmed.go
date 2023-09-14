@@ -39,11 +39,9 @@ func (p *PubMedLoader) WithTextSplitter(textSplitter TextSplitter) *PubMedLoader
 }
 
 func (p *PubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	documens := make([]document.Document, len(p.pubMedIDs))
 
 	for i, pubMedID := range p.pubMedIDs {
-
 		doc, err := p.load(ctx, pubMedID)
 		if err != nil {
 			return nil, err
@@ -60,7 +58,6 @@ func (p *PubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 }
 
 func (p *PubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {
-
 	url := fmt.Sprintf(pubMedBioCURLFormat, pubMedID)
 
 	req, err := http.NewRequest("GET", url, nil)

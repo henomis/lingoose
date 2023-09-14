@@ -42,12 +42,10 @@ func (r *RecursiveCharacterTextSplitter) WithLengthFunction(
 
 // AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
 func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
-
 	docs := make([]document.Document, 0)
 
 	for i, doc := range documents {
 		for _, chunk := range r.SplitText(doc.Content) {
-
 			metadata := make(types.Meta)
 			for k, v := range documents[i].Metadata {
 				metadata[k] = v

@@ -50,7 +50,6 @@ func (t *Tube) WithDecoder(decoder Decoder) *Tube {
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
 func (t *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
-
 	if input == nil {
 		input = types.M{}
 	}
@@ -82,7 +81,6 @@ func (t *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 	}
 
 	return decodedOutput, nil
-
 }
 
 func (t *Tube) executeLLM(ctx context.Context, input types.M) (string, error) {
@@ -124,7 +122,6 @@ func (t *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 }
 
 func (t *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error) {
-
 	for _, promptMessage := range t.llm.Chat.PromptMessages() {
 		err := promptMessage.Prompt.Format(input)
 		if err != nil {

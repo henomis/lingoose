@@ -106,7 +106,6 @@ func (h *HuggingFace) WithHTTPClient(httpClient *http.Client) *HuggingFace {
 
 // Completion returns the completion for the given prompt
 func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, error) {
-
 	var output string
 	var outputs []string
 	var err error
@@ -131,7 +130,6 @@ func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, er
 
 // BatchCompletion returns the completion for the given prompts
 func (h *HuggingFace) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
-
 	var outputs []string
 	var err error
 	switch h.mode {

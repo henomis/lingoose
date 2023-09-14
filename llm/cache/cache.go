@@ -59,7 +59,6 @@ func (c *Cache) WithScoreThreshold(scoreThreshold float64) *Cache {
 }
 
 func (c *Cache) Get(ctx context.Context, query string) (*Result, error) {
-
 	embedding, err := c.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err

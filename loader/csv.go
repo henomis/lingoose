@@ -58,7 +58,6 @@ func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 }
 
 func (c *CSVLoader) validate() error {
-
 	fileStat, err := os.Stat(c.filename)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrorInternal, err)
@@ -95,7 +94,6 @@ func (c *CSVLoader) readCSV() ([]document.Document, error) {
 		}
 
 		if titles == nil {
-
 			titles = make([]string, len(record))
 			for i, r := range record {
 				titles[i] = strings.ReplaceAll(r, "\"", "")

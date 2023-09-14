@@ -99,7 +99,6 @@ func (c *CohereRerank) rerankDocuments(
 	documents []document.Document,
 	results []model.RerankResult,
 ) []document.Document {
-
 	rerankedDocuments := make([]document.Document, 0)
 	for _, result := range results {
 		index := result.Index

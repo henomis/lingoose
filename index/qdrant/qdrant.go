@@ -52,7 +52,6 @@ type Options struct {
 }
 
 func New(options Options, embedder index.Embedder) *Index {
-
 	apiKey := os.Getenv("QDRANT_API_KEY")
 	endpoint := os.Getenv("QDRANT_ENDPOINT")
 
@@ -79,7 +78,6 @@ func (q *Index) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Index {
 }
 
 func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
-
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -93,7 +91,6 @@ func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 }
 
 func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
-
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
 		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -112,7 +109,6 @@ func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
 	}
 
 	return res.Result.VectorsCount == 0, nil
-
 }
 
 func (q *Index) Add(ctx context.Context, item *index.Data) error {
@@ -160,7 +156,6 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 }
 
 func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
 	qdrantOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -184,7 +179,6 @@ func (q *Index) similaritySearch(
 	values []float64,
 	opts *option.Options,
 ) ([]qdrantresponse.PointSearchResult, error) {
-
 	if opts.Filter == nil {
 		opts.Filter = qdrantrequest.Filter{}
 	}
@@ -223,7 +217,6 @@ func (q *Index) query(
 }
 
 func (q *Index) createCollectionIfRequired(ctx context.Context) error {
-
 	if q.createCollection == nil {
 		return nil
 	}
@@ -258,9 +251,7 @@ func (q *Index) createCollectionIfRequired(ctx context.Context) error {
 }
 
 func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
-
 	for i := 0; i < len(documents); i += q.batchUpsertSize {
-
 		batchEnd := i + q.batchUpsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
@@ -291,7 +282,6 @@ func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 }
 
 func (q *Index) pointUpsert(ctx context.Context, points []qdrantrequest.Point) error {
-
 	wait := true
 	req := &qdrantrequest.PointUpsert{
 		Wait:           &wait,
@@ -314,11 +304,9 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 	startIndex int,
 	includeContent bool,
 ) ([]qdrantrequest.Point, error) {
-
 	var vectors []qdrantrequest.Point
 
 	for i, embedding := range embeddings {
-
 		metadata := index.DeepCopyMetadata(documents[startIndex+i].Metadata)
 
 		// inject document content into vector metadata
@@ -351,7 +339,6 @@ func buildSearchResultsFromQdrantMatches(
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
-
 		metadata := index.DeepCopyMetadata(match.Payload)
 		if !includeContent {
 			delete(metadata, index.DefaultKeyContent)

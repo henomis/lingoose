@@ -24,7 +24,6 @@ type Loader struct {
 }
 
 func isFile(filename string) error {
-
 	fileStat, err := os.Stat(filename)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrorInternal, err)

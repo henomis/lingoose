@@ -49,7 +49,6 @@ type Options struct {
 }
 
 func New(options Options, embedder index.Embedder) *Index {
-
 	apiKey := os.Getenv("PINECONE_API_KEY")
 	environment := os.Getenv("PINECONE_ENVIRONMENT")
 
@@ -77,7 +76,6 @@ func (p *Index) WithAPIKeyAndEnvironment(apiKey, environment string) *Index {
 }
 
 func (p *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
-
 	err := p.createIndexIfRequired(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -91,7 +89,6 @@ func (p *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 }
 
 func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
-
 	err := p.createIndexIfRequired(ctx)
 	if err != nil {
 		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -123,7 +120,6 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 	}
 
 	return *namespace.VectorCount == 0, nil
-
 }
 
 func (p *Index) Add(ctx context.Context, item *index.Data) error {
@@ -152,7 +148,6 @@ func (p *Index) Add(ctx context.Context, item *index.Data) error {
 }
 
 func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (index.SearchResults, error) {
-
 	pineconeOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -176,7 +171,6 @@ func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 }
 
 func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
 	pineconeOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -200,7 +194,6 @@ func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 }
 
 func (p *Index) query(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
-
 	embeddings, err := p.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
@@ -242,7 +235,6 @@ func (p *Index) similaritySearch(
 }
 
 func (p *Index) getProjectID(ctx context.Context) error {
-
 	if p.projectID != nil {
 		return nil
 	}
@@ -260,7 +252,6 @@ func (p *Index) getProjectID(ctx context.Context) error {
 }
 
 func (p *Index) createIndexIfRequired(ctx context.Context) error {
-
 	if p.createIndex == nil {
 		return nil
 	}
@@ -311,13 +302,10 @@ func (p *Index) createIndexIfRequired(ctx context.Context) error {
 			time.Sleep(1 * time.Second)
 		}
 	}
-
 }
 
 func (p *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
-
 	for i := 0; i < len(documents); i += p.batchUpsertSize {
-
 		batchEnd := i + p.batchUpsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
@@ -348,7 +336,6 @@ func (p *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 }
 
 func (p *Index) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
-
 	err := p.getProjectID(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", index.ErrInternal, err)
@@ -380,11 +367,9 @@ func buildPineconeVectorsFromEmbeddingsAndDocuments(
 	startIndex int,
 	includeContent bool,
 ) ([]pineconerequest.Vector, error) {
-
 	var vectors []pineconerequest.Vector
 
 	for i, embedding := range embeddings {
-
 		metadata := index.DeepCopyMetadata(documents[startIndex+i].Metadata)
 
 		// inject document content into vector metadata
@@ -417,7 +402,6 @@ func buildSearchResultsFromPineconeMatches(
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
-
 		metadata := index.DeepCopyMetadata(match.Metadata)
 		if !includeContent {
 			delete(metadata, index.DefaultKeyContent)

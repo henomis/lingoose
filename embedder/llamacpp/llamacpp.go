@@ -56,7 +56,6 @@ func (l *LlamaCppEmbedder) Embed(ctx context.Context, texts []string) ([]embedde
 }
 
 func (l *LlamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Embedding, error) {
-
 	_, err := os.Stat(l.llamacppPath)
 	if err != nil {
 		return nil, err
@@ -72,11 +71,9 @@ func (l *LlamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Emb
 	}
 
 	return parseEmbeddings(string(out))
-
 }
 
 func parseEmbeddings(str string) (embedder.Embedding, error) {
-
 	strSlice := strings.Split(strings.TrimSpace(str), " ")
 	floatSlice := make([]float64, len(strSlice))
 	for i, s := range strSlice {

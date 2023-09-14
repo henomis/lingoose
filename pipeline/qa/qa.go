@@ -33,7 +33,6 @@ type QAPipeline struct {
 }
 
 func New(llmEngine pipeline.LlmEngine) *QAPipeline {
-
 	systemPrompt := prompt.New(qaTubeSystemPromptTemplate)
 	userPrompt := prompt.NewPromptTemplate(qaTubeUserPromptTemplate)
 
@@ -95,7 +94,6 @@ func (q *QAPipeline) Query(ctx context.Context, query string, opts ...indexoptio
 }
 
 func (q *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
-
 	content := ""
 	for _, document := range documents {
 		content += document.Content + "\n"
@@ -108,5 +106,4 @@ func (q *QAPipeline) Run(ctx context.Context, query string, documents []document
 			"context": content,
 		},
 	)
-
 }

@@ -59,7 +59,6 @@ func (y *YoutubeDLLoader) WithAutoSubtitlesMode() *YoutubeDLLoader {
 }
 
 func (y *YoutubeDLLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(y.youtubeDlPath)
 	if err != nil {
 		return nil, ErrYoutubeDLNotFound
@@ -78,7 +77,6 @@ func (y *YoutubeDLLoader) Load(ctx context.Context) ([]document.Document, error)
 }
 
 func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, error) {
-
 	tempDir, err := os.MkdirTemp("", "youtube-dl")
 	if err != nil {
 		return nil, err
@@ -119,7 +117,6 @@ func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, e
 }
 
 func convertVTTtoPlainText(filename string) (string, error) {
-
 	file, err := os.Open(filename)
 	if err != nil {
 		return "", err
@@ -134,7 +131,6 @@ func convertVTTtoPlainText(filename string) (string, error) {
 
 	var plainText string
 	for _, line := range lines {
-
 		timestampRegex := regexp.MustCompile(`\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}`)
 		line = timestampRegex.ReplaceAllString(line, "")
 

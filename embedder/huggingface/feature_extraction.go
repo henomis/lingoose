@@ -17,7 +17,6 @@ type featureExtractionRequest struct {
 }
 
 func (h *HuggingFaceEmbedder) featureExtraction(ctx context.Context, text []string) ([]embedder.Embedding, error) {
-
 	isTrue := true
 	request := featureExtractionRequest{
 		Inputs: text,

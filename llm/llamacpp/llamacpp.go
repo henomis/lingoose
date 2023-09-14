@@ -67,7 +67,6 @@ func (l *Llamacpp) WithArgs(llamacppArgs []string) *Llamacpp {
 }
 
 func (l *Llamacpp) Completion(ctx context.Context, prompt string) (string, error) {
-
 	_, err := os.Stat(l.llamacppPath)
 	if err != nil {
 		return "", err

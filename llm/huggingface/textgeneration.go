@@ -33,7 +33,6 @@ func (tgs textGenerationResponseSequence) String() string {
 }
 
 func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompts []string) ([]string, error) {
-
 	numSequences := 1
 	isTrue := true
 

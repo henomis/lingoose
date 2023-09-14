@@ -51,7 +51,6 @@ func (h *HFSpeechRecognition) WithTextSplitter(textSplitter TextSplitter) *HFSpe
 }
 
 func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(h.mediaFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)

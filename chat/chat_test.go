@@ -9,7 +9,6 @@ import (
 )
 
 func TestChat_ToMessages(t *testing.T) {
-
 	prompt1 := prompt.NewPromptTemplate(
 		"You are a helpful assistant that translates {{.input_language}} to {{.output_language}}.").WithInputs(
 		types.M{

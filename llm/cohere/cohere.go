@@ -84,7 +84,6 @@ func (c *Cohere) WithStop(stop []string) *Cohere {
 
 // Completion returns the completion for the given prompt
 func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) {
-
 	resp := &response.Generate{}
 	err := c.client.Generate(
 		ctx,

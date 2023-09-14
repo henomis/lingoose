@@ -102,7 +102,6 @@ func (d *DallE) transformToURL(ctx context.Context, input string) (any, error) {
 }
 
 func (d *DallE) transformToFile(ctx context.Context, input string) (any, error) {
-
 	imgData, err := d.transformToImage(ctx, input)
 	if err != nil {
 		return nil, err
@@ -122,7 +121,6 @@ func (d *DallE) transformToFile(ctx context.Context, input string) (any, error) 
 }
 
 func (d *DallE) transformToImage(ctx context.Context, input string) (any, error) {
-
 	reqBase64 := openai.ImageRequest{
 		Prompt:         input,
 		Size:           string(d.imageSize),

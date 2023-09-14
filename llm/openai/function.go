@@ -50,7 +50,6 @@ func (o *OpenAI) BindFunction(
 }
 
 func (o *OpenAI) getFunctions() []openai.FunctionDefinition {
-
 	functions := []openai.FunctionDefinition{}
 
 	for _, function := range o.functions {

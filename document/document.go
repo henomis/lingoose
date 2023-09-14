@@ -28,7 +28,6 @@ func (d *Document) GetContent() string {
 
 // GetEnrichedContent returns the document content with the metadata appended
 func (d *Document) GetEnrichedContent() string {
-
 	if d.Metadata == nil {
 		return d.Content
 	}

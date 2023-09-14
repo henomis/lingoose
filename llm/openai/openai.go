@@ -76,7 +76,6 @@ type OpenAI struct {
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
-
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	return &OpenAI{
@@ -197,7 +196,6 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 
 // BatchCompletion returns multiple completions for the given prompts.
 func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
-
 	response, err := o.openAIClient.CreateCompletion(
 		ctx,
 		openai.CompletionRequest{
@@ -242,7 +240,6 @@ func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn StreamCallback
 
 // BatchCompletionStream returns multiple completion streams for the given prompts.
 func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamCallback, prompts []string) error {
-
 	stream, err := o.openAIClient.CreateCompletionStream(
 		ctx,
 		openai.CompletionRequest{
@@ -262,7 +259,6 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 	defer stream.Close()
 
 	for {
-
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			break
@@ -289,7 +285,6 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 
 			callbackFn[index](output)
 		}
-
 	}
 
 	return nil
@@ -297,7 +292,6 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 
 // Chat returns a single chat completion for the given prompt.
 func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
-
 	messages, err := buildMessages(prompt)
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
@@ -359,7 +353,6 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 // ChatStream returns a single chat stream for the given prompt.
 func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
-
 	messages, err := buildMessages(prompt)
 	if err != nil {
 		return fmt.Errorf("%s: %w", ErrOpenAIChat, err)
@@ -382,7 +375,6 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prom
 	}
 
 	for {
-
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			break
@@ -415,7 +407,6 @@ func (o *OpenAI) SetStop(stop []string) {
 }
 
 func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
-
 	callbackMetadata := make(types.Meta)
 
 	err := mapstructure.Decode(usage, &callbackMetadata)
@@ -427,7 +418,6 @@ func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
 }
 
 func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
-
 	var messages []openai.ChatCompletionMessage
 
 	promptMessages, err := prompt.ToMessages()
@@ -452,7 +442,6 @@ func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
 				Content: message.Content,
 			})
 		} else if message.Type == chat.MessageTypeFunction {
-
 			fnmessage := openai.ChatCompletionMessage{
 				Role:    openai.ChatMessageRoleFunction,
 				Content: message.Content,
@@ -469,7 +458,6 @@ func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
 }
 
 func debugChat(prompt *chat.Chat, content string) {
-
 	promptMessages, err := prompt.ToMessages()
 	if err != nil {
 		return

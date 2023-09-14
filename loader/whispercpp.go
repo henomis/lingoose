@@ -61,7 +61,6 @@ func (w *WhisperCppLoader) WithArgs(whisperCppArgs []string) *WhisperCppLoader {
 }
 
 func (w *WhisperCppLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(w.ffmpegPath)
 	if err != nil {
 		return nil, err
@@ -99,7 +98,6 @@ func (w *WhisperCppLoader) Load(ctx context.Context) ([]document.Document, error
 }
 
 func (w *WhisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
-
 	ffmpegArgs := []string{"-i", w.filename}
 	ffmpegArgs = append(ffmpegArgs, w.ffmpegArgs...)
 	//nolint:gosec

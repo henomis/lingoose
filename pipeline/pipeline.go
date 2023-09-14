@@ -44,7 +44,6 @@ type Pipeline struct {
 }
 
 func New(pipes ...Pipe) *Pipeline {
-
 	pipesMap := make(map[int]Pipe)
 	for i, pipe := range pipes {
 		pipesMap[i] = pipe
@@ -56,7 +55,6 @@ func New(pipes ...Pipe) *Pipeline {
 }
 
 func (p *Pipeline) WithPreCallbacks(callbacks ...Callback) *Pipeline {
-
 	p.preCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.preCallbacks[i] = callback
@@ -66,7 +64,6 @@ func (p *Pipeline) WithPreCallbacks(callbacks ...Callback) *Pipeline {
 }
 
 func (p *Pipeline) WithPostCallbacks(callbacks ...Callback) *Pipeline {
-
 	p.postCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.postCallbacks[i] = callback
@@ -87,7 +84,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	output := input
 
 	for {
-
 		if p.thereIsAValidPreCallbackForTube(currentTube) {
 			output, err = p.preCallbacks[currentTube](ctx, output)
 			if err != nil {
@@ -114,7 +110,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 				currentTube = *nextTube
 				continue
 			}
-
 		}
 
 		currentTube++
@@ -122,7 +117,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 		if currentTube == len(p.pipes) {
 			break
 		}
-
 	}
 
 	return output, nil
@@ -149,7 +143,6 @@ func (p *Pipeline) thereIsAValidPostCallbackForTube(currentTube int) bool {
 }
 
 func (p *Pipeline) getNextTube(output types.M) *int {
-
 	nextTube, ok := output[NextTubeKey]
 	if !ok {
 		return nil
@@ -161,5 +154,4 @@ func (p *Pipeline) getNextTube(output types.M) *int {
 	}
 
 	return nil
-
 }

@@ -60,7 +60,6 @@ func (v *VisualQuestionAnswering) WithImage(mediaFile string) *VisualQuestionAns
 }
 
 func (v *VisualQuestionAnswering) Transform(ctx context.Context, input string, all bool) (any, error) {
-
 	respJSON, err := hfVisualQuestionAnsweringHTTPCall(ctx, v.token, v.model, v.mediaFile, input)
 	if err != nil {
 		return "", err
@@ -80,7 +79,6 @@ func (v *VisualQuestionAnswering) Transform(ctx context.Context, input string, a
 }
 
 func hfVisualQuestionAnsweringHTTPCall(ctx context.Context, token, model, mediaFile, question string) ([]byte, error) {
-
 	var inputs VisualQuestionAnsweringRequest
 
 	base64String, err := imageToBase64(mediaFile)
@@ -128,7 +126,6 @@ func hfVisualQuestionAnsweringHTTPCall(ctx context.Context, token, model, mediaF
 }
 
 func hfCheckHTTPResponse(respJSON []byte) error {
-
 	type apiError struct {
 		Error string `json:"error,omitempty"`
 	}
@@ -167,7 +164,6 @@ func hfCheckHTTPResponse(respJSON []byte) error {
 }
 
 func imageToBase64(mediaFile string) (string, error) {
-
 	img, err := os.Open(mediaFile)
 	if err != nil {
 		return "", err

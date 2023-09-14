@@ -15,7 +15,6 @@ Pay attention to use only the column names you can see in the tables below. Be c
 Pay attention to use date('now') function to get the current date, if the question involves "today".`
 
 func getSqliteSchema(db *sql.DB) (string, error) {
-
 	var schema string
 
 	// Retrieve table names
@@ -129,5 +128,4 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 	}
 
 	return schema, nil
-
 }
