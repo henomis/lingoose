@@ -14,6 +14,7 @@ Never query for all columns from a table. You must query only the columns that a
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
 Pay attention to use date('now') function to get the current date, if the question involves "today".`
 
+//nolint:funlen,gocognit
 func getSqliteSchema(db *sql.DB) (string, error) {
 	var schema string
 

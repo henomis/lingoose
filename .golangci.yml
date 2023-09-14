@@ -167,10 +167,17 @@ linters:
     - bodyclose 
     - contextcheck 
     - cyclop
-    - dupl # Tool for code clone detection
-    - durationcheck # check for two durations multiplied together
+    - dupl
+    - durationcheck
     - errname
     - errorlint
+    - execinquery
+    - exhaustive
+    - exportloopref
+    # - forbidigo
+    - funlen
+    # - gochecknoinits
+    - gocognit
     - goconst
     - goimports
     - lll
@@ -178,3 +185,29 @@ linters:
     - unconvert
     - whitespace
   fast: false
+
+
+issues:
+  # Maximum count of issues with the same text.
+  # Set to 0 to disable.
+  # Default: 3
+  max-same-issues: 50
+
+  exclude-rules:
+    - source: "^//\\s*go:generate\\s"
+      linters: [ lll ]
+    - source: "(noinspection|TODO)"
+      linters: [ godot ]
+    - source: "//noinspection"
+      linters: [ gocritic ]
+    - source: "^\\s+if _, ok := err\\.\\([^.]+\\.InternalError\\); ok {"
+      linters: [ errorlint ]
+    - path: "_test\\.go"
+      linters:
+        - bodyclose
+        - dupl
+        - funlen
+        - goconst
+        - gosec
+        - noctx
+        - wrapcheck   

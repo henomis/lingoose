@@ -73,6 +73,8 @@ func (p *Pipeline) WithPostCallbacks(callbacks ...Callback) *Pipeline {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
+//
+//nolint:gocognit
 func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
 	currentTube := 0
