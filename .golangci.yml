@@ -179,8 +179,19 @@ linters:
     # - gochecknoinits
     - gocognit
     - goconst
+    # - gocritic  this can be enabled
+    - gocyclo
+    # - godot
     - goimports
+    # - gomnd this can be enabled
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
     - lll
+    - makezero
+    - nestif
+    - nilerr
     - revive
     - unconvert
     - whitespace
