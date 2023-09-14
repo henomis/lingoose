@@ -6,6 +6,8 @@ import (
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/index"
+	indexoption "github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
@@ -19,14 +21,14 @@ const (
 	qaTubeUserPromptTemplate = "Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}"
 )
 
-type Retriever interface {
-	Query(context.Context, string) ([]document.Document, error)
+type Index interface {
+	Query(context.Context, string, ...indexoption.Option) (index.SearchResults, error)
 }
 
 type QAPipeline struct {
 	llmEngine pipeline.LlmEngine
 	pipeline  *pipeline.Pipeline
-	retriever Retriever
+	index     Index
 }
 
 func New(llmEngine pipeline.LlmEngine) *QAPipeline {
@@ -55,7 +57,7 @@ func New(llmEngine pipeline.LlmEngine) *QAPipeline {
 	return &QAPipeline{
 		llmEngine: llmEngine,
 		pipeline:  pipeline.New(tube),
-		retriever: nil,
+		index:     nil,
 	}
 }
 
@@ -73,22 +75,22 @@ func (p *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
 	}
 }
 
-func (p *QAPipeline) WithRetriever(retriever Retriever) *QAPipeline {
-	p.retriever = retriever
-	return p
+func (q *QAPipeline) WithIndex(index Index) *QAPipeline {
+	q.index = index
+	return q
 }
 
-func (q *QAPipeline) Query(ctx context.Context, query string) (types.M, error) {
-	if q.retriever == nil {
+func (q *QAPipeline) Query(ctx context.Context, query string, opts ...indexoption.Option) (types.M, error) {
+	if q.index == nil {
 		return nil, fmt.Errorf("retriever is not defined")
 	}
 
-	docs, err := q.retriever.Query(ctx, query)
+	docs, err := q.index.Query(ctx, query, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return q.Run(ctx, query, docs)
+	return q.Run(ctx, query, docs.ToDocuments())
 }
 
 func (t *QAPipeline) Run(ctx context.Context, query string, documents []document.Document) (types.M, error) {
