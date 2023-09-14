@@ -83,24 +83,6 @@ linters-settings:
       - strconv.ParseInt
       - strconv.ParseUint
 
-  gomodguard:
-    blocked:
-      # List of blocked modules.
-      # Default: []
-      modules:
-        - github.com/golang/protobuf:
-            recommendations:
-              - google.golang.org/protobuf
-            reason: "see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules"
-        - github.com/satori/go.uuid:
-            recommendations:
-              - github.com/google/uuid
-            reason: "satori's package is not maintained"
-        - github.com/gofrs/uuid:
-            recommendations:
-              - github.com/google/uuid
-            reason: "see recommendation from dev-infra team: https://confluence.gtforge.com/x/gQI6Aw"
-
   govet:
     # Enable all analyzers.
     # Default: false
@@ -117,11 +99,6 @@ linters-settings:
         # Default: false
         strict: true
 
-  nakedret:
-    # Make an issue if func has more lines of code than this setting, and it has naked returns.
-    # Default: 30
-    max-func-lines: 0
-
   nolintlint:
     # Exclude following linters from requiring an explanation.
     # Default: []
@@ -132,12 +109,6 @@ linters-settings:
     # Enable to require nolint directives to mention the specific linter being suppressed.
     # Default: false
     require-specific: true
-
-  rowserrcheck:
-    # database/sql is always checked
-    # Default: []
-    packages:
-      - github.com/jmoiron/sqlx
 
   tenv:
     # The option `all` will run against whole test files (`_test.go`) regardless of method/function signatures.
@@ -199,7 +170,14 @@ linters:
     - promlinter
     - revive
     - rowserrcheck
+    - sqlclosecheck
+    - stylecheck
+    - tenv
+    # - testpackage
+    - tparallel
     - unconvert
+    - unparam
+    - wastedassign
     - whitespace
   fast: false
 

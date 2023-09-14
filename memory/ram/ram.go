@@ -11,7 +11,7 @@ var (
 	ErrObjectNotFound = errors.New("object not found")
 )
 
-//nolint:revive
+//nolint:revive,stylecheck
 type Ram struct {
 	memory types.M
 }
