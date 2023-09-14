@@ -53,18 +53,18 @@ func (h *HFSpeechRecognition) WithTextSplitter(textSplitter TextSplitter) *HFSpe
 func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, error) {
 	err := isFile(h.mediaFile)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	responseBytes, err := hfMediaHTTPCall(ctx, h.token, h.model, h.mediaFile)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	response := hfSpeechRecognitionResponse{}
 	err = json.Unmarshal(responseBytes, &response)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	var documents []document.Document

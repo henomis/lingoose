@@ -78,12 +78,12 @@ func (p *Index) WithAPIKeyAndEnvironment(apiKey, environment string) *Index {
 func (p *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 	err := p.createIndexIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	err = p.batchUpsert(ctx, documents)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 	return nil
 }
@@ -91,12 +91,12 @@ func (p *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 	err := p.createIndexIfRequired(ctx)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	err = p.getProjectID(ctx)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	req := &pineconerequest.VectorDescribeIndexStats{
@@ -107,7 +107,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 
 	err = p.pineconeClient.VectorDescribeIndexStats(ctx, req, res)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	namespace, ok := res.Namespaces[p.namespace]
@@ -116,7 +116,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 	}
 
 	if namespace.VectorCount == nil {
-		return false, fmt.Errorf("%s: failed to get total index size", index.ErrInternal)
+		return false, fmt.Errorf("%w: failed to get total index size", index.ErrInternal)
 	}
 
 	return *namespace.VectorCount == 0, nil
@@ -125,7 +125,7 @@ func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
 func (p *Index) Add(ctx context.Context, item *index.Data) error {
 	err := p.createIndexIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if item.ID == "" {
@@ -162,7 +162,7 @@ func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 
 	matches, err := p.similaritySearch(ctx, values, pineconeOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
@@ -185,7 +185,7 @@ func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 
 	matches, err := p.query(ctx, query, pineconeOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
@@ -209,7 +209,7 @@ func (p *Index) similaritySearch(
 ) ([]pineconeresponse.QueryMatch, error) {
 	err := p.getProjectID(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	includeMetadata := true
@@ -338,7 +338,7 @@ func (p *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 func (p *Index) vectorUpsert(ctx context.Context, vectors []pineconerequest.Vector) error {
 	err := p.getProjectID(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	req := &pineconerequest.VectorUpsert{

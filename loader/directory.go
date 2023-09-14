@@ -68,11 +68,11 @@ func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error)
 func (d *DirectoryLoader) validate() error {
 	fileStat, err := os.Stat(d.dirname)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if !fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil

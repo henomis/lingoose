@@ -136,18 +136,18 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 	var argValue interface{}
 	err := json.Unmarshal([]byte(argumentAsJSON), &argValue)
 	if err != nil {
-		return "", fmt.Errorf("error unmarshaling argument: %s", err)
+		return "", fmt.Errorf("error unmarshaling argument: %w", err)
 	}
 
 	// Convert the argument value to the correct type
 	argValueReflect := reflect.New(argType).Elem()
 	jsonData, err := json.Marshal(argValue)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling argument: %s", err)
+		return "", fmt.Errorf("error marshaling argument: %w", err)
 	}
 	err = json.Unmarshal(jsonData, argValueReflect.Addr().Interface())
 	if err != nil {
-		return "", fmt.Errorf("error unmarshaling argument: %s", err)
+		return "", fmt.Errorf("error unmarshaling argument: %w", err)
 	}
 
 	// Add the argument value to the slice
@@ -161,7 +161,7 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 	if len(result) > 0 {
 		jsonResultData, errMarshal := json.Marshal(result[0].Interface())
 		if errMarshal != nil {
-			return "", fmt.Errorf("error marshaling result: %s", errMarshal)
+			return "", fmt.Errorf("error marshaling result: %w", errMarshal)
 		}
 		return string(jsonResultData), nil
 	}
@@ -172,12 +172,12 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
-		return "", fmt.Errorf("%s: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
+		return "", fmt.Errorf("%w: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
 	}
 
 	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, response.Choices[0].Message.FunctionCall.Arguments)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	o.calledFunctionName = &fn.Name

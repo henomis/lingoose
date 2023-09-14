@@ -46,7 +46,7 @@ func (s *Splitter) WithMemory(name string, memory Memory) *Splitter {
 func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrSplitFunction, err)
+		return nil, fmt.Errorf("%w: %w", ErrSplitFunction, err)
 	}
 
 	var wg sync.WaitGroup

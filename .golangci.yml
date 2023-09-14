@@ -153,45 +153,28 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    #- bodyclose
-    #- depguard
-    #- dogsled
-    #- dupl
+    # enabled by default
     - errcheck
-    - revive
-    #- exhaustive
-    #- funlen
-    - gas
-    #- gochecknoinits
-    - goconst
-    #- gocritic
-    #- gocyclo
-    #- gofmt
-    - goimports
-    # - golint
-    #- gomnd
-    #- goprintffuncname
-    #- gosec
     - gosimple
     - govet
     - ineffassign
-    # - interfacer
-    - lll
-    # - maligned
-    - megacheck
-    #- misspell
-    #- nakedret
-    #- noctx
-    #- nolintlint
-    #- rowserrcheck
-    #- scopelint
     - staticcheck
-    #- stylecheck
     - typecheck
-    - unconvert
-    #- unparam
     - unused
-    - whitespace
+    # disabled by default
     - asciicheck
     - bidichk
+    - bodyclose 
+    - contextcheck 
+    - cyclop
+    - dupl # Tool for code clone detection
+    - durationcheck # check for two durations multiplied together
+    - errname
+    - errorlint
+    - goconst
+    - goimports
+    - lll
+    - revive
+    - unconvert
+    - whitespace
   fast: false

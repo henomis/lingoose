@@ -43,7 +43,7 @@ func (w *WhisperLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 	resp, err := w.openAIClient.CreateTranscription(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	documents := []document.Document{

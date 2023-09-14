@@ -2,6 +2,7 @@ package huggingface
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,8 +10,8 @@ import (
 
 const APIBaseURL = "https://api-inference.huggingface.co/models/"
 
-const (
-	ErrHuggingFaceCompletion = "huggingface completion error"
+var (
+	ErrHuggingFaceCompletion = errors.New("huggingface completion error")
 )
 
 type Mode int
@@ -122,7 +123,7 @@ func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, er
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrHuggingFaceCompletion, err)
+		return "", fmt.Errorf("%w: %w", ErrHuggingFaceCompletion, err)
 	}
 
 	return output, nil
@@ -142,7 +143,7 @@ func (h *HuggingFace) BatchCompletion(ctx context.Context, prompts []string) ([]
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrHuggingFaceCompletion, err)
+		return nil, fmt.Errorf("%w: %w", ErrHuggingFaceCompletion, err)
 	}
 
 	return outputs, nil

@@ -37,7 +37,7 @@ func (t *TextLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	text, err := os.ReadFile(t.filename)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	documents := []document.Document{
@@ -60,7 +60,7 @@ func (t *TextLoader) validate() error {
 	} else {
 		_, ok := t.metadata[SourceMetadataKey]
 		if ok {
-			return fmt.Errorf("%s: metadata key %s is reserved", ErrorInternal, SourceMetadataKey)
+			return fmt.Errorf("%w: metadata key %s is reserved", ErrInternal, SourceMetadataKey)
 		}
 	}
 
@@ -68,11 +68,11 @@ func (t *TextLoader) validate() error {
 
 	fileStat, err := os.Stat(t.filename)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil

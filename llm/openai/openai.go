@@ -174,8 +174,8 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 		cacheResult, err = o.cache.Get(ctx, prompt)
 		if err == nil {
 			return strings.Join(cacheResult.Answer, "\n"), nil
-		} else if err != cache.ErrCacheMiss {
-			return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		} else if !errors.Is(err, cache.ErrCacheMiss) {
+			return "", fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
 		}
 	}
 
@@ -187,7 +187,7 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 	if o.cache != nil {
 		err = o.cache.Set(ctx, cacheResult.Embedding, outputs[0])
 		if err != nil {
-			return "", fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+			return "", fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
 		}
 	}
 
@@ -210,7 +210,7 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]strin
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		return nil, fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
 	}
 
 	if o.usageCallback != nil {
@@ -218,7 +218,7 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]strin
 	}
 
 	if len(response.Choices) == 0 {
-		return nil, fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
+		return nil, fmt.Errorf("%w: no choices returned", ErrOpenAICompletion)
 	}
 
 	var outputs []string
@@ -253,7 +253,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrOpenAICompletion, err)
+		return fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
 	}
 
 	defer stream.Close()
@@ -265,7 +265,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 		}
 
 		if errRecv != nil {
-			return fmt.Errorf("%s: %w", ErrOpenAICompletion, errRecv)
+			return fmt.Errorf("%w: %w", ErrOpenAICompletion, errRecv)
 		}
 
 		if o.usageCallback != nil {
@@ -273,7 +273,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 		}
 
 		if len(response.Choices) == 0 {
-			return fmt.Errorf("%s: no choices returned", ErrOpenAICompletion)
+			return fmt.Errorf("%w: no choices returned", ErrOpenAICompletion)
 		}
 
 		for _, choice := range response.Choices {
@@ -294,7 +294,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	messages, err := buildMessages(prompt)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	chatCompletionRequest := openai.ChatCompletionRequest{
@@ -317,7 +317,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	if o.usageCallback != nil {
@@ -325,7 +325,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
+		return "", fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 	}
 
 	content := response.Choices[0].Message.Content
@@ -340,7 +340,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 		content, err = o.functionCall(response)
 		if err != nil {
-			return "", fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+			return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 		}
 	}
 
@@ -355,7 +355,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
 	messages, err := buildMessages(prompt)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	stream, err := o.openAIClient.CreateChatCompletionStream(
@@ -371,7 +371,7 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prom
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrOpenAIChat, err)
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	for {
@@ -386,7 +386,7 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prom
 		// }
 
 		if len(response.Choices) == 0 {
-			return fmt.Errorf("%s: no choices returned", ErrOpenAIChat)
+			return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 		}
 
 		content := response.Choices[0].Delta.Content

@@ -44,7 +44,7 @@ func (t *Template) Format(input types.M) error {
 
 	input, err = structToMap(input)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrDecoding, err)
+		return fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	overallMap := mergeMaps(t.input.(types.M), input)
@@ -52,7 +52,7 @@ func (t *Template) Format(input types.M) error {
 	var buffer bytes.Buffer
 	err = t.templateEngine.Execute(&buffer, overallMap)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
+		return fmt.Errorf("%w: %w", ErrTemplateEngine, err)
 	}
 
 	t.value = buffer.String()
@@ -71,7 +71,7 @@ func (t *Template) initTemplateEngine() error {
 
 	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(t.template)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
+		return fmt.Errorf("%w: %w", ErrTemplateEngine, err)
 	}
 
 	t.templateEngine = templateEngine

@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -51,7 +52,7 @@ func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	documents, err := c.readCSV()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	return documents, nil
@@ -60,11 +61,11 @@ func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 func (c *CSVLoader) validate() error {
 	fileStat, err := os.Stat(c.filename)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil
@@ -86,7 +87,7 @@ func (c *CSVLoader) readCSV() ([]document.Document, error) {
 
 	for {
 		record, errRead := reader.Read()
-		if errRead == io.EOF {
+		if errors.Is(errRead, io.EOF) {
 			break
 		}
 		if errRead != nil {

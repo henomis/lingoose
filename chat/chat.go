@@ -81,7 +81,7 @@ func (c *Chat) ToMessages() (Messages, error) {
 			if len(messagePromptTemplate.Prompt.String()) == 0 {
 				err = messagePromptTemplate.Prompt.Format(types.M{})
 				if err != nil {
-					return nil, fmt.Errorf("%s: %w", ErrChatMessages, err)
+					return nil, fmt.Errorf("%w: %w", ErrChatMessages, err)
 				}
 			}
 			message.Content = messagePromptTemplate.Prompt.String()

@@ -50,7 +50,7 @@ func New(name string, outputPath string, embedder index.Embedder) *Index {
 func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 	err := s.load()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	for i := 0; i < len(documents); i += defaultBatchSize {
@@ -66,7 +66,7 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 
 		embeddings, errEmbed := s.embedder.Embed(ctx, texts)
 		if errEmbed != nil {
-			return fmt.Errorf("%s: %w", index.ErrInternal, errEmbed)
+			return fmt.Errorf("%w: %w", index.ErrInternal, errEmbed)
 		}
 
 		for j, document := range documents[i:end] {
@@ -80,7 +80,7 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 
 	err = s.save()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func (s *Index) database() string {
 func (s *Index) IsEmpty() (bool, error) {
 	err := s.load()
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return len(s.data) == 0, nil
@@ -143,7 +143,7 @@ func (s *Index) Add(ctx context.Context, item *index.Data) error {
 	_ = ctx
 	err := s.load()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if item.ID == "" {
@@ -177,7 +177,7 @@ func (s *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 
 	err := s.load()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return s.similaritySearch(ctx, values, sviOptions)
@@ -194,12 +194,12 @@ func (s *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 
 	err := s.load()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	embeddings, err := s.embedder.Embed(ctx, []string{query})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return s.similaritySearch(ctx, embeddings[0], sviOptions)

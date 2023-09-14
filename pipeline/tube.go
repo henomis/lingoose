@@ -56,7 +56,7 @@ func (t *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	input, err := structToMap(input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	if t.memory != nil {
@@ -65,12 +65,12 @@ func (t *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 
 	response, err := t.executeLLM(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrLLMExecution, err)
+		return nil, fmt.Errorf("%w: %w", ErrLLMExecution, err)
 	}
 
 	decodedOutput, err := t.decoder.Decode(response)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	if t.memory != nil {
@@ -176,7 +176,7 @@ func structToMap(obj interface{}) (types.M, error) {
 	genericMap := types.M{}
 	err := mapstructure.Decode(obj, &genericMap)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	return genericMap, nil

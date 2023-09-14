@@ -80,12 +80,12 @@ func (q *Index) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Index {
 func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	err = q.batchUpsert(ctx, documents)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 	return nil
 }
@@ -93,7 +93,7 @@ func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	res := &qdrantresponse.CollectionCollectInfo{}
@@ -105,7 +105,7 @@ func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
 		res,
 	)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return res.Result.VectorsCount == 0, nil
@@ -114,7 +114,7 @@ func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
 func (q *Index) Add(ctx context.Context, item *index.Data) error {
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if item.ID == "" {
@@ -147,7 +147,7 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 
 	matches, err := q.similaritySearch(ctx, values, qdrantOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
@@ -166,7 +166,7 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 
 	matches, err := q.query(ctx, query, qdrantOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)

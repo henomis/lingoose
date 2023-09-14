@@ -2,6 +2,7 @@ package index
 
 import (
 	"context"
+	"errors"
 	"sort"
 
 	"github.com/henomis/lingoose/document"
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	ErrInternal = "internal index error"
+	ErrInternal = errors.New("internal index error")
 )
 
 const (
