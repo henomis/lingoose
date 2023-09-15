@@ -14,7 +14,6 @@ func (o *OpenAIEmbedder) textToTokens(text string) ([]int, error) {
 }
 
 func (o *OpenAIEmbedder) getMaxTokens() int {
-
 	if tiktoken.MODEL_TO_ENCODING[o.model.String()] == "cl100k_base" {
 		return 8191
 	}

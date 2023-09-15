@@ -7,7 +7,6 @@ import (
 )
 
 func normalizeEmbeddings(embeddings []embedder.Embedding, lens []float64) embedder.Embedding {
-
 	chunkAvgEmbeddings := average(embeddings, lens)
 	norm := norm(chunkAvgEmbeddings)
 

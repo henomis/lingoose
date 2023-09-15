@@ -12,7 +12,6 @@ import (
 const APIBaseURL = "https://api-inference.huggingface.co/pipeline/feature-extraction/"
 
 func (h *HuggingFaceEmbedder) doRequest(ctx context.Context, jsonBody []byte, model string) ([]byte, error) {
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, APIBaseURL+model, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return nil, err
@@ -57,6 +56,7 @@ func checkRespForError(respJSON []byte) error {
 		apiErr := apiError{}
 		err := json.Unmarshal(buf, &apiErr)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErr.Error != "" {
@@ -70,6 +70,7 @@ func checkRespForError(respJSON []byte) error {
 		apiErrs := apiErrors{}
 		err := json.Unmarshal(buf, &apiErrs)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErrs.Errors != nil {

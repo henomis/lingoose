@@ -60,8 +60,7 @@ func (v *VisualQuestionAnswering) WithImage(mediaFile string) *VisualQuestionAns
 }
 
 func (v *VisualQuestionAnswering) Transform(ctx context.Context, input string, all bool) (any, error) {
-
-	respJSON, err := hfVisualQuestionAnsweringHttpCall(ctx, v.token, v.model, v.mediaFile, input)
+	respJSON, err := hfVisualQuestionAnsweringHTTPCall(ctx, v.token, v.model, v.mediaFile, input)
 	if err != nil {
 		return "", err
 	}
@@ -79,8 +78,7 @@ func (v *VisualQuestionAnswering) Transform(ctx context.Context, input string, a
 	return resp[0].Answer, nil
 }
 
-func hfVisualQuestionAnsweringHttpCall(ctx context.Context, token, model, mediaFile, question string) ([]byte, error) {
-
+func hfVisualQuestionAnsweringHTTPCall(ctx context.Context, token, model, mediaFile, question string) ([]byte, error) {
 	var inputs VisualQuestionAnsweringRequest
 
 	base64String, err := imageToBase64(mediaFile)
@@ -119,7 +117,7 @@ func hfVisualQuestionAnsweringHttpCall(ctx context.Context, token, model, mediaF
 		return nil, err
 	}
 
-	err = hfCheckHttpResponse(respBody)
+	err = hfCheckHTTPResponse(respBody)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +125,7 @@ func hfVisualQuestionAnsweringHttpCall(ctx context.Context, token, model, mediaF
 	return respBody, nil
 }
 
-func hfCheckHttpResponse(respJSON []byte) error {
-
+func hfCheckHTTPResponse(respJSON []byte) error {
 	type apiError struct {
 		Error string `json:"error,omitempty"`
 	}
@@ -143,6 +140,7 @@ func hfCheckHttpResponse(respJSON []byte) error {
 		apiErr := apiError{}
 		err := json.Unmarshal(buf, &apiErr)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErr.Error != "" {
@@ -156,6 +154,7 @@ func hfCheckHttpResponse(respJSON []byte) error {
 		apiErrs := apiErrors{}
 		err := json.Unmarshal(buf, &apiErrs)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErrs.Errors != nil {
@@ -167,7 +166,6 @@ func hfCheckHttpResponse(respJSON []byte) error {
 }
 
 func imageToBase64(mediaFile string) (string, error) {
-
 	img, err := os.Open(mediaFile)
 	if err != nil {
 		return "", err

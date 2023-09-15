@@ -15,9 +15,11 @@ type LlmMock struct {
 }
 
 func (l *LlmMock) Completion(ctx context.Context, prompt string) (string, error) {
+	_ = ctx
 	fmt.Printf("User: %s\n", prompt)
 
 	rand.Seed(time.Now().UnixNano())
+	//nolint:gosec
 	number := rand.Intn(3) + 3
 
 	randomStrings := getRandomStrings(number)
@@ -32,7 +34,7 @@ func (l *LlmMock) Completion(ctx context.Context, prompt string) (string, error)
 }
 
 func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
-
+	_ = ctx
 	messages, err := prompt.ToMessages()
 	if err != nil {
 		return "", err
@@ -49,6 +51,7 @@ func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
+	//nolint:gosec
 	number := rand.Intn(3) + 3
 
 	randomStrings := getRandomStrings(number)
@@ -62,12 +65,15 @@ func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return output, nil
 }
 
-type JsonLllMock struct{}
+type JSONLllMock struct{}
 
-func (l *JsonLllMock) Completion(ctx context.Context, prompt string) (string, error) {
+func (l *JSONLllMock) Completion(ctx context.Context, prompt string) (string, error) {
+	_ = ctx
 	fmt.Printf("User: %s\n", prompt)
 
+	//nolint:gosec
 	rand.Seed(time.Now().UnixNano())
+	//nolint:gosec
 	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
 		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
 
@@ -82,22 +88,24 @@ func (l *JsonLllMock) Completion(ctx context.Context, prompt string) (string, er
 // getRandomStrings returns a random selection of strings from the data slice.
 // this function has been generate by AI! ;)
 func getRandomStrings(number int) []string {
-
-	data := []string{"air", "fly", "ball", "kite", "tree", "grass", "house", "ocean", "river", "lake", "road", "bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer", "window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
+	data := []string{"air", "fly", "ball", "kite", "tree", "grass", "house", "ocean", "river", "lake", "road",
+		"bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer",
+		"window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
 
 	rand.Seed(time.Now().UnixNano())
 
 	result := []string{}
 
 	for i := 0; i < number; i++ {
+		//nolint:gosec
 		result = append(result, data[rand.Intn(len(data))])
 	}
 
 	return result
 }
 
-func (l *JsonLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
-
+func (l *JSONLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+	_ = ctx
 	messages, err := prompt.ToMessages()
 	if err != nil {
 		return "", err
@@ -115,6 +123,7 @@ func (l *JsonLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, erro
 
 	rand.Seed(time.Now().UnixNano())
 
+	//nolint:gosec
 	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
 		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
 

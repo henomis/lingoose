@@ -28,7 +28,7 @@ func main() {
 
 	err = llm.BatchCompletionStream(
 		context.Background(),
-		[]openai.OpenAIStreamCallback{
+		[]openai.StreamCallback{
 			func(output string) {
 				fmt.Printf("{%s}", output)
 				output1 += output

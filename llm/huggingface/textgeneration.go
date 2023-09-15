@@ -33,7 +33,6 @@ func (tgs textGenerationResponseSequence) String() string {
 }
 
 func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompts []string) ([]string, error) {
-
 	numSequences := 1
 	isTrue := true
 
@@ -65,7 +64,8 @@ func (h *HuggingFace) textgenerationCompletion(ctx context.Context, prompts []st
 		return nil, err
 	}
 	if len(tgrespsRaw) != len(request.Inputs) {
-		return nil, fmt.Errorf("%s: expected %d responses, got %d; response=%s", ErrHuggingFaceCompletion, len(request.Inputs), len(tgrespsRaw), string(respBody))
+		return nil, fmt.Errorf("%w: expected %d responses, got %d; response=%s", ErrHuggingFaceCompletion,
+			len(request.Inputs), len(tgrespsRaw), string(respBody))
 	}
 
 	outputs := make([]string, len(request.Inputs))

@@ -42,7 +42,6 @@ func (p *PDFLoader) WithTextSplitter(textSplitter TextSplitter) *PDFLoader {
 }
 
 func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	_, err := os.Stat(p.pdfToTextPath)
 	if err != nil {
 		return nil, ErrPdfToTextNotFound
@@ -71,6 +70,7 @@ func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
 }
 
 func (p *PDFLoader) loadFile(ctx context.Context) ([]document.Document, error) {
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, p.pdfToTextPath, p.path, "-").Output()
 	if err != nil {
 		return nil, err
@@ -92,10 +92,9 @@ func (p *PDFLoader) loadDir(ctx context.Context) ([]document.Document, error) {
 
 	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
 		if err == nil && strings.HasSuffix(info.Name(), ".pdf") {
-
-			d, err := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
-			if err != nil {
-				return err
+			d, errLoad := NewPDFToTextLoader(path).WithPDFToTextPath(p.pdfToTextPath).loadFile(ctx)
+			if errLoad != nil {
+				return errLoad
 			}
 
 			docs = append(docs, d...)

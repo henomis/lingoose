@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrorInternal = fmt.Errorf("internal error")
+	ErrInternal = fmt.Errorf("internal error")
 )
 
 const (
@@ -24,14 +24,13 @@ type Loader struct {
 }
 
 func isFile(filename string) error {
-
 	fileStat, err := os.Stat(filename)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil

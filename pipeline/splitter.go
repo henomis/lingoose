@@ -44,10 +44,9 @@ func (s *Splitter) WithMemory(name string, memory Memory) *Splitter {
 }
 
 func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
-
 	splittedInputs, err := s.splitterFn(input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrSplitFunction, err)
+		return nil, fmt.Errorf("%w: %w", ErrSplitFunction, err)
 	}
 
 	var wg sync.WaitGroup
@@ -67,8 +66,8 @@ func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 				tube = tube.WithDecoder(s.decoder)
 			}
 
-			output, err := tube.Run(ctx, splittedInput)
-			if err != nil {
+			output, errRun := tube.Run(ctx, splittedInput)
+			if errRun != nil {
 				return
 			}
 
@@ -81,5 +80,4 @@ func (s *Splitter) Run(ctx context.Context, input types.M) (types.M, error) {
 	wg.Wait()
 
 	return types.M{types.DefaultOutputKey: pipeOutpus}, nil
-
 }

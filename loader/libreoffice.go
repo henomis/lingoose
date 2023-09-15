@@ -46,7 +46,6 @@ func (l *LibreOfficeLoader) WithArgs(libreOfficeArgs []string) *LibreOfficeLoade
 }
 
 func (l *LibreOfficeLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(l.libreOfficePath)
 	if err != nil {
 		return nil, ErrLibreOfficeNotFound
@@ -70,9 +69,9 @@ func (l *LibreOfficeLoader) Load(ctx context.Context) ([]document.Document, erro
 }
 
 func (l *LibreOfficeLoader) loadFile(ctx context.Context) ([]document.Document, error) {
-
 	libreOfficeArgs := append(l.libreOfficeArgs, l.filename)
 
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, l.libreOfficePath, libreOfficeArgs...).Output()
 	if err != nil {
 		return nil, err

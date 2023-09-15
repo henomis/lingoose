@@ -4,34 +4,34 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type HistoryMessageType string
+type MessageType string
 
-type HistoryMessage struct {
+type Message struct {
 	Content string     `json:"content"`
 	Meta    types.Meta `json:"meta"`
 }
 
 // ***** History RAM implementation *****
-type HistoryRam struct {
-	history []HistoryMessage
+type RAM struct {
+	history []Message
 }
 
-func NewHistoryRam() *HistoryRam {
-	return &HistoryRam{}
+func NewHistoryRAM() *RAM {
+	return &RAM{}
 }
 
-func (h *HistoryRam) Add(content string, meta types.Meta) error {
-	h.history = append(h.history, HistoryMessage{
+func (h *RAM) Add(content string, meta types.Meta) error {
+	h.history = append(h.history, Message{
 		Content: content,
 		Meta:    meta,
 	})
 	return nil
 }
 
-func (h *HistoryRam) All() []HistoryMessage {
+func (h *RAM) All() []Message {
 	return h.history
 }
 
-func (h *HistoryRam) Clear() {
-	h.history = []HistoryMessage{}
+func (h *RAM) Clear() {
+	h.history = []Message{}
 }

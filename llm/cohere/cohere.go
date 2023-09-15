@@ -77,17 +77,16 @@ func (c *Cohere) WithVerbose(verbose bool) *Cohere {
 }
 
 // WithStop sets the stop sequences to use for the LLM
-func (o *Cohere) WithStop(stop []string) *Cohere {
-	o.stop = stop
-	return o
+func (c *Cohere) WithStop(stop []string) *Cohere {
+	c.stop = stop
+	return c
 }
 
 // Completion returns the completion for the given prompt
 func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) {
-
 	resp := &response.Generate{}
 	err := c.client.Generate(
-		context.Background(),
+		ctx,
 		&request.Generate{
 			Prompt:        prompt,
 			Temperature:   &c.temperature,
@@ -117,5 +116,7 @@ func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) 
 
 // Chat is not implemented
 func (c *Cohere) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+	_ = ctx
+	_ = prompt
 	return "", fmt.Errorf("not implemented")
 }

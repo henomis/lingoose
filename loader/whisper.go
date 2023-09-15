@@ -18,7 +18,6 @@ type WhisperLoader struct {
 }
 
 func NewWhisperLoader(filename string) *WhisperLoader {
-
 	openAIApiKey := os.Getenv("OPENAI_API_KEY")
 
 	return &WhisperLoader{
@@ -33,7 +32,6 @@ func (w *WhisperLoader) WithClient(client *openai.Client) *WhisperLoader {
 }
 
 func (w *WhisperLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(w.filename)
 	if err != nil {
 		return nil, err
@@ -45,7 +43,7 @@ func (w *WhisperLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 	resp, err := w.openAIClient.CreateTranscription(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	documents := []document.Document{

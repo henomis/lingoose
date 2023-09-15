@@ -15,7 +15,6 @@ type Loader interface {
 }
 
 func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
-
 	docs := []document.Document{}
 	iterator := 0
 	remainigDocs := 0
@@ -33,7 +32,7 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 	}
 
 	summary := pipeline.NewTube(summarizeLLM)
-	preSummaryCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	preSummaryCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		var err error
 		docs, err = loader.Load(ctx)
 		if err != nil {
@@ -49,7 +48,7 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 			"text": docs[iterator].Content,
 		}, nil
 	})
-	postSummaryCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	postSummaryCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		remainigDocs--
 		iterator++
 		if remainigDocs == 0 {
@@ -60,12 +59,12 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 	})
 
 	refine := pipeline.NewTube(refineLLM)
-	preRefineCB := pipeline.PipelineCallback(func(ctx context.Context, input types.M) (types.M, error) {
+	preRefineCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
 		input["text"] = docs[iterator].Content
 		return input, nil
 	})
 
-	postRefineCB := pipeline.PipelineCallback(func(ctx context.Context, output types.M) (types.M, error) {
+	postRefineCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
 		remainigDocs--
 		iterator++
 		if remainigDocs == 0 {
@@ -76,8 +75,8 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 		return output, nil
 	})
 
-	summarizePipeline := pipeline.New(summary, refine).WithPreCallbacks(preSummaryCB, preRefineCB).WithPostCallbacks(postSummaryCB, postRefineCB)
+	summarizePipeline := pipeline.New(summary, refine).
+		WithPreCallbacks(preSummaryCB, preRefineCB).WithPostCallbacks(postSummaryCB, postRefineCB)
 
 	return summarizePipeline
-
 }

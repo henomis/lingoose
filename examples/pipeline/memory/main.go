@@ -32,7 +32,7 @@ func main() {
 		},
 	)
 	llm2 := pipeline.Llm{
-		LlmEngine: &llmmock.JsonLllMock{},
+		LlmEngine: &llmmock.JSONLllMock{},
 		LlmMode:   pipeline.LlmModeCompletion,
 		Prompt:    prompt2,
 	}

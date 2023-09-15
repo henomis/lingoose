@@ -34,7 +34,7 @@ type Index struct {
 	embedder   index.Embedder
 }
 
-type SimpleVectorIndexFilterFn func([]index.SearchResult) []index.SearchResult
+type FilterFn func([]index.SearchResult) []index.SearchResult
 
 func New(name string, outputPath string, embedder index.Embedder) *Index {
 	simpleVectorIndex := &Index{
@@ -50,11 +50,10 @@ func New(name string, outputPath string, embedder index.Embedder) *Index {
 func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
 	err := s.load()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	for i := 0; i < len(documents); i += defaultBatchSize {
-
 		end := i + defaultBatchSize
 		if end > len(documents) {
 			end = len(documents)
@@ -65,24 +64,23 @@ func (s *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 			texts = append(texts, document.Content)
 		}
 
-		embeddings, err := s.embedder.Embed(ctx, texts)
-		if err != nil {
-			return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		embeddings, errEmbed := s.embedder.Embed(ctx, texts)
+		if errEmbed != nil {
+			return fmt.Errorf("%w: %w", index.ErrInternal, errEmbed)
 		}
 
 		for j, document := range documents[i:end] {
-			id, err := uuid.NewUUID()
-			if err != nil {
-				return err
+			id, errUUID := uuid.NewUUID()
+			if errUUID != nil {
+				return errUUID
 			}
 			s.data = append(s.data, buildDataFromEmbeddingAndDocument(id.String(), embeddings[j], document))
 		}
-
 	}
 
 	err = s.save()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return nil
@@ -103,13 +101,12 @@ func buildDataFromEmbeddingAndDocument(
 }
 
 func (s Index) save() error {
-
 	jsonContent, err := json.Marshal(s.data)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(s.database(), jsonContent, 0644)
+	return os.WriteFile(s.database(), jsonContent, 0600)
 }
 
 func (s *Index) load() error {
@@ -134,25 +131,25 @@ func (s *Index) database() string {
 }
 
 func (s *Index) IsEmpty() (bool, error) {
-
 	err := s.load()
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return len(s.data) == 0, nil
 }
 
 func (s *Index) Add(ctx context.Context, item *index.Data) error {
+	_ = ctx
 	err := s.load()
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if item.ID == "" {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return err
+		id, errUUID := uuid.NewUUID()
+		if errUUID != nil {
+			return errUUID
 		}
 		item.ID = id.String()
 	}
@@ -180,14 +177,13 @@ func (s *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 
 	err := s.load()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return s.similaritySearch(ctx, values, sviOptions)
 }
 
 func (s *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
 	sviOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -198,12 +194,12 @@ func (s *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 
 	err := s.load()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	embeddings, err := s.embedder.Embed(ctx, []string{query})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return s.similaritySearch(ctx, embeddings[0], sviOptions)
@@ -214,7 +210,7 @@ func (s *Index) similaritySearch(
 	embedding embedder.Embedding,
 	opts *option.Options,
 ) (index.SearchResults, error) {
-
+	_ = ctx
 	scores := s.cosineSimilarityBatch(embedding)
 
 	searchResults := make([]index.SearchResult, len(scores))
@@ -231,7 +227,7 @@ func (s *Index) similaritySearch(
 	}
 
 	if opts.Filter != nil {
-		searchResults = opts.Filter.(SimpleVectorIndexFilterFn)(searchResults)
+		searchResults = opts.Filter.(FilterFn)(searchResults)
 	}
 
 	return index.FilterSearchResults(searchResults, opts.TopK), nil

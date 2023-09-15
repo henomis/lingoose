@@ -13,34 +13,36 @@ type TextSplitter struct {
 	lengthFunction LenFunction
 }
 
-func (p *TextSplitter) mergeSplits(splits []string, separator string) []string {
-
+//nolint:gocognit
+func (t *TextSplitter) mergeSplits(splits []string, separator string) []string {
 	docs := make([]string, 0)
-	current_doc := make([]string, 0)
+	currentDoc := make([]string, 0)
 	total := 0
 	for _, d := range splits {
-		splitLen := p.lengthFunction(d)
+		splitLen := t.lengthFunction(d)
 
-		if total+splitLen+getSLen(current_doc, separator, 0) > p.chunkSize {
-			if total > p.chunkSize {
-				log.Printf("Created a chunk of size %d, which is longer than the specified %d", total, p.chunkSize)
+		if total+splitLen+getSLen(currentDoc, separator, 0) > t.chunkSize {
+			if total > t.chunkSize {
+				log.Printf("Created a chunk of size %d, which is longer than the specified %d", total, t.chunkSize)
 			}
-			if len(current_doc) > 0 {
-				doc := p.joinDocs(current_doc, separator)
+			if len(currentDoc) > 0 {
+				doc := t.joinDocs(currentDoc, separator)
 				if doc != "" {
 					docs = append(docs, doc)
 				}
-				for (total > p.chunkOverlap) || (getSLen(current_doc, separator, 0) > p.chunkSize) && total > 0 {
-					total -= p.lengthFunction(current_doc[0]) + getSLen(current_doc, separator, 1)
-					current_doc = current_doc[1:]
+				for (total > t.chunkOverlap) || (getSLen(currentDoc, separator, 0) > t.chunkSize) && total > 0 {
+					//nolint:gosec
+					total -= t.lengthFunction(currentDoc[0]) + getSLen(currentDoc, separator, 1)
+					//nolint:gosec
+					currentDoc = currentDoc[1:]
 				}
 			}
 		}
-		current_doc = append(current_doc, d)
-		total += getSLen(current_doc, separator, 1)
+		currentDoc = append(currentDoc, d)
+		total += getSLen(currentDoc, separator, 1)
 		total += splitLen
 	}
-	doc := p.joinDocs(current_doc, separator)
+	doc := t.joinDocs(currentDoc, separator)
 	if doc != "" {
 		docs = append(docs, doc)
 	}
@@ -52,8 +54,8 @@ func (t *TextSplitter) joinDocs(docs []string, separator string) string {
 	return strings.TrimSpace(text)
 }
 
-func getSLen(current_doc []string, separator string, compareLen int) int {
-	if len(current_doc) > compareLen {
+func getSLen(currentDoc []string, separator string, compareLen int) int {
+	if len(currentDoc) > compareLen {
 		return len(separator)
 	}
 

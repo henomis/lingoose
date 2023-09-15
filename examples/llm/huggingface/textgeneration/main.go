@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	llm := huggingface.New("gpt2", 0.1, true).WithMode(huggingface.HuggingFaceModeTextGeneration)
+	llm := huggingface.New("gpt2", 0.1, true).WithMode(huggingface.ModeTextGeneration)
 
 	_, err := llm.Completion(context.Background(), "What is the NATO purpose?")
 	if err != nil {

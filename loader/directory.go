@@ -19,12 +19,10 @@ type DirectoryLoader struct {
 }
 
 func NewDirectoryLoader(dirname string, regExPathMatch string) *DirectoryLoader {
-
 	return &DirectoryLoader{
 		dirname:        dirname,
 		regExPathMatch: regExPathMatch,
 	}
-
 }
 
 func (d *DirectoryLoader) WithTextSplitter(textSplitter TextSplitter) *DirectoryLoader {
@@ -33,7 +31,6 @@ func (d *DirectoryLoader) WithTextSplitter(textSplitter TextSplitter) *Directory
 }
 
 func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := d.validate()
 	if err != nil {
 		return nil, err
@@ -48,10 +45,9 @@ func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error)
 
 	err = filepath.Walk(d.dirname, func(path string, info os.FileInfo, err error) error {
 		if err == nil && regExp.MatchString(info.Name()) {
-
-			d, err := NewTextLoader(path, nil).Load(ctx)
-			if err != nil {
-				return err
+			d, errLoad := NewTextLoader(path, nil).Load(ctx)
+			if errLoad != nil {
+				return errLoad
 			}
 
 			docs = append(docs, d...)
@@ -70,14 +66,13 @@ func (d *DirectoryLoader) Load(ctx context.Context) ([]document.Document, error)
 }
 
 func (d *DirectoryLoader) validate() error {
-
 	fileStat, err := os.Stat(d.dirname)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if !fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil

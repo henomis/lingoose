@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//nolint:lll
 const sqliteDataSourcePromptTemplate = `
 You are a SQLite expert. Given an input question, first create a syntactically correct SQLite query to run, then look at the results of the query and return the answer to the input question.
 Unless the user specifies in the question a specific number of examples to obtain, query for at most {{.top_k}} results using the LIMIT clause as per SQLite. You can order the results to return the most informative data in the database.
@@ -13,12 +14,16 @@ Never query for all columns from a table. You must query only the columns that a
 Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.
 Pay attention to use date('now') function to get the current date, if the question involves "today".`
 
+//nolint:funlen,gocognit
 func getSqliteSchema(db *sql.DB) (string, error) {
-
 	var schema string
 
 	// Retrieve table names
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
+	if err != nil {
+		return "", err
+	}
+	err = rows.Err()
 	if err != nil {
 		return "", err
 	}
@@ -27,14 +32,17 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 	// Loop through tables and retrieve schema
 	for rows.Next() {
 		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return "", err
+		if errScan := rows.Scan(&tableName); errScan != nil {
+			return "", errScan
 		}
 
 		// Retrieve column information
-		cols, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
-		if err != nil {
-			return "", err
+		cols, errQuery := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
+		if errQuery != nil {
+			return "", errQuery
+		}
+		if errRows := cols.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer cols.Close()
 
@@ -51,8 +59,8 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 				defaultVal sql.NullString
 				primaryKey int
 			)
-			if err := cols.Scan(&colNum, &colName, &colType, &notNull, &defaultVal, &primaryKey); err != nil {
-				return "", err
+			if errScan := cols.Scan(&colNum, &colName, &colType, &notNull, &defaultVal, &primaryKey); errScan != nil {
+				return "", errScan
 			}
 
 			// Build column definition
@@ -72,9 +80,12 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 		}
 
 		// Retrieve foreign key information
-		fks, err := db.Query(fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName))
-		if err != nil {
-			return "", err
+		fks, errQuery := db.Query(fmt.Sprintf("PRAGMA foreign_key_list(%s)", tableName))
+		if errQuery != nil {
+			return "", errQuery
+		}
+		if errRows := fks.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer fks.Close()
 
@@ -92,8 +103,8 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 				match         string
 				foreignKeyDef string
 			)
-			if err := fks.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); err != nil {
-				return "", err
+			if errScan := fks.Scan(&id, &seq, &table, &from, &to, &onUpdate, &onDelete, &match); errScan != nil {
+				return "", errScan
 			}
 
 			foreignKeyDef = fmt.Sprintf("  FOREIGN KEY (%s) REFERENCES %s(%s)", from, table, to)
@@ -128,5 +139,4 @@ func getSqliteSchema(db *sql.DB) (string, error) {
 	}
 
 	return schema, nil
-
 }

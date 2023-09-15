@@ -34,7 +34,7 @@ type Cache struct {
 	scoreThreshold float64
 }
 
-type CacheResult struct {
+type Result struct {
 	Answer    []string
 	Embedding []float64
 }
@@ -58,8 +58,7 @@ func (c *Cache) WithScoreThreshold(scoreThreshold float64) *Cache {
 	return c
 }
 
-func (c *Cache) Get(ctx context.Context, query string) (*CacheResult, error) {
-
+func (c *Cache) Get(ctx context.Context, query string) (*Result, error) {
 	embedding, err := c.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func (c *Cache) Get(ctx context.Context, query string) (*CacheResult, error) {
 
 	answers, cacheHit := c.extractResults(results)
 	if cacheHit {
-		return &CacheResult{
+		return &Result{
 			Answer:    answers,
 			Embedding: embedding[0],
 		}, nil

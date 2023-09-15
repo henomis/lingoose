@@ -17,7 +17,6 @@ type Template struct {
 }
 
 func NewPromptTemplate(text string) *Template {
-
 	promptTemplate := &Template{
 		input:    types.M{},
 		template: text,
@@ -33,7 +32,6 @@ func (t *Template) WithInputs(inputs interface{}) *Template {
 
 // Format formats the prompt using the template engine and the provided inputs.
 func (t *Template) Format(input types.M) error {
-
 	err := t.initTemplateEngine()
 	if err != nil {
 		return ErrTemplateEngine
@@ -46,7 +44,7 @@ func (t *Template) Format(input types.M) error {
 
 	input, err = structToMap(input)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrDecoding, err)
+		return fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	overallMap := mergeMaps(t.input.(types.M), input)
@@ -54,7 +52,7 @@ func (t *Template) Format(input types.M) error {
 	var buffer bytes.Buffer
 	err = t.templateEngine.Execute(&buffer, overallMap)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
+		return fmt.Errorf("%w: %w", ErrTemplateEngine, err)
 	}
 
 	t.value = buffer.String()
@@ -62,22 +60,21 @@ func (t *Template) Format(input types.M) error {
 	return nil
 }
 
-func (p *Template) String() string {
-	return p.value
+func (t *Template) String() string {
+	return t.value
 }
 
-func (p *Template) initTemplateEngine() error {
-
-	if p.templateEngine != nil {
+func (t *Template) initTemplateEngine() error {
+	if t.templateEngine != nil {
 		return nil
 	}
 
-	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(p.template)
+	templateEngine, err := texttemplate.New("prompt").Option("missingkey=zero").Parse(t.template)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrTemplateEngine, err)
+		return fmt.Errorf("%w: %w", ErrTemplateEngine, err)
 	}
 
-	p.templateEngine = templateEngine
+	t.templateEngine = templateEngine
 
 	return nil
 }

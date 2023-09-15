@@ -46,7 +46,6 @@ func (l *TesseractLoader) WithArgs(tesseractArgs []string) *TesseractLoader {
 }
 
 func (l *TesseractLoader) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(l.tesseractPath)
 	if err != nil {
 		return nil, ErrTesseractNotFound
@@ -70,10 +69,10 @@ func (l *TesseractLoader) Load(ctx context.Context) ([]document.Document, error)
 }
 
 func (l *TesseractLoader) loadFile(ctx context.Context) ([]document.Document, error) {
-
 	tesseractArgs := []string{l.filename, "stdout"}
 	tesseractArgs = append(tesseractArgs, l.tesseractArgs...)
 
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, l.tesseractPath, tesseractArgs...).Output()
 	if err != nil {
 		return nil, err

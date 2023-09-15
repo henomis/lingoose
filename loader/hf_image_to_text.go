@@ -56,21 +56,20 @@ func (h *HFImageToText) WithTextSplitter(textSplitter TextSplitter) *HFImageToTe
 }
 
 func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
-
 	err := isFile(h.mediaFile)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
-	responseBytes, err := hfMediaHttpCall(ctx, h.token, h.model, h.mediaFile)
+	responseBytes, err := hfMediaHTTPCall(ctx, h.token, h.model, h.mediaFile)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	responses := []*hfImageToTextResponse{}
 	err = json.Unmarshal(responseBytes, &responses)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	var documents []document.Document
@@ -96,7 +95,7 @@ func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
-func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
+func hfMediaHTTPCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {
 	buf, err := os.ReadFile(mediaFile)
 	if err != nil {
 		return nil, err
@@ -123,7 +122,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 		return nil, err
 	}
 
-	err = hfCheckHttpResponse(respBody)
+	err = hfCheckHTTPResponse(respBody)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +130,7 @@ func hfMediaHttpCall(ctx context.Context, token, model, mediaFile string) ([]byt
 	return respBody, nil
 }
 
-func hfCheckHttpResponse(respJSON []byte) error {
-
+func hfCheckHTTPResponse(respJSON []byte) error {
 	type apiError struct {
 		Error string `json:"error,omitempty"`
 	}
@@ -147,6 +145,7 @@ func hfCheckHttpResponse(respJSON []byte) error {
 		apiErr := apiError{}
 		err := json.Unmarshal(buf, &apiErr)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErr.Error != "" {
@@ -160,6 +159,7 @@ func hfCheckHttpResponse(respJSON []byte) error {
 		apiErrs := apiErrors{}
 		err := json.Unmarshal(buf, &apiErrs)
 		if err != nil {
+			//nolint:nilerr
 			return nil
 		}
 		if apiErrs.Errors != nil {

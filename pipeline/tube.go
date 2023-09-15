@@ -49,72 +49,70 @@ func (t *Tube) WithDecoder(decoder Decoder) *Tube {
 // Run execute the step and return the output.
 // The prompt is formatted with the input and the output of the prompt is used as input for the LLM.
 // If the step has a memory, the output is stored in the memory.
-func (s *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
-
+func (t *Tube) Run(ctx context.Context, input types.M) (types.M, error) {
 	if input == nil {
 		input = types.M{}
 	}
 
 	input, err := structToMap(input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
-	if s.memory != nil {
-		input = mergeMaps(input, s.memory.All())
+	if t.memory != nil {
+		input = mergeMaps(input, t.memory.All())
 	}
 
-	response, err := s.executeLLM(ctx, input)
+	response, err := t.executeLLM(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrLLMExecution, err)
+		return nil, fmt.Errorf("%w: %w", ErrLLMExecution, err)
 	}
 
-	decodedOutput, err := s.decoder.Decode(response)
+	decodedOutput, err := t.decoder.Decode(response)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
-	if s.memory != nil {
-		err = s.memory.Set(s.namespace, decodedOutput)
+	if t.memory != nil {
+		err = t.memory.Set(t.namespace, decodedOutput)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return decodedOutput, nil
-
 }
 
-func (s *Tube) executeLLM(ctx context.Context, input types.M) (string, error) {
-	if s.llm.LlmMode == LlmModeCompletion {
-		return s.executeLLMCompletion(ctx, input)
-	} else if s.llm.LlmMode == LlmModeChat {
-		return s.executeLLMChat(ctx, input)
+func (t *Tube) executeLLM(ctx context.Context, input types.M) (string, error) {
+	if t.llm.LlmMode == LlmModeCompletion {
+		return t.executeLLMCompletion(ctx, input)
+	} else if t.llm.LlmMode == LlmModeChat {
+		return t.executeLLMChat(ctx, input)
 	}
 
 	return "", ErrInvalidLmmMode
 }
 
-func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {
-	err := s.llm.Prompt.Format(input)
+func (t *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string, error) {
+	err := t.llm.Prompt.Format(input)
 	if err != nil {
 		return "", err
 	}
 
-	if s.history != nil {
-		err = s.history.Add(s.llm.Prompt.String(), nil)
+	if t.history != nil {
+		err = t.history.Add(t.llm.Prompt.String(), nil)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	response, err := s.llm.LlmEngine.Completion(ctx, s.llm.Prompt.String())
+	response, err := t.llm.LlmEngine.Completion(ctx, t.llm.Prompt.String())
 	if err != nil {
 		return "", err
 	}
 
-	if s.history != nil {
-		err = s.history.Add(response, nil)
+	if t.history != nil {
+		err = t.history.Add(response, nil)
 		if err != nil {
 			return "", err
 		}
@@ -123,16 +121,15 @@ func (s *Tube) executeLLMCompletion(ctx context.Context, input types.M) (string,
 	return response, nil
 }
 
-func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error) {
-
-	for _, promptMessage := range s.llm.Chat.PromptMessages() {
+func (t *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error) {
+	for _, promptMessage := range t.llm.Chat.PromptMessages() {
 		err := promptMessage.Prompt.Format(input)
 		if err != nil {
 			return "", err
 		}
 
-		if s.history != nil {
-			err = s.history.Add(
+		if t.history != nil {
+			err = t.history.Add(
 				promptMessage.Prompt.String(),
 				types.Meta{
 					"role": promptMessage.Type,
@@ -144,13 +141,13 @@ func (s *Tube) executeLLMChat(ctx context.Context, input types.M) (string, error
 		}
 	}
 
-	response, err := s.llm.LlmEngine.Chat(ctx, s.llm.Chat)
+	response, err := t.llm.LlmEngine.Chat(ctx, t.llm.Chat)
 	if err != nil {
 		return "", err
 	}
 
-	if s.history != nil {
-		err = s.history.Add(
+	if t.history != nil {
+		err = t.history.Add(
 			response,
 			types.Meta{
 				"role": chat.MessageTypeAssistant,
@@ -179,7 +176,7 @@ func structToMap(obj interface{}) (types.M, error) {
 	genericMap := types.M{}
 	err := mapstructure.Decode(obj, &genericMap)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	return genericMap, nil

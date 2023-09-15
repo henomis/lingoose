@@ -52,7 +52,6 @@ type Options struct {
 }
 
 func New(options Options, embedder index.Embedder) *Index {
-
 	apiKey := os.Getenv("QDRANT_API_KEY")
 	endpoint := os.Getenv("QDRANT_ENDPOINT")
 
@@ -79,52 +78,49 @@ func (q *Index) WithAPIKeyAndEdpoint(apiKey, endpoint string) *Index {
 }
 
 func (q *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
-
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	err = q.batchUpsert(ctx, documents)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 	return nil
 }
 
-func (p *Index) IsEmpty(ctx context.Context) (bool, error) {
-
-	err := p.createCollectionIfRequired(ctx)
+func (q *Index) IsEmpty(ctx context.Context) (bool, error) {
+	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	res := &qdrantresponse.CollectionCollectInfo{}
-	err = p.qdrantClient.CollectionCollectInfo(
+	err = q.qdrantClient.CollectionCollectInfo(
 		ctx,
 		&qdrantrequest.CollectionCollectInfo{
-			CollectionName: p.collectionName,
+			CollectionName: q.collectionName,
 		},
 		res,
 	)
 	if err != nil {
-		return true, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return res.Result.VectorsCount == 0, nil
-
 }
 
 func (q *Index) Add(ctx context.Context, item *index.Data) error {
 	err := q.createCollectionIfRequired(ctx)
 	if err != nil {
-		return fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if item.ID == "" {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return err
+		id, errUUID := uuid.NewUUID()
+		if errUUID != nil {
+			return errUUID
 		}
 		item.ID = id.String()
 	}
@@ -151,7 +147,7 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 
 	matches, err := q.similaritySearch(ctx, values, qdrantOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
@@ -160,7 +156,6 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 }
 
 func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
-
 	qdrantOptions := &option.Options{
 		TopK: defaultTopK,
 	}
@@ -171,7 +166,7 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 
 	matches, err := q.query(ctx, query, qdrantOptions)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", index.ErrInternal, err)
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
@@ -179,8 +174,11 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
 }
 
-func (q *Index) similaritySearch(ctx context.Context, values []float64, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
-
+func (q *Index) similaritySearch(
+	ctx context.Context,
+	values []float64,
+	opts *option.Options,
+) ([]qdrantresponse.PointSearchResult, error) {
 	if opts.Filter == nil {
 		opts.Filter = qdrantrequest.Filter{}
 	}
@@ -205,7 +203,11 @@ func (q *Index) similaritySearch(ctx context.Context, values []float64, opts *op
 	return res.Result, nil
 }
 
-func (q *Index) query(ctx context.Context, query string, opts *option.Options) ([]qdrantresponse.PointSearchResult, error) {
+func (q *Index) query(
+	ctx context.Context,
+	query string,
+	opts *option.Options,
+) ([]qdrantresponse.PointSearchResult, error) {
 	embeddings, err := q.embedder.Embed(ctx, []string{query})
 	if err != nil {
 		return nil, err
@@ -215,7 +217,6 @@ func (q *Index) query(ctx context.Context, query string, opts *option.Options) (
 }
 
 func (q *Index) createCollectionIfRequired(ctx context.Context) error {
-
 	if q.createCollection == nil {
 		return nil
 	}
@@ -250,9 +251,7 @@ func (q *Index) createCollectionIfRequired(ctx context.Context) error {
 }
 
 func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
-
 	for i := 0; i < len(documents); i += q.batchUpsertSize {
-
 		batchEnd := i + q.batchUpsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
@@ -283,7 +282,6 @@ func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 }
 
 func (q *Index) pointUpsert(ctx context.Context, points []qdrantrequest.Point) error {
-
 	wait := true
 	req := &qdrantrequest.PointUpsert{
 		Wait:           &wait,
@@ -306,11 +304,9 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 	startIndex int,
 	includeContent bool,
 ) ([]qdrantrequest.Point, error) {
-
 	var vectors []qdrantrequest.Point
 
 	for i, embedding := range embeddings {
-
 		metadata := index.DeepCopyMetadata(documents[startIndex+i].Metadata)
 
 		// inject document content into vector metadata
@@ -336,11 +332,13 @@ func buildQdrantPointsFromEmbeddingsAndDocuments(
 	return vectors, nil
 }
 
-func buildSearchResultsFromQdrantMatches(matches []qdrantresponse.PointSearchResult, includeContent bool) index.SearchResults {
+func buildSearchResultsFromQdrantMatches(
+	matches []qdrantresponse.PointSearchResult,
+	includeContent bool,
+) index.SearchResults {
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
-
 		metadata := index.DeepCopyMetadata(match.Payload)
 		if !includeContent {
 			delete(metadata, index.DefaultKeyContent)

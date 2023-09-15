@@ -35,16 +35,15 @@ type Pipe interface {
 	Run(ctx context.Context, input types.M) (types.M, error)
 }
 
-type PipelineCallback func(ctx context.Context, values types.M) (types.M, error)
+type Callback func(ctx context.Context, values types.M) (types.M, error)
 
 type Pipeline struct {
 	pipes         map[int]Pipe
-	preCallbacks  map[int]PipelineCallback
-	postCallbacks map[int]PipelineCallback
+	preCallbacks  map[int]Callback
+	postCallbacks map[int]Callback
 }
 
 func New(pipes ...Pipe) *Pipeline {
-
 	pipesMap := make(map[int]Pipe)
 	for i, pipe := range pipes {
 		pipesMap[i] = pipe
@@ -55,9 +54,8 @@ func New(pipes ...Pipe) *Pipeline {
 	}
 }
 
-func (p *Pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *Pipeline {
-
-	p.preCallbacks = make(map[int]PipelineCallback)
+func (p *Pipeline) WithPreCallbacks(callbacks ...Callback) *Pipeline {
+	p.preCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.preCallbacks[i] = callback
 	}
@@ -65,9 +63,8 @@ func (p *Pipeline) WithPreCallbacks(callbacks ...PipelineCallback) *Pipeline {
 	return p
 }
 
-func (p *Pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *Pipeline {
-
-	p.postCallbacks = make(map[int]PipelineCallback)
+func (p *Pipeline) WithPostCallbacks(callbacks ...Callback) *Pipeline {
+	p.postCallbacks = make(map[int]Callback)
 	for i, callback := range callbacks {
 		p.postCallbacks[i] = callback
 	}
@@ -76,6 +73,8 @@ func (p *Pipeline) WithPostCallbacks(callbacks ...PipelineCallback) *Pipeline {
 }
 
 // Run chains the steps of the pipeline and returns the output of the last step.
+//
+//nolint:gocognit
 func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	var err error
 	currentTube := 0
@@ -87,7 +86,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 	output := input
 
 	for {
-
 		if p.thereIsAValidPreCallbackForTube(currentTube) {
 			output, err = p.preCallbacks[currentTube](ctx, output)
 			if err != nil {
@@ -114,7 +112,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 				currentTube = *nextTube
 				continue
 			}
-
 		}
 
 		currentTube++
@@ -122,7 +119,6 @@ func (p Pipeline) Run(ctx context.Context, input types.M) (types.M, error) {
 		if currentTube == len(p.pipes) {
 			break
 		}
-
 	}
 
 	return output, nil
@@ -149,7 +145,6 @@ func (p *Pipeline) thereIsAValidPostCallbackForTube(currentTube int) bool {
 }
 
 func (p *Pipeline) getNextTube(output types.M) *int {
-
 	nextTube, ok := output[NextTubeKey]
 	if !ok {
 		return nil
@@ -161,5 +156,4 @@ func (p *Pipeline) getNextTube(output types.M) *int {
 	}
 
 	return nil
-
 }

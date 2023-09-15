@@ -38,7 +38,6 @@ type conversation struct {
 }
 
 func (h *HuggingFace) conversationalCompletion(ctx context.Context, prompt string) (string, error) {
-
 	isTrue := true
 	request := conversationalRequest{
 		Inputs: conversationalInputs{

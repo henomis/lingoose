@@ -2,6 +2,7 @@ package huggingface
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,19 +10,19 @@ import (
 
 const APIBaseURL = "https://api-inference.huggingface.co/models/"
 
-const (
-	ErrHuggingFaceCompletion = "huggingface completion error"
+var (
+	ErrHuggingFaceCompletion = errors.New("huggingface completion error")
 )
 
-type HuggingFaceMode int
+type Mode int
 
 const (
-	HuggingFaceModeCoversational HuggingFaceMode = iota
-	HuggingFaceModeTextGeneration
+	ModeCoversational Mode = iota
+	ModeTextGeneration
 )
 
 type HuggingFace struct {
-	mode        HuggingFaceMode
+	mode        Mode
 	token       string
 	model       string
 	temperature float32
@@ -35,7 +36,7 @@ type HuggingFace struct {
 
 func New(model string, temperature float32, verbose bool) *HuggingFace {
 	return &HuggingFace{
-		mode:        HuggingFaceModeCoversational,
+		mode:        ModeCoversational,
 		token:       os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 		model:       model,
 		temperature: temperature,
@@ -93,7 +94,7 @@ func (h *HuggingFace) WithTopP(topP float32) *HuggingFace {
 }
 
 // WithMode sets the mode to use for the LLM
-func (h *HuggingFace) WithMode(mode HuggingFaceMode) *HuggingFace {
+func (h *HuggingFace) WithMode(mode Mode) *HuggingFace {
 	h.mode = mode
 	return h
 }
@@ -106,24 +107,23 @@ func (h *HuggingFace) WithHTTPClient(httpClient *http.Client) *HuggingFace {
 
 // Completion returns the completion for the given prompt
 func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, error) {
-
 	var output string
 	var outputs []string
 	var err error
 	switch h.mode {
-	case HuggingFaceModeTextGeneration:
+	case ModeTextGeneration:
 		outputs, err = h.textgenerationCompletion(ctx, []string{prompt})
 		if err == nil {
 			output = outputs[0]
 		}
-	case HuggingFaceModeCoversational:
+	case ModeCoversational:
 		fallthrough
 	default:
 		output, err = h.conversationalCompletion(ctx, prompt)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", ErrHuggingFaceCompletion, err)
+		return "", fmt.Errorf("%w: %w", ErrHuggingFaceCompletion, err)
 	}
 
 	return output, nil
@@ -131,20 +131,19 @@ func (h *HuggingFace) Completion(ctx context.Context, prompt string) (string, er
 
 // BatchCompletion returns the completion for the given prompts
 func (h *HuggingFace) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
-
 	var outputs []string
 	var err error
 	switch h.mode {
-	case HuggingFaceModeTextGeneration:
+	case ModeTextGeneration:
 		outputs, err = h.textgenerationCompletion(ctx, prompts)
-	case HuggingFaceModeCoversational:
+	case ModeCoversational:
 		fallthrough
 	default:
 		return nil, fmt.Errorf("batch completion not supported for conversational mode")
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrHuggingFaceCompletion, err)
+		return nil, fmt.Errorf("%w: %w", ErrHuggingFaceCompletion, err)
 	}
 
 	return outputs, nil

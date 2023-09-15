@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultSeparators     []string    = []string{"\n\n", "\n", " ", ""}
+	defaultSeparators                 = []string{"\n\n", "\n", " ", ""}
 	defaultLengthFunction LenFunction = func(s string) int { return len(s) }
 )
 
@@ -33,19 +33,19 @@ func (r *RecursiveCharacterTextSplitter) WithSeparators(separators []string) *Re
 	return r
 }
 
-func (r *RecursiveCharacterTextSplitter) WithLengthFunction(lengthFunction LenFunction) *RecursiveCharacterTextSplitter {
+func (r *RecursiveCharacterTextSplitter) WithLengthFunction(
+	lengthFunction LenFunction,
+) *RecursiveCharacterTextSplitter {
 	r.lengthFunction = lengthFunction
 	return r
 }
 
 // AI-translated from https://github.com/hwchase17/langchain/blob/master/langchain/text_splitter.py
 func (r *RecursiveCharacterTextSplitter) SplitDocuments(documents []document.Document) []document.Document {
-
 	docs := make([]document.Document, 0)
 
 	for i, doc := range documents {
 		for _, chunk := range r.SplitText(doc.Content) {
-
 			metadata := make(types.Meta)
 			for k, v := range documents[i].Metadata {
 				metadata[k] = v

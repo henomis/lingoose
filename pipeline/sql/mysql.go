@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+//nolint:lll
 const mysqlDataSourcePromptTemplate = "\n" +
 	"You are a MySQL expert. Given an input question, first create a syntactically correct MySQL query to run, then look at the results of the query and return the answer to the input question.\n" +
 	"Unless the user specifies in the question a specific number of examples to obtain, query for at most {top_k} results using the LIMIT clause as per MySQL. You can order the results to return the most informative data in the database.\n" +
@@ -13,11 +14,17 @@ const mysqlDataSourcePromptTemplate = "\n" +
 	"Pay attention to use only the column names you can see in the tables below. Be careful to not query for columns that do not exist. Also, pay attention to which column is in which table.\n" +
 	"Pay attention to use CURDATE() function to get the current date, if the question involves \"today\"."
 
+//nolint:funlen,gocognit
 func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 	var schema string
 
 	// Retrieve table names
+	//nolint:lll
 	rows, err := db.Query(fmt.Sprintf("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'", dbName))
+	if err != nil {
+		return "", err
+	}
+	err = rows.Err()
 	if err != nil {
 		return "", err
 	}
@@ -26,14 +33,17 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 	// Loop through tables and retrieve schema
 	for rows.Next() {
 		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
-			return "", err
+		if errQuery := rows.Scan(&tableName); errQuery != nil {
+			return "", errQuery
 		}
 
 		// Retrieve column information
-		cols, err := db.Query(fmt.Sprintf("SHOW COLUMNS FROM %s", tableName))
-		if err != nil {
-			return "", err
+		cols, errQuery := db.Query(fmt.Sprintf("SHOW COLUMNS FROM %s", tableName))
+		if errQuery != nil {
+			return "", errQuery
+		}
+		if errRows := cols.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer cols.Close()
 
@@ -50,8 +60,8 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 				def   sql.NullString
 				extra sql.NullString
 			)
-			if err := cols.Scan(&field, &typ, &null, &key, &def, &extra); err != nil {
-				return "", err
+			if errScan := cols.Scan(&field, &typ, &null, &key, &def, &extra); errScan != nil {
+				return "", errScan
 			}
 
 			// Build column definition
@@ -79,9 +89,13 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 		}
 
 		// Retrieve foreign key information
-		fks, err := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
-		if err != nil {
-			return "", err
+		//nolint:lll
+		fks, errQuery := db.Query(fmt.Sprintf("SELECT constraint_name, column_name, referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_schema = '%s' AND table_name = '%s' AND referenced_table_name IS NOT NULL", dbName, tableName))
+		if errQuery != nil {
+			return "", errQuery
+		}
+		if errRows := fks.Err(); errRows != nil {
+			return "", errRows
 		}
 		defer fks.Close()
 
@@ -94,11 +108,12 @@ func getMySQLSchema(db *sql.DB, dbName string) (string, error) {
 				referencedTableName  string
 				referencedColumnName string
 			)
-			if err := fks.Scan(&constraintName, &columnName, &referencedTableName, &referencedColumnName); err != nil {
-				return "", err
+			if errScan := fks.Scan(&constraintName, &columnName, &referencedTableName, &referencedColumnName); errScan != nil {
+				return "", errScan
 			}
 
-			fkDef := fmt.Sprintf("  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)", constraintName, columnName, referencedTableName, referencedColumnName)
+			fkDef := fmt.Sprintf("  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)",
+				constraintName, columnName, referencedTableName, referencedColumnName)
 			fkDefs = append(fkDefs, fkDef)
 		}
 

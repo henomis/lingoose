@@ -3,6 +3,7 @@ package loader
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -36,13 +37,14 @@ func (c *CSVLoader) WithSeparator(separator rune) *CSVLoader {
 	return c
 }
 
-func (t *CSVLoader) WithTextSplitter(textSplitter TextSplitter) *CSVLoader {
+//nolint:revive
+func (c *CSVLoader) WithTextSplitter(textSplitter TextSplitter) *CSVLoader {
 	// can't split csv
-	return t
+	return c
 }
 
 func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
-
+	_ = ctx
 	err := c.validate()
 	if err != nil {
 		return nil, err
@@ -50,21 +52,20 @@ func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	documents, err := c.readCSV()
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrorInternal, err)
+		return nil, fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	return documents, nil
 }
 
 func (c *CSVLoader) validate() error {
-
 	fileStat, err := os.Stat(c.filename)
 	if err != nil {
-		return fmt.Errorf("%s: %w", ErrorInternal, err)
+		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 
 	if fileStat.IsDir() {
-		return fmt.Errorf("%s: %w", ErrorInternal, os.ErrNotExist)
+		return fmt.Errorf("%w: %w", ErrInternal, os.ErrNotExist)
 	}
 
 	return nil
@@ -85,16 +86,15 @@ func (c *CSVLoader) readCSV() ([]document.Document, error) {
 	var titles []string
 
 	for {
-		record, err := reader.Read()
-		if err == io.EOF {
+		record, errRead := reader.Read()
+		if errors.Is(errRead, io.EOF) {
 			break
 		}
-		if err != nil {
-			return nil, err
+		if errRead != nil {
+			return nil, errRead
 		}
 
 		if titles == nil {
-
 			titles = make([]string, len(record))
 			for i, r := range record {
 				titles[i] = strings.ReplaceAll(r, "\"", "")

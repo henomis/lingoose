@@ -25,7 +25,7 @@ func NewJSONDecoder() *JSONDecoder {
 func (d *JSONDecoder) Decode(input string) (types.M, error) {
 	err := json.Unmarshal([]byte(input), &d.output)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	return types.M{
@@ -47,7 +47,7 @@ func NewRegExDecoder(regex string) *RegExDecoder {
 func (d *RegExDecoder) Decode(input string) (types.M, error) {
 	re, err := regexp.Compile(d.regex)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", ErrDecoding, err)
+		return nil, fmt.Errorf("%w: %w", ErrDecoding, err)
 	}
 
 	matches := re.FindStringSubmatch(input)

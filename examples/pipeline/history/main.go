@@ -15,7 +15,7 @@ import (
 
 func main() {
 
-	history := history.NewHistoryRam()
+	history := history.NewHistoryRAM()
 
 	llmChatOpenAI := openai.NewChat()
 

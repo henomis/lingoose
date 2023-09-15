@@ -67,15 +67,20 @@ func (l *Llamacpp) WithArgs(llamacppArgs []string) *Llamacpp {
 }
 
 func (l *Llamacpp) Completion(ctx context.Context, prompt string) (string, error) {
-
 	_, err := os.Stat(l.llamacppPath)
 	if err != nil {
 		return "", err
 	}
 
-	llamacppArgs := []string{"-m", l.modelPath, "-p", prompt, "-n", fmt.Sprintf("%d", l.maxTokens), "--temp", fmt.Sprintf("%.2f", l.temperature)}
+	llamacppArgs := []string{
+		"-m", l.modelPath,
+		"-p", prompt,
+		"-n", fmt.Sprintf("%d", l.maxTokens),
+		"--temp", fmt.Sprintf("%.2f", l.temperature),
+	}
 	llamacppArgs = append(llamacppArgs, l.llamacppArgs...)
 
+	//nolint:gosec
 	out, err := exec.CommandContext(ctx, l.llamacppPath, llamacppArgs...).Output()
 	if err != nil {
 		return "", err
@@ -90,5 +95,7 @@ func (l *Llamacpp) Completion(ctx context.Context, prompt string) (string, error
 }
 
 func (l *Llamacpp) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+	_ = ctx
+	_ = prompt
 	return "", fmt.Errorf("not implemented")
 }
