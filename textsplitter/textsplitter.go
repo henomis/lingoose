@@ -31,7 +31,9 @@ func (t *TextSplitter) mergeSplits(splits []string, separator string) []string {
 					docs = append(docs, doc)
 				}
 				for (total > t.chunkOverlap) || (getSLen(currentDoc, separator, 0) > t.chunkSize) && total > 0 {
+					//nolint:gosec
 					total -= t.lengthFunction(currentDoc[0]) + getSLen(currentDoc, separator, 1)
+					//nolint:gosec
 					currentDoc = currentDoc[1:]
 				}
 			}
