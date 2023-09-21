@@ -3,9 +3,11 @@ package simplevectorindex
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -211,7 +213,10 @@ func (s *Index) similaritySearch(
 	opts *option.Options,
 ) (index.SearchResults, error) {
 	_ = ctx
-	scores := s.cosineSimilarityBatch(embedding)
+	scores, err := s.cosineSimilarityBatch(embedding)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
 
 	searchResults := make([]index.SearchResult, len(scores))
 
@@ -230,33 +235,64 @@ func (s *Index) similaritySearch(
 		searchResults = opts.Filter.(FilterFn)(searchResults)
 	}
 
-	return index.FilterSearchResults(searchResults, opts.TopK), nil
+	return filterSearchResults(searchResults, opts.TopK), nil
 }
 
-func (s *Index) cosineSimilarity(a embedder.Embedding, b embedder.Embedding) float64 {
-	dotProduct := float64(0.0)
-	normA := float64(0.0)
-	normB := float64(0.0)
-
-	for i := 0; i < len(a); i++ {
-		dotProduct += a[i] * b[i]
-		normA += a[i] * a[i]
-		normB += b[i] * b[i]
+func (s *Index) cosineSimilarity(a []float64, b []float64) (cosine float64, err error) {
+	var count int
+	lengthA := len(a)
+	lengthB := len(b)
+	if lengthA > lengthB {
+		count = lengthA
+	} else {
+		count = lengthB
 	}
-
-	if normA == 0 || normB == 0 {
-		return float64(0.0)
+	sumA := 0.0
+	s1 := 0.0
+	s2 := 0.0
+	for k := 0; k < count; k++ {
+		if k >= lengthA {
+			s2 += math.Pow(b[k], 2)
+			continue
+		}
+		if k >= lengthB {
+			s1 += math.Pow(a[k], 2)
+			continue
+		}
+		sumA += a[k] * b[k]
+		s1 += math.Pow(a[k], 2)
+		s2 += math.Pow(b[k], 2)
 	}
-
-	return dotProduct / (math.Sqrt(normA) * math.Sqrt(normB))
+	if s1 == 0 || s2 == 0 {
+		return 0.0, errors.New("vectors should not be null (all zeros)")
+	}
+	return sumA / (math.Sqrt(s1) * math.Sqrt(s2)), nil
 }
 
-func (s *Index) cosineSimilarityBatch(a embedder.Embedding) []float64 {
+func (s *Index) cosineSimilarityBatch(a embedder.Embedding) ([]float64, error) {
+	var err error
 	scores := make([]float64, len(s.data))
 
 	for i := range s.data {
-		scores[i] = s.cosineSimilarity(a, s.data[i].Values)
+		scores[i], err = s.cosineSimilarity(a, s.data[i].Values)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return scores
+	return scores, nil
+}
+
+func filterSearchResults(searchResults index.SearchResults, topK int) index.SearchResults {
+	//sort by similarity score
+	sort.Slice(searchResults, func(i, j int) bool {
+		return (1 - searchResults[i].Score) < (1 - searchResults[j].Score)
+	})
+
+	maxTopK := topK
+	if maxTopK > len(searchResults) {
+		maxTopK = len(searchResults)
+	}
+
+	return searchResults[:maxTopK]
 }

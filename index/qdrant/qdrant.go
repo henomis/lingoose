@@ -25,6 +25,7 @@ type Index struct {
 	collectionName  string
 	embedder        index.Embedder
 	includeContent  bool
+	includeValues   bool
 	batchUpsertSize int
 
 	createCollection *CreateCollectionOptions
@@ -47,6 +48,7 @@ type CreateCollectionOptions struct {
 type Options struct {
 	CollectionName   string
 	IncludeContent   bool
+	IncludeValues    bool
 	BatchUpsertSize  *int
 	CreateCollection *CreateCollectionOptions
 }
@@ -67,6 +69,7 @@ func New(options Options, embedder index.Embedder) *Index {
 		collectionName:   options.CollectionName,
 		embedder:         embedder,
 		includeContent:   options.IncludeContent,
+		includeValues:    options.IncludeValues,
 		batchUpsertSize:  batchUpsertSize,
 		createCollection: options.CreateCollection,
 	}
@@ -150,9 +153,7 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
-
-	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
+	return buildSearchResultsFromQdrantMatches(matches, q.includeContent), nil
 }
 
 func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
@@ -169,9 +170,7 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
-
-	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
+	return buildSearchResultsFromQdrantMatches(matches, q.includeContent), nil
 }
 
 func (q *Index) similaritySearch(
@@ -192,6 +191,7 @@ func (q *Index) similaritySearch(
 			Limit:          opts.TopK,
 			Vector:         values,
 			WithPayload:    &includeMetadata,
+			WithVector:     &q.includeValues,
 			Filter:         opts.Filter.(qdrantrequest.Filter),
 		},
 		res,

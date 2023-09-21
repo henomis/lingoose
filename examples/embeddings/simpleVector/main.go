@@ -30,7 +30,7 @@ func main() {
 		}
 	}
 
-	query := "Describe within a paragraph what is the purpose of the NATO Alliance."
+	query := "What is the purpose of the NATO Alliance?"
 	similarities, err := docsVectorIndex.Query(
 		context.Background(),
 		query,
@@ -83,7 +83,7 @@ func ingestData(docsVectorIndex *simplevectorindex.Index, openaiEmbedder index.E
 		return err
 	}
 
-	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(2000, 100)
+	textSplitter := textsplitter.NewRecursiveCharacterTextSplitter(1000, 20)
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 

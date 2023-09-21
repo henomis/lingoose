@@ -3,7 +3,6 @@ package index
 import (
 	"context"
 	"errors"
-	"sort"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
@@ -56,20 +55,6 @@ func (s SearchResults) ToDocuments() []document.Document {
 
 type Embedder interface {
 	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
-}
-
-func FilterSearchResults(searchResults SearchResults, topK int) SearchResults {
-	//sort by similarity score
-	sort.Slice(searchResults, func(i, j int) bool {
-		return searchResults[i].Score > searchResults[j].Score
-	})
-
-	maxTopK := topK
-	if maxTopK > len(searchResults) {
-		maxTopK = len(searchResults)
-	}
-
-	return searchResults[:maxTopK]
 }
 
 func DeepCopyMetadata(metadata types.Meta) types.Meta {

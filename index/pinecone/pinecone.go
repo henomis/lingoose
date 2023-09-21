@@ -28,6 +28,7 @@ type Index struct {
 	namespace       string
 	embedder        index.Embedder
 	includeContent  bool
+	includeValues   bool
 	batchUpsertSize int
 
 	createIndex *CreateIndexOptions
@@ -44,6 +45,7 @@ type Options struct {
 	IndexName       string
 	Namespace       string
 	IncludeContent  bool
+	IncludeValues   bool
 	BatchUpsertSize *int
 	CreateIndex     *CreateIndexOptions
 }
@@ -65,6 +67,7 @@ func New(options Options, embedder index.Embedder) *Index {
 		embedder:        embedder,
 		namespace:       options.Namespace,
 		includeContent:  options.IncludeContent,
+		includeValues:   options.IncludeValues,
 		batchUpsertSize: batchUpsertSize,
 		createIndex:     options.CreateIndex,
 	}
@@ -165,9 +168,7 @@ func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
-
-	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
+	return buildSearchResultsFromPineconeMatches(matches, p.includeContent), nil
 }
 
 func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
@@ -188,9 +189,7 @@ func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
-
-	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
+	return buildSearchResultsFromPineconeMatches(matches, p.includeContent), nil
 }
 
 func (p *Index) query(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
@@ -222,6 +221,7 @@ func (p *Index) similaritySearch(
 			TopK:            int32(opts.TopK),
 			Vector:          values,
 			IncludeMetadata: &includeMetadata,
+			IncludeValues:   &p.includeValues,
 			Namespace:       &p.namespace,
 			Filter:          opts.Filter.(map[string]string),
 		},
