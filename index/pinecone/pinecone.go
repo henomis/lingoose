@@ -165,9 +165,7 @@ func (p *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
-
-	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
+	return buildSearchResultsFromPineconeMatches(matches, p.includeContent), nil
 }
 
 func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
@@ -188,9 +186,7 @@ func (p *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromPineconeMatches(matches, p.includeContent)
-
-	return index.FilterSearchResults(searchResults, pineconeOptions.TopK), nil
+	return buildSearchResultsFromPineconeMatches(matches, p.includeContent), nil
 }
 
 func (p *Index) query(ctx context.Context, query string, opts *option.Options) ([]pineconeresponse.QueryMatch, error) {
