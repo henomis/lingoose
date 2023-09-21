@@ -150,9 +150,7 @@ func (q *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
-
-	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
+	return buildSearchResultsFromQdrantMatches(matches, q.includeContent), nil
 }
 
 func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) (index.SearchResults, error) {
@@ -169,9 +167,7 @@ func (q *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	searchResults := buildSearchResultsFromQdrantMatches(matches, q.includeContent)
-
-	return index.FilterSearchResults(searchResults, qdrantOptions.TopK), nil
+	return buildSearchResultsFromQdrantMatches(matches, q.includeContent), nil
 }
 
 func (q *Index) similaritySearch(
