@@ -344,7 +344,10 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	o.finishReason = string(response.Choices[0].FinishReason)
 	o.calledFunctionName = nil
-	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
+	if len(o.functions) > 0 &&
+		(response.Choices[0].FinishReason == "function_call" ||
+			// in case the function was explicitly called, finish reason may be "stop"
+			(response.Choices[0].FinishReason == "stop" && response.Choices[0].Message.FunctionCall != nil)) {
 		if o.verbose {
 			fmt.Printf("Calling function %s\n", response.Choices[0].Message.FunctionCall.Name)
 			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.FunctionCall.Arguments)
