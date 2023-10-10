@@ -59,6 +59,7 @@ const (
 
 type UsageCallback func(types.Meta)
 type StreamCallback func(string)
+type ChatRequestCallback func(*openai.ChatCompletionRequest)
 
 type OpenAI struct {
 	openAIClient           *openai.Client
@@ -73,6 +74,7 @@ type OpenAI struct {
 	calledFunctionName     *string
 	finishReason           string
 	cache                  *cache.Cache
+	chatRequestCallback    ChatRequestCallback
 }
 
 func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
@@ -134,6 +136,12 @@ func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 // WithCache sets the cache to use for the OpenAI instance.
 func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
 	o.cache = cache
+	return o
+}
+
+// WithChatRequestCallback sets the chat request callback to use for the OpenAI instance.
+func (o *OpenAI) WithChatRequestCallback(callback ChatRequestCallback) *OpenAI {
+	o.chatRequestCallback = callback
 	return o
 }
 
@@ -309,6 +317,10 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	if len(o.functions) > 0 {
 		chatCompletionRequest.Functions = o.getFunctions()
+	}
+
+	if o.chatRequestCallback != nil {
+		o.chatRequestCallback(&chatCompletionRequest)
 	}
 
 	response, err := o.openAIClient.CreateChatCompletion(
