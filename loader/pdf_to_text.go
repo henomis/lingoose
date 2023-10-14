@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrPdfToTextNotFound = fmt.Errorf("pdftotext not found")
-	defaultPdfToTextPath = "/usr/bin/pdftotext"
+	defaultPdfToTextPath = "pdftotext"
 )
 
 type PDFLoader struct {
@@ -42,11 +42,6 @@ func (p *PDFLoader) WithTextSplitter(textSplitter TextSplitter) *PDFLoader {
 }
 
 func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
-	_, err := os.Stat(p.pdfToTextPath)
-	if err != nil {
-		return nil, ErrPdfToTextNotFound
-	}
-
 	fileInfo, err := os.Stat(p.path)
 	if err != nil {
 		return nil, err

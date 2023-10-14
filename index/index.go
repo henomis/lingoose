@@ -3,9 +3,12 @@ package index
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/embedder"
+	"github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/types"
 )
 
@@ -14,14 +17,155 @@ var (
 )
 
 const (
-	DefaultKeyID      = "id"
-	DefaultKeyContent = "content"
+	DefaultKeyID           = "id"
+	DefaultKeyContent      = "content"
+	defaultBatchInsertSize = 32
+	defaultTopK            = 10
+	defaultIncludeContent  = true
 )
 
 type Data struct {
 	ID       string
 	Values   []float64
 	Metadata types.Meta
+}
+
+type Embedder interface {
+	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
+}
+
+type VectorDB interface {
+	Insert(context.Context, []Data) error
+	IsEmpty(context.Context) (bool, error)
+	Search(context.Context, []float64, *option.Options) (SearchResults, error)
+}
+
+type Index struct {
+	vectorDB        VectorDB
+	embedder        Embedder
+	batchInsertSize int
+	includeContent  bool
+}
+
+func New(vectorDB VectorDB, embedder Embedder) *Index {
+	return &Index{
+		vectorDB:        vectorDB,
+		embedder:        embedder,
+		batchInsertSize: defaultBatchInsertSize,
+		includeContent:  defaultIncludeContent,
+	}
+}
+
+func (i *Index) WithIncludeContents(includeContents bool) *Index {
+	i.includeContent = includeContents
+	return i
+}
+
+func (i *Index) WithBatchInsertSize(batchInsertSize int) *Index {
+	i.batchInsertSize = batchInsertSize
+	return i
+}
+
+func (i *Index) LoadFromDocuments(ctx context.Context, documents []document.Document) error {
+	err := i.batchUpsert(ctx, documents)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrInternal, err)
+	}
+	return nil
+}
+
+func (i *Index) Add(ctx context.Context, data *Data) error {
+	if data == nil {
+		return nil
+	}
+	return i.vectorDB.Insert(ctx, []Data{*data})
+}
+
+func (i *Index) IsEmpty(ctx context.Context) (bool, error) {
+	return i.vectorDB.IsEmpty(ctx)
+}
+
+func (i *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (SearchResults, error) {
+	options := &option.Options{
+		TopK: defaultTopK,
+	}
+
+	for _, opt := range opts {
+		opt(options)
+	}
+	return i.vectorDB.Search(ctx, values, options)
+}
+
+func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) (SearchResults, error) {
+	embeddings, err := i.embedder.Embed(ctx, []string{query})
+	if err != nil {
+		return nil, err
+	}
+	return i.Search(ctx, embeddings[0], opts...)
+}
+
+func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
+	for j := 0; j < len(documents); j += i.batchInsertSize {
+		batchEnd := j + i.batchInsertSize
+		if batchEnd > len(documents) {
+			batchEnd = len(documents)
+		}
+
+		texts := []string{}
+		for _, document := range documents[j:batchEnd] {
+			texts = append(texts, document.Content)
+		}
+
+		embeddings, err := i.embedder.Embed(ctx, texts)
+		if err != nil {
+			return err
+		}
+
+		data, err := i.buildDataFromEmbeddingsAndDocuments(embeddings, documents, j)
+		if err != nil {
+			return err
+		}
+
+		err = i.vectorDB.Insert(ctx, data)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (i *Index) buildDataFromEmbeddingsAndDocuments(
+	embeddings []embedder.Embedding,
+	documents []document.Document,
+	startIndex int,
+) ([]Data, error) {
+	var vectors []Data
+
+	for j, embedding := range embeddings {
+		metadata := DeepCopyMetadata(documents[startIndex+j].Metadata)
+
+		// inject document content into vector metadata
+		if i.includeContent {
+			metadata[DefaultKeyContent] = documents[startIndex+j].Content
+		}
+
+		vectorID, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
+
+		vectors = append(vectors, Data{
+			ID:       vectorID.String(),
+			Values:   embedding,
+			Metadata: metadata,
+		})
+
+		// inject vector ID into document metadata
+		documents[startIndex+j].Metadata[DefaultKeyID] = vectorID.String()
+	}
+
+	return vectors, nil
 }
 
 type SearchResult struct {
@@ -51,10 +195,6 @@ func (s SearchResults) ToDocuments() []document.Document {
 		}
 	}
 	return documents
-}
-
-type Embedder interface {
-	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
 func DeepCopyMetadata(metadata types.Meta) types.Meta {
