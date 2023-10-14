@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
+	"github.com/henomis/lingoose/index"
+	"github.com/henomis/lingoose/index/vectordb/jsondb"
 	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/llm/openai"
 )
@@ -16,7 +17,10 @@ import (
 func main() {
 
 	embedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	index := simplevectorindex.New("db", ".", embedder)
+	index := index.New(
+		jsondb.New("db.json"),
+		embedder,
+	)
 	llm := openai.NewCompletion().WithCompletionCache(cache.New(embedder, index).WithTopK(3))
 
 	for {

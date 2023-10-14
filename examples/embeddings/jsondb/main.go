@@ -7,7 +7,7 @@ import (
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
-	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
+	"github.com/henomis/lingoose/index/vectordb/jsondb"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -18,20 +18,22 @@ import (
 
 func main() {
 
-	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+	index := index.New(
+		jsondb.New("db.json"),
+		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+	).WithIncludeContents(true)
 
-	docsVectorIndex := simplevectorindex.New("docs", ".", openaiEmbedder)
-	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
+	indexIsEmpty, _ := index.IsEmpty(context.Background())
 
 	if indexIsEmpty {
-		err := ingestData(docsVectorIndex, openaiEmbedder)
+		err := ingestData(index)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	similarities, err := docsVectorIndex.Query(
+	similarities, err := index.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),
@@ -52,7 +54,7 @@ func main() {
 		documentContext += similarity.Content() + "\n\n"
 	}
 
-	llmOpenAI := openai.NewCompletion()
+	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 	prompt1 := prompt.NewPromptTemplate(
 		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
@@ -74,7 +76,7 @@ func main() {
 	fmt.Println(output)
 }
 
-func ingestData(docsVectorIndex *simplevectorindex.Index, openaiEmbedder index.Embedder) error {
+func ingestData(index *index.Index) error {
 
 	fmt.Printf("Ingesting data...")
 
@@ -87,7 +89,7 @@ func ingestData(docsVectorIndex *simplevectorindex.Index, openaiEmbedder index.E
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
-	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+	err = index.LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}

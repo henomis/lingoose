@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
+	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
-	qdrantindex "github.com/henomis/lingoose/index/qdrant"
+	qdrantdb "github.com/henomis/lingoose/index/vectordb/qdrant"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -18,34 +19,34 @@ import (
 
 func main() {
 
-	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-
-	qdrantIndex := qdrantindex.New(
-		qdrantindex.Options{
-			CollectionName: "test",
-			IncludeContent: true,
-			CreateCollection: &qdrantindex.CreateCollectionOptions{
-				Dimension: 1536,
-				Distance:  qdrantindex.DistanceCosine,
+	index := index.New(
+		qdrantdb.New(
+			qdrantdb.Options{
+				CollectionName: "test",
+				IncludeContent: true,
+				CreateCollection: &qdrantdb.CreateCollectionOptions{
+					Dimension: 1536,
+					Distance:  qdrantdb.DistanceCosine,
+				},
 			},
-		},
-		openaiEmbedder,
-	).WithAPIKeyAndEdpoint("", "http://localhost:6333")
+		).WithAPIKeyAndEdpoint("", "http://localhost:6333"),
+		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+	).WithIncludeContents(true)
 
-	indexIsEmpty, err := qdrantIndex.IsEmpty(context.Background())
+	indexIsEmpty, err := index.IsEmpty(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
 	if indexIsEmpty {
-		err = ingestData(qdrantIndex)
+		err = ingestData(index)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	similarities, err := qdrantIndex.Query(
+	similarities, err := index.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),
@@ -86,7 +87,7 @@ func main() {
 
 }
 
-func ingestData(qdrantIndex *qdrantindex.Index) error {
+func ingestData(qdrantIndex *index.Index) error {
 
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {

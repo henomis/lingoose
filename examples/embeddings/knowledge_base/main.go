@@ -8,8 +8,10 @@ import (
 
 	"github.com/henomis/lingoose/chat"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
+	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
-	simplevectorindex "github.com/henomis/lingoose/index/simpleVectorIndex"
+
+	"github.com/henomis/lingoose/index/vectordb/jsondb"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -23,13 +25,15 @@ const (
 
 func main() {
 
-	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
+	index := index.New(
+		jsondb.New("db.json"),
+		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+	).WithIncludeContents(true)
 
-	docsVectorIndex := simplevectorindex.New("db", ".", openaiEmbedder)
-	indexIsEmpty, _ := docsVectorIndex.IsEmpty()
+	indexIsEmpty, _ := index.IsEmpty(context.Background())
 
 	if indexIsEmpty {
-		err := ingestData(docsVectorIndex)
+		err := ingestData(index)
 		if err != nil {
 			panic(err)
 		}
@@ -49,7 +53,7 @@ func main() {
 			break
 		}
 
-		similarities, err := docsVectorIndex.Query(context.Background(), query, indexoption.WithTopK(3))
+		similarities, err := index.Query(context.Background(), query, indexoption.WithTopK(3))
 		if err != nil {
 			panic(err)
 		}
@@ -98,11 +102,11 @@ func main() {
 
 }
 
-func ingestData(docsVectorIndex *simplevectorindex.Index) error {
+func ingestData(index *index.Index) error {
 
 	fmt.Printf("Learning Knowledge Base...")
 
-	loader := loader.NewPDFToTextLoader("./kb")
+	loader := loader.NewPDFToTextLoader("./kb").WithPDFToTextPath("/opt/homebrew/bin/pdftotext")
 
 	documents, err := loader.Load(context.Background())
 	if err != nil {
@@ -113,7 +117,7 @@ func ingestData(docsVectorIndex *simplevectorindex.Index) error {
 
 	documentChunks := textSplitter.SplitDocuments(documents)
 
-	err = docsVectorIndex.LoadFromDocuments(context.Background(), documentChunks)
+	err = index.LoadFromDocuments(context.Background(), documentChunks)
 	if err != nil {
 		return err
 	}
