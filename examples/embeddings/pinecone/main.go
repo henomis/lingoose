@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
+	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
-	pineconeindex "github.com/henomis/lingoose/index/pinecone"
+	pineconedb "github.com/henomis/lingoose/index/vectordb/pinecone"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -17,37 +18,36 @@ import (
 
 func main() {
 
-	openaiEmbedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-
-	pineconeIndex := pineconeindex.New(
-		pineconeindex.Options{
-			IndexName:      "test",
-			Namespace:      "test-namespace",
-			IncludeContent: true,
-			CreateIndex: &pineconeindex.CreateIndexOptions{
-				Dimension: 1536,
-				Replicas:  1,
-				Metric:    "cosine",
-				PodType:   "p1.x1",
+	index := index.New(
+		pineconedb.New(
+			pineconedb.Options{
+				IndexName: "test",
+				Namespace: "test-namespace",
+				CreateIndexOptions: &pineconedb.CreateIndexOptions{
+					Dimension: 1536,
+					Replicas:  1,
+					Metric:    "cosine",
+					PodType:   "p1.x1",
+				},
 			},
-		},
-		openaiEmbedder,
-	)
+		),
+		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+	).WithIncludeContents(true)
 
-	indexIsEmpty, err := pineconeIndex.IsEmpty(context.Background())
+	indexIsEmpty, err := index.IsEmpty(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
 	if indexIsEmpty {
-		err = ingestData(pineconeIndex)
+		err = ingestData(index)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	query := "What is the purpose of the NATO Alliance?"
-	similarities, err := pineconeIndex.Query(
+	similarities, err := index.Query(
 		context.Background(),
 		query,
 		indexoption.WithTopK(3),
@@ -88,7 +88,7 @@ func main() {
 
 }
 
-func ingestData(pineconeIndex *pineconeindex.Index) error {
+func ingestData(index *index.Index) error {
 
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
@@ -108,6 +108,6 @@ func ingestData(pineconeIndex *pineconeindex.Index) error {
 
 	}
 
-	return pineconeIndex.LoadFromDocuments(context.Background(), documentChunks)
+	return index.LoadFromDocuments(context.Background(), documentChunks)
 
 }

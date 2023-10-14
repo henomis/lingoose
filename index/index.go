@@ -33,29 +33,29 @@ type Embedder interface {
 	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
 }
 
-type IndexEngine interface {
+type VectorDB interface {
 	Insert(context.Context, []Data) error
 	IsEmpty(context.Context) (bool, error)
 	Search(context.Context, []float64, *option.Options) (SearchResults, error)
 }
 
 type Index struct {
-	indexEngine     IndexEngine
+	vectorDB        VectorDB
 	embedder        Embedder
 	batchInsertSize int
 	includeContent  bool
 }
 
-func New(indexEngine IndexEngine, embedder Embedder) *Index {
+func New(vectorDB VectorDB, embedder Embedder) *Index {
 	return &Index{
-		indexEngine:     indexEngine,
+		vectorDB:        vectorDB,
 		embedder:        embedder,
 		batchInsertSize: defaultBatchInsertSize,
 	}
 }
 
 func (i *Index) WithIncludeContents(includeContents bool) *Index {
-	i.includeContent = true
+	i.includeContent = includeContents
 	return i
 }
 
@@ -73,7 +73,7 @@ func (i *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 }
 
 func (i *Index) IsEmpty(ctx context.Context) (bool, error) {
-	return i.indexEngine.IsEmpty(ctx)
+	return i.vectorDB.IsEmpty(ctx)
 }
 
 func (i *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (SearchResults, error) {
@@ -84,7 +84,7 @@ func (i *Index) Search(ctx context.Context, values []float64, opts ...option.Opt
 	for _, opt := range opts {
 		opt(options)
 	}
-	return i.indexEngine.Search(ctx, values, options)
+	return i.vectorDB.Search(ctx, values, options)
 }
 
 func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) (SearchResults, error) {
@@ -95,29 +95,29 @@ func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 	return i.Search(ctx, embeddings[0], opts...)
 }
 
-func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
-	for i := 0; i < len(documents); i += q.batchInsertSize {
-		batchEnd := i + q.batchInsertSize
+func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
+	for j := 0; j < len(documents); j += i.batchInsertSize {
+		batchEnd := j + i.batchInsertSize
 		if batchEnd > len(documents) {
 			batchEnd = len(documents)
 		}
 
 		texts := []string{}
-		for _, document := range documents[i:batchEnd] {
+		for _, document := range documents[j:batchEnd] {
 			texts = append(texts, document.Content)
 		}
 
-		embeddings, err := q.embedder.Embed(ctx, texts)
+		embeddings, err := i.embedder.Embed(ctx, texts)
 		if err != nil {
 			return err
 		}
 
-		data, err := q.buildDataFromEmbeddingsAndDocuments(embeddings, documents, i)
+		data, err := i.buildDataFromEmbeddingsAndDocuments(embeddings, documents, j)
 		if err != nil {
 			return err
 		}
 
-		err = q.indexEngine.Insert(ctx, data)
+		err = i.vectorDB.Insert(ctx, data)
 		if err != nil {
 			return err
 		}
@@ -126,19 +126,19 @@ func (q *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 	return nil
 }
 
-func (q *Index) buildDataFromEmbeddingsAndDocuments(
+func (i *Index) buildDataFromEmbeddingsAndDocuments(
 	embeddings []embedder.Embedding,
 	documents []document.Document,
 	startIndex int,
 ) ([]Data, error) {
 	var vectors []Data
 
-	for i, embedding := range embeddings {
-		metadata := DeepCopyMetadata(documents[startIndex+i].Metadata)
+	for j, embedding := range embeddings {
+		metadata := DeepCopyMetadata(documents[startIndex+j].Metadata)
 
 		// inject document content into vector metadata
-		if q.includeContent {
-			metadata[DefaultKeyContent] = documents[startIndex+i].Content
+		if i.includeContent {
+			metadata[DefaultKeyContent] = documents[startIndex+j].Content
 		}
 
 		vectorID, err := uuid.NewUUID()
@@ -153,7 +153,7 @@ func (q *Index) buildDataFromEmbeddingsAndDocuments(
 		})
 
 		// inject vector ID into document metadata
-		documents[startIndex+i].Metadata[DefaultKeyID] = vectorID.String()
+		documents[startIndex+j].Metadata[DefaultKeyID] = vectorID.String()
 	}
 
 	return vectors, nil

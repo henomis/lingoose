@@ -6,8 +6,8 @@ import (
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
-	qdrantindexengine "github.com/henomis/lingoose/index/engines/qdrant"
 	indexoption "github.com/henomis/lingoose/index/option"
+	qdrantdb "github.com/henomis/lingoose/index/vectordb/qdrant"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -20,13 +20,13 @@ import (
 func main() {
 
 	index := index.New(
-		qdrantindexengine.New(
-			qdrantindexengine.Options{
+		qdrantdb.New(
+			qdrantdb.Options{
 				CollectionName: "test",
 				IncludeContent: true,
-				CreateCollection: &qdrantindexengine.CreateCollectionOptions{
+				CreateCollection: &qdrantdb.CreateCollectionOptions{
 					Dimension: 1536,
-					Distance:  qdrantindexengine.DistanceCosine,
+					Distance:  qdrantdb.DistanceCosine,
 				},
 			},
 		).WithAPIKeyAndEdpoint("", "http://localhost:6333"),

@@ -13,11 +13,7 @@ import (
 	qdrantresponse "github.com/henomis/qdrant-go/response"
 )
 
-const (
-	defaultTopK = 10
-)
-
-type IndexEngine struct {
+type DB struct {
 	qdrantClient   *qdrantgo.Client
 	collectionName string
 	includeContent bool
@@ -48,13 +44,13 @@ type Options struct {
 	CreateCollection *CreateCollectionOptions
 }
 
-func New(options Options) *IndexEngine {
+func New(options Options) *DB {
 	apiKey := os.Getenv("QDRANT_API_KEY")
 	endpoint := os.Getenv("QDRANT_ENDPOINT")
 
 	qdrantClient := qdrantgo.New(endpoint, apiKey)
 
-	return &IndexEngine{
+	return &DB{
 		qdrantClient:     qdrantClient,
 		collectionName:   options.CollectionName,
 		includeContent:   options.IncludeContent,
@@ -63,22 +59,22 @@ func New(options Options) *IndexEngine {
 	}
 }
 
-func (i *IndexEngine) WithAPIKeyAndEdpoint(apiKey, endpoint string) *IndexEngine {
-	i.qdrantClient = qdrantgo.New(endpoint, apiKey)
-	return i
+func (d *DB) WithAPIKeyAndEdpoint(apiKey, endpoint string) *DB {
+	d.qdrantClient = qdrantgo.New(endpoint, apiKey)
+	return d
 }
 
-func (q *IndexEngine) IsEmpty(ctx context.Context) (bool, error) {
-	err := q.createCollectionIfRequired(ctx)
+func (d *DB) IsEmpty(ctx context.Context) (bool, error) {
+	err := d.createCollectionIfRequired(ctx)
 	if err != nil {
 		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	res := &qdrantresponse.CollectionCollectInfo{}
-	err = q.qdrantClient.CollectionCollectInfo(
+	err = d.qdrantClient.CollectionCollectInfo(
 		ctx,
 		&qdrantrequest.CollectionCollectInfo{
-			CollectionName: q.collectionName,
+			CollectionName: d.collectionName,
 		},
 		res,
 	)
@@ -89,26 +85,26 @@ func (q *IndexEngine) IsEmpty(ctx context.Context) (bool, error) {
 	return res.Result.VectorsCount == 0, nil
 }
 
-func (i *IndexEngine) Insert(ctx context.Context, data []index.Data) error {
-	err := i.createCollectionIfRequired(ctx)
+func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
+	err := d.createCollectionIfRequired(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	var points []qdrantrequest.Point
-	for _, d := range data {
-		if d.ID == "" {
+	for _, data := range datas {
+		if data.ID == "" {
 			id, errUUID := uuid.NewUUID()
 			if errUUID != nil {
 				return errUUID
 			}
-			d.ID = id.String()
+			data.ID = id.String()
 		}
 
 		point := qdrantrequest.Point{
-			ID:      d.ID,
-			Vector:  d.Values,
-			Payload: d.Metadata,
+			ID:      data.ID,
+			Vector:  data.Values,
+			Payload: data.Metadata,
 		}
 		points = append(points, point)
 	}
@@ -116,24 +112,24 @@ func (i *IndexEngine) Insert(ctx context.Context, data []index.Data) error {
 	wait := true
 	req := &qdrantrequest.PointUpsert{
 		Wait:           &wait,
-		CollectionName: i.collectionName,
+		CollectionName: d.collectionName,
 		Points:         points,
 	}
 	res := &qdrantresponse.PointUpsert{}
 
-	return i.qdrantClient.PointUpsert(ctx, req, res)
+	return d.qdrantClient.PointUpsert(ctx, req, res)
 }
 
-func (i *IndexEngine) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
-	matches, err := i.similaritySearch(ctx, values, options)
+func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
+	matches, err := d.similaritySearch(ctx, values, options)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return buildSearchResultsFromQdrantMatches(matches, i.includeContent), nil
+	return buildSearchResultsFromQdrantMatches(matches, d.includeContent), nil
 }
 
-func (q *IndexEngine) similaritySearch(
+func (d *DB) similaritySearch(
 	ctx context.Context,
 	values []float64,
 	opts *option.Options,
@@ -144,14 +140,14 @@ func (q *IndexEngine) similaritySearch(
 
 	includeMetadata := true
 	res := &qdrantresponse.PointSearch{}
-	err := q.qdrantClient.PointSearch(
+	err := d.qdrantClient.PointSearch(
 		ctx,
 		&qdrantrequest.PointSearch{
-			CollectionName: q.collectionName,
+			CollectionName: d.collectionName,
 			Limit:          opts.TopK,
 			Vector:         values,
 			WithPayload:    &includeMetadata,
-			WithVector:     &q.includeValues,
+			WithVector:     &d.includeValues,
 			Filter:         opts.Filter.(qdrantrequest.Filter),
 		},
 		res,
@@ -163,33 +159,33 @@ func (q *IndexEngine) similaritySearch(
 	return res.Result, nil
 }
 
-func (q *IndexEngine) createCollectionIfRequired(ctx context.Context) error {
-	if q.createCollection == nil {
+func (d *DB) createCollectionIfRequired(ctx context.Context) error {
+	if d.createCollection == nil {
 		return nil
 	}
 
 	resp := &qdrantresponse.CollectionList{}
-	err := q.qdrantClient.CollectionList(ctx, &qdrantrequest.CollectionList{}, resp)
+	err := d.qdrantClient.CollectionList(ctx, &qdrantrequest.CollectionList{}, resp)
 	if err != nil {
 		return err
 	}
 
 	for _, collection := range resp.Result.Collections {
-		if collection.Name == q.collectionName {
+		if collection.Name == d.collectionName {
 			return nil
 		}
 	}
 
 	req := &qdrantrequest.CollectionCreate{
-		CollectionName: q.collectionName,
+		CollectionName: d.collectionName,
 		Vectors: qdrantrequest.VectorsParams{
-			Size:     q.createCollection.Dimension,
-			Distance: qdrantrequest.Distance(q.createCollection.Distance),
-			OnDisk:   &q.createCollection.OnDisk,
+			Size:     d.createCollection.Dimension,
+			Distance: qdrantrequest.Distance(d.createCollection.Distance),
+			OnDisk:   &d.createCollection.OnDisk,
 		},
 	}
 
-	err = q.qdrantClient.CollectionCreate(ctx, req, &qdrantresponse.CollectionCreate{})
+	err = d.qdrantClient.CollectionCreate(ctx, req, &qdrantresponse.CollectionCreate{})
 	if err != nil {
 		return err
 	}
