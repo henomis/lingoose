@@ -21,6 +21,7 @@ const (
 	DefaultKeyContent      = "content"
 	defaultBatchInsertSize = 32
 	defaultTopK            = 10
+	defaultIncludeContent  = true
 )
 
 type Data struct {
@@ -51,6 +52,7 @@ func New(vectorDB VectorDB, embedder Embedder) *Index {
 		vectorDB:        vectorDB,
 		embedder:        embedder,
 		batchInsertSize: defaultBatchInsertSize,
+		includeContent:  defaultIncludeContent,
 	}
 }
 
@@ -70,6 +72,13 @@ func (i *Index) LoadFromDocuments(ctx context.Context, documents []document.Docu
 		return fmt.Errorf("%w: %w", ErrInternal, err)
 	}
 	return nil
+}
+
+func (i *Index) Add(ctx context.Context, data *Data) error {
+	if data == nil {
+		return nil
+	}
+	return i.vectorDB.Insert(ctx, []Data{*data})
 }
 
 func (i *Index) IsEmpty(ctx context.Context) (bool, error) {
