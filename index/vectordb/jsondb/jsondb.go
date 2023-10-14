@@ -38,30 +38,30 @@ func New(dbPath string) *Index {
 	return index
 }
 
-func (s Index) save() error {
-	jsonContent, err := json.Marshal(s.data)
+func (i Index) save() error {
+	jsonContent, err := json.Marshal(i.data)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(s.dbPath, jsonContent, 0600)
+	return os.WriteFile(i.dbPath, jsonContent, 0600)
 }
 
-func (s *Index) load() error {
-	if len(s.data) > 0 {
+func (i *Index) load() error {
+	if len(i.data) > 0 {
 		return nil
 	}
 
-	if _, err := os.Stat(s.dbPath); os.IsNotExist(err) {
-		return s.save()
+	if _, err := os.Stat(i.dbPath); os.IsNotExist(err) {
+		return i.save()
 	}
 
-	content, err := os.ReadFile(s.dbPath)
+	content, err := os.ReadFile(i.dbPath)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(content, &s.data)
+	return json.Unmarshal(content, &i.data)
 }
 
 func (i *Index) IsEmpty(_ context.Context) (bool, error) {
@@ -73,9 +73,9 @@ func (i *Index) IsEmpty(_ context.Context) (bool, error) {
 	return len(i.data) == 0, nil
 }
 
-func (s *Index) Insert(ctx context.Context, datas []index.Data) error {
+func (i *Index) Insert(ctx context.Context, datas []index.Data) error {
 	_ = ctx
-	err := s.load()
+	err := i.load()
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
@@ -98,18 +98,18 @@ func (s *Index) Insert(ctx context.Context, datas []index.Data) error {
 		records = append(records, point)
 	}
 
-	s.data = append(s.data, records...)
+	i.data = append(i.data, records...)
 
-	return s.save()
+	return i.save()
 }
 
-func (s *Index) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
-	err := s.load()
+func (i *Index) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
+	err := i.load()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return s.similaritySearch(ctx, values, options)
+	return i.similaritySearch(ctx, values, options)
 }
 
 func (i *Index) similaritySearch(
