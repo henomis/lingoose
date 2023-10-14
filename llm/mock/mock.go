@@ -18,9 +18,9 @@ func (l *LlmMock) Completion(ctx context.Context, prompt string) (string, error)
 	_ = ctx
 	fmt.Printf("User: %s\n", prompt)
 
-	rand.Seed(time.Now().UnixNano())
 	//nolint:gosec
-	number := rand.Intn(3) + 3
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	number := r.Intn(3) + 3
 
 	randomStrings := getRandomStrings(number)
 	output := strings.Join(randomStrings, " ")
@@ -50,9 +50,9 @@ func (l *LlmMock) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 		}
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	//nolint:gosec
-	number := rand.Intn(3) + 3
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	number := r.Intn(3) + 3
 
 	randomStrings := getRandomStrings(number)
 	output := strings.Join(randomStrings, " ")
@@ -72,10 +72,10 @@ func (l *JSONLllMock) Completion(ctx context.Context, prompt string) (string, er
 	fmt.Printf("User: %s\n", prompt)
 
 	//nolint:gosec
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	//nolint:gosec
-	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
-		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
+	output := `{"first": "` + strings.Join(getRandomStrings(r.Intn(5)+1), " ") + `", "second": "` +
+		strings.Join(getRandomStrings(r.Intn(5)+1), " ") + `"}`
 
 	fmt.Printf("AI: %s\n", output)
 
@@ -92,13 +92,14 @@ func getRandomStrings(number int) []string {
 		"bridge", "mountain", "valley", "desert", "flower", "wind", "book", "table", "chair", "television", "computer",
 		"window", "door", "cup", "plate", "spoon", "fork", "knife", "bottle", "glass"}
 
-	rand.Seed(time.Now().UnixNano())
+	//nolint:gosec
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	result := []string{}
 
 	for i := 0; i < number; i++ {
 		//nolint:gosec
-		result = append(result, data[rand.Intn(len(data))])
+		result = append(result, data[r.Intn(len(data))])
 	}
 
 	return result
@@ -121,11 +122,11 @@ func (l *JSONLllMock) Chat(ctx context.Context, prompt *chat.Chat) (string, erro
 		}
 	}
 
-	rand.Seed(time.Now().UnixNano())
-
 	//nolint:gosec
-	output := `{"first": "` + strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `", "second": "` +
-		strings.Join(getRandomStrings(rand.Intn(5)+1), " ") + `"}`
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	output := `{"first": "` + strings.Join(getRandomStrings(r.Intn(5)+1), " ") + `", "second": "` +
+		strings.Join(getRandomStrings(r.Intn(5)+1), " ") + `"}`
 
 	fmt.Printf("AI: %s\n", output)
 
