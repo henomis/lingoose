@@ -77,7 +77,7 @@ func (c *Cache) Get(ctx context.Context, query string) (*Result, error) {
 		}, nil
 	}
 
-	return nil, ErrCacheMiss
+	return &Result{Embedding: embedding[0]}, ErrCacheMiss
 }
 
 func (c *Cache) Set(ctx context.Context, embedding []float64, answer string) error {
