@@ -22,15 +22,15 @@ type data struct {
 	Values   []float64  `json:"values"`
 }
 
-type Index struct {
+type DB struct {
 	data   []data
 	dbPath string
 }
 
 type FilterFn func([]index.SearchResult) []index.SearchResult
 
-func New(dbPath string) *Index {
-	index := &Index{
+func New(dbPath string) *DB {
+	index := &DB{
 		data:   []data{},
 		dbPath: dbPath,
 	}
@@ -38,7 +38,7 @@ func New(dbPath string) *Index {
 	return index
 }
 
-func (i Index) save() error {
+func (i DB) save() error {
 	jsonContent, err := json.Marshal(i.data)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (i Index) save() error {
 	return os.WriteFile(i.dbPath, jsonContent, 0600)
 }
 
-func (i *Index) load() error {
+func (i *DB) load() error {
 	if len(i.data) > 0 {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (i *Index) load() error {
 	return json.Unmarshal(content, &i.data)
 }
 
-func (i *Index) IsEmpty(_ context.Context) (bool, error) {
+func (i *DB) IsEmpty(_ context.Context) (bool, error) {
 	err := i.load()
 	if err != nil {
 		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
@@ -73,7 +73,7 @@ func (i *Index) IsEmpty(_ context.Context) (bool, error) {
 	return len(i.data) == 0, nil
 }
 
-func (i *Index) Insert(ctx context.Context, datas []index.Data) error {
+func (i *DB) Insert(ctx context.Context, datas []index.Data) error {
 	_ = ctx
 	err := i.load()
 	if err != nil {
@@ -103,7 +103,7 @@ func (i *Index) Insert(ctx context.Context, datas []index.Data) error {
 	return i.save()
 }
 
-func (i *Index) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
+func (i *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
 	err := i.load()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
@@ -112,7 +112,7 @@ func (i *Index) Search(ctx context.Context, values []float64, options *option.Op
 	return i.similaritySearch(ctx, values, options)
 }
 
-func (i *Index) similaritySearch(
+func (i *DB) similaritySearch(
 	ctx context.Context,
 	embedding embedder.Embedding,
 	opts *option.Options,
@@ -143,7 +143,7 @@ func (i *Index) similaritySearch(
 	return filterSearchResults(searchResults, opts.TopK), nil
 }
 
-func (i *Index) cosineSimilarity(a []float64, b []float64) (cosine float64, err error) {
+func (i *DB) cosineSimilarity(a []float64, b []float64) (cosine float64, err error) {
 	var count int
 	lengthA := len(a)
 	lengthB := len(b)
@@ -174,7 +174,7 @@ func (i *Index) cosineSimilarity(a []float64, b []float64) (cosine float64, err 
 	return sumA / (math.Sqrt(s1) * math.Sqrt(s2)), nil
 }
 
-func (i *Index) cosineSimilarityBatch(a embedder.Embedding) ([]float64, error) {
+func (i *DB) cosineSimilarityBatch(a embedder.Embedding) ([]float64, error) {
 	var err error
 	scores := make([]float64, len(i.data))
 
