@@ -19,9 +19,12 @@ import (
 func main() {
 
 	index := index.New(
-		jsondb.New("db.json"),
+		jsondb.New().WithPersist("db.json"),
 		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
-	).WithIncludeContents(true)
+	).WithIncludeContents(true).WithAddDataCallback(func(data *index.Data) error {
+		data.Metadata["contentLen"] = len(data.Metadata["content"].(string))
+		return nil
+	})
 
 	indexIsEmpty, _ := index.IsEmpty(context.Background())
 
