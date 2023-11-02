@@ -40,7 +40,6 @@ type Options struct {
 	CollectionName   string
 	IncludeContent   bool
 	IncludeValues    bool
-	BatchUpsertSize  *int
 	CreateCollection *CreateCollectionOptions
 }
 
