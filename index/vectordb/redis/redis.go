@@ -21,7 +21,6 @@ const (
 type DB struct {
 	redisearchClient *redisearch.Client
 	includeContent   bool
-	includeValues    bool
 
 	createIndex *CreateIndexOptions
 }
@@ -45,7 +44,6 @@ type CreateIndexOptions struct {
 type Options struct {
 	RedisearchClient *redisearch.Client
 	IncludeContent   bool
-	IncludeValues    bool
 
 	CreateIndex *CreateIndexOptions
 }
@@ -54,7 +52,6 @@ func New(options Options) *DB {
 	return &DB{
 		redisearchClient: options.RedisearchClient,
 		includeContent:   options.IncludeContent,
-		includeValues:    options.IncludeValues,
 		createIndex:      options.CreateIndex,
 	}
 }

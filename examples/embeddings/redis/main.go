@@ -24,7 +24,6 @@ func main() {
 			redis.Options{
 				RedisearchClient: redisearch.NewClient("localhost:6379", "test"),
 				IncludeContent:   true,
-				IncludeValues:    true,
 				CreateIndex: &redis.CreateIndexOptions{
 					Dimension: 1536,
 					Distance:  redis.DistanceCosine,

@@ -17,7 +17,6 @@ type DB struct {
 	qdrantClient   *qdrantgo.Client
 	collectionName string
 	includeContent bool
-	includeValues  bool
 
 	createCollection *CreateCollectionOptions
 }
@@ -39,7 +38,6 @@ type CreateCollectionOptions struct {
 type Options struct {
 	CollectionName   string
 	IncludeContent   bool
-	IncludeValues    bool
 	CreateCollection *CreateCollectionOptions
 }
 
@@ -53,7 +51,6 @@ func New(options Options) *DB {
 		qdrantClient:     qdrantClient,
 		collectionName:   options.CollectionName,
 		includeContent:   options.IncludeContent,
-		includeValues:    options.IncludeValues,
 		createCollection: options.CreateCollection,
 	}
 }
@@ -138,6 +135,7 @@ func (d *DB) similaritySearch(
 	}
 
 	includeMetadata := true
+	includeValues := true
 	res := &qdrantresponse.PointSearch{}
 	err := d.qdrantClient.PointSearch(
 		ctx,
@@ -146,7 +144,7 @@ func (d *DB) similaritySearch(
 			Limit:          opts.TopK,
 			Vector:         values,
 			WithPayload:    &includeMetadata,
-			WithVector:     &d.includeValues,
+			WithVector:     &includeValues,
 			Filter:         opts.Filter.(qdrantrequest.Filter),
 		},
 		res,
