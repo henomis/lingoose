@@ -24,6 +24,8 @@ const (
 	defaultIncludeContent  = true
 )
 
+type AddDataCallback func(data *Data) error
+
 type Data struct {
 	ID       string
 	Values   []float64
@@ -45,6 +47,7 @@ type Index struct {
 	embedder        Embedder
 	batchInsertSize int
 	includeContent  bool
+	addDataCallback AddDataCallback
 }
 
 func New(vectorDB VectorDB, embedder Embedder) *Index {
@@ -53,6 +56,7 @@ func New(vectorDB VectorDB, embedder Embedder) *Index {
 		embedder:        embedder,
 		batchInsertSize: defaultBatchInsertSize,
 		includeContent:  defaultIncludeContent,
+		addDataCallback: nil,
 	}
 }
 
@@ -63,6 +67,13 @@ func (i *Index) WithIncludeContents(includeContents bool) *Index {
 
 func (i *Index) WithBatchInsertSize(batchInsertSize int) *Index {
 	i.batchInsertSize = batchInsertSize
+	return i
+}
+
+// WithAddDataCallback allows to modify the data before it is added to the index.
+// This can be useful to add additional metadata to the vector.
+func (i *Index) WithAddDataCallback(callback AddDataCallback) *Index {
+	i.addDataCallback = callback
 	return i
 }
 
@@ -78,6 +89,14 @@ func (i *Index) Add(ctx context.Context, data *Data) error {
 	if data == nil {
 		return nil
 	}
+
+	if i.addDataCallback != nil {
+		err := i.addDataCallback(data)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrInternal, err)
+		}
+	}
+
 	return i.vectorDB.Insert(ctx, []Data{*data})
 }
 
@@ -124,6 +143,15 @@ func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 		data, err := i.buildDataFromEmbeddingsAndDocuments(embeddings, documents, j)
 		if err != nil {
 			return err
+		}
+
+		if i.addDataCallback != nil {
+			for j := range data {
+				err := i.addDataCallback(&data[j])
+				if err != nil {
+					return fmt.Errorf("%w: %w", ErrInternal, err)
+				}
+			}
 		}
 
 		err = i.vectorDB.Insert(ctx, data)
