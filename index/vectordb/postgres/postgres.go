@@ -40,7 +40,6 @@ type Options struct {
 }
 
 func New(options Options) *DB {
-
 	return &DB{
 		db:          options.DB,
 		table:       options.Table,
@@ -81,9 +80,9 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 			data.ID = id.String()
 		}
 
-		jsonMetadata, err := json.Marshal(data.Metadata)
-		if err != nil {
-			return err
+		jsonMetadata, marshalErr := json.Marshal(data.Metadata)
+		if marshalErr != nil {
+			return fmt.Errorf("%w: %w", index.ErrInternal, marshalErr)
 		}
 
 		values = append(
@@ -104,8 +103,11 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 			strings.Join(values, ","),
 		),
 	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
 
-	return err
+	return nil
 }
 
 func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
@@ -121,18 +123,19 @@ func (d *DB) similaritySearch(
 		opts.Filter = ""
 	}
 
-	query_vector := fmt.Sprintf("embedding %s '%s'", d.createIndex.Distance, floatToValues(values))
+	queryVector := fmt.Sprintf("embedding %s '%s'", d.createIndex.Distance, floatToValues(values))
+	//nolint:gosec
 	query := fmt.Sprintf(
 		"SELECT id, embedding, metadata, %s AS score FROM %s ORDER BY %s LIMIT %d",
-		query_vector,
+		queryVector,
 		d.table,
-		query_vector,
+		queryVector,
 		opts.TopK,
 	)
 
 	rows, err := d.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 	defer rows.Close()
 
@@ -142,33 +145,37 @@ func (d *DB) similaritySearch(
 		var embedding string
 		var jsonMetadata json.RawMessage
 		var score float64
-		if err := rows.Scan(&id, &embedding, &jsonMetadata, &score); err != nil {
-			return nil, err
+		err = rows.Scan(&id, &embedding, &jsonMetadata, &score)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 		}
 
 		metadata := make(types.Meta)
-		if err := json.Unmarshal(jsonMetadata, &metadata); err != nil {
-			return nil, err
+		err = json.Unmarshal(jsonMetadata, &metadata)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 		}
 
-		values, err := valuesToFloats(embedding)
+		var embeddingValues []float64
+		embeddingValues, err = valuesToFloats(embedding)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 		}
 
 		result := index.SearchResult{
 			Data: index.Data{
 				ID:       id,
 				Metadata: metadata,
-				Values:   values,
+				Values:   embeddingValues,
 			},
 			Score: score,
 		}
 		results = append(results, result)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	return results, nil
@@ -181,7 +188,7 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 
 	_, err := d.db.Exec("CREATE EXTENSION IF NOT EXISTS vector")
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	_, err = d.db.ExecContext(
@@ -189,7 +196,11 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 		fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (id UUID PRIMARY KEY, metadata json, embedding vector(%d))",
 			d.table, d.createIndex.Dimension),
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
 }
 
 func floatToValues(floats []float64) string {
