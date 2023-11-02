@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/RediSearch/redisearch-go/v2/redisearch"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
-	qdrantdb "github.com/henomis/lingoose/index/vectordb/qdrant"
+	"github.com/henomis/lingoose/index/vectordb/redis"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/prompt"
@@ -15,20 +16,18 @@ import (
 )
 
 // download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
-// run qdrant docker run --rm -p 6333:6333 qdrant/qdrant
 
 func main() {
-
 	index := index.New(
-		qdrantdb.New(
-			qdrantdb.Options{
-				CollectionName: "test",
-				CreateCollection: &qdrantdb.CreateCollectionOptions{
+		redis.New(
+			redis.Options{
+				RedisearchClient: redisearch.NewClient("localhost:6379", "test"),
+				CreateIndex: &redis.CreateIndexOptions{
 					Dimension: 1536,
-					Distance:  qdrantdb.DistanceCosine,
+					Distance:  redis.DistanceCosine,
 				},
 			},
-		).WithAPIKeyAndEdpoint("", "http://localhost:6333"),
+		),
 		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
 	).WithIncludeContents(true)
 
@@ -67,12 +66,13 @@ func main() {
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	prompt1 := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
-		map[string]string{
-			"query":   query,
-			"context": content,
-		},
-	)
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").
+		WithInputs(
+			map[string]string{
+				"query":   query,
+				"context": content,
+			},
+		)
 
 	err = prompt1.Format(nil)
 	if err != nil {
@@ -83,11 +83,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }
 
-func ingestData(qdrantIndex *index.Index) error {
-
+func ingestData(redisIndex *index.Index) error {
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
@@ -103,9 +101,7 @@ func ingestData(qdrantIndex *index.Index) error {
 		fmt.Println(doc.Metadata)
 		fmt.Println("----------")
 		fmt.Println()
-
 	}
 
-	return qdrantIndex.LoadFromDocuments(context.Background(), documentChunks)
-
+	return redisIndex.LoadFromDocuments(context.Background(), documentChunks)
 }
