@@ -147,9 +147,9 @@ func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) 
 
 		if i.addDataCallback != nil {
 			for j := range data {
-				err := i.addDataCallback(&data[j])
-				if err != nil {
-					return fmt.Errorf("%w: %w", ErrInternal, err)
+				callbackErr := i.addDataCallback(&data[j])
+				if callbackErr != nil {
+					return fmt.Errorf("%w: %w", ErrInternal, callbackErr)
 				}
 			}
 		}
