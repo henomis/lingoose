@@ -26,9 +26,9 @@ type DB struct {
 type Distance string
 
 const (
-	DistanceCosine    Distance = "COSINE"
-	DistanceEuclidean Distance = "IP"
-	DistanceDot       Distance = "L2"
+	DistanceCosine       Distance = "COSINE"
+	DistanceEuclidean    Distance = "L2"
+	DistanceInnerProduct Distance = "IP"
 
 	defaultVectorFieldName      = "vec"
 	defaultVectorScoreFieldName = "__vec_score"
