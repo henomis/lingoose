@@ -126,10 +126,11 @@ func (d *DB) similaritySearch(
 	queryVector := fmt.Sprintf("embedding %s '%s'", d.createIndex.Distance, floatToValues(values))
 	//nolint:gosec
 	query := fmt.Sprintf(
-		"SELECT id, embedding, metadata, %s AS score FROM %s ORDER BY %s LIMIT %d",
+		"SELECT id, embedding, metadata, %s AS score FROM %s %s ORDER BY %s LIMIT %d",
 		queryVector,
 		d.table,
 		queryVector,
+		opts.Filter,
 		opts.TopK,
 	)
 
