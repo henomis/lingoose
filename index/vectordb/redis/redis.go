@@ -92,7 +92,7 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 		documents = append(documents, document)
 	}
 
-	if err := d.redisearchClient.Index(documents...); err != nil {
+	if err = d.redisearchClient.Index(documents...); err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
@@ -109,7 +109,7 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 }
 
 func (d *DB) similaritySearch(
-	ctx context.Context,
+	_ context.Context,
 	values []float64,
 	opts *option.Options,
 ) ([]redisearch.Document, error) {
@@ -130,7 +130,7 @@ func (d *DB) similaritySearch(
 	return docs, err
 }
 
-func (d *DB) createIndexIfRequired(ctx context.Context) error {
+func (d *DB) createIndexIfRequired(_ context.Context) error {
 	if d.createIndex == nil {
 		return nil
 	}
@@ -179,8 +179,8 @@ func buildSearchResultsFromRedisDocuments(
 		metadata := index.DeepCopyMetadata(match.Properties)
 
 		score := 0.0
-		scoreField, ok := match.Properties[defaultVectorScoreFieldName]
-		if ok {
+		scoreField, fieldExists := match.Properties[defaultVectorScoreFieldName]
+		if fieldExists {
 			scoreAsString, ok := scoreField.(string)
 			if ok {
 				score, _ = strconv.ParseFloat(scoreAsString, 64)
@@ -189,8 +189,8 @@ func buildSearchResultsFromRedisDocuments(
 		}
 
 		values := []float64{}
-		vectorField, ok := match.Properties[defaultVectorFieldName]
-		if ok {
+		vectorField, fieldExists := match.Properties[defaultVectorFieldName]
+		if fieldExists {
 			vectorAsString, ok := vectorField.(string)
 			if ok {
 				values = bytestofloat64([]byte(vectorAsString))
