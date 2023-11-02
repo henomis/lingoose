@@ -19,7 +19,6 @@ import (
 // run qdrant docker run --rm -p 6333:6333 qdrant/qdrant
 
 func main() {
-
 	index := index.New(
 		redis.New(
 			redis.Options{
@@ -70,12 +69,13 @@ func main() {
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	prompt1 := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
-		map[string]string{
-			"query":   query,
-			"context": content,
-		},
-	)
+		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").
+		WithInputs(
+			map[string]string{
+				"query":   query,
+				"context": content,
+			},
+		)
 
 	err = prompt1.Format(nil)
 	if err != nil {
@@ -86,11 +86,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func ingestData(redisIndex *index.Index) error {
-
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
@@ -106,9 +104,7 @@ func ingestData(redisIndex *index.Index) error {
 		fmt.Println(doc.Metadata)
 		fmt.Println("----------")
 		fmt.Println()
-
 	}
 
 	return redisIndex.LoadFromDocuments(context.Background(), documentChunks)
-
 }
