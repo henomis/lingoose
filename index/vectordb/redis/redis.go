@@ -126,8 +126,11 @@ func (d *DB) similaritySearch(
 			AddParam("query_vector", float64tobytes(values)).
 			AddFilter(opts.Filter.(redisearch.Filter)),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
 
-	return docs, err
+	return docs, nil
 }
 
 func (d *DB) createIndexIfRequired(_ context.Context) error {
@@ -138,14 +141,14 @@ func (d *DB) createIndexIfRequired(_ context.Context) error {
 	indexName := ""
 	indexInfo, err := d.redisearchClient.Info()
 	if err != nil && (err.Error() != errUnknownIndexName) {
-		return err
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	} else if err == nil {
 		indexName = indexInfo.Name
 	}
 
 	indexes, err := d.redisearchClient.List()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	if len(indexes) > 0 && len(indexName) > 0 {
@@ -156,7 +159,7 @@ func (d *DB) createIndexIfRequired(_ context.Context) error {
 		}
 	}
 
-	return d.redisearchClient.CreateIndex(
+	err = d.redisearchClient.CreateIndex(
 		redisearch.NewSchema(redisearch.DefaultOptions).
 			AddField(redisearch.NewVectorFieldOptions(
 				defaultVectorFieldName,
@@ -168,6 +171,11 @@ func (d *DB) createIndexIfRequired(_ context.Context) error {
 						"DISTANCE_METRIC": d.createIndex.Distance,
 					}})),
 	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
 }
 
 func buildSearchResultsFromRedisDocuments(
