@@ -22,6 +22,9 @@ type data struct {
 	Values   []float64  `json:"values"`
 }
 
+// DB is a simple in-memory vector database
+// that stores the data in a json file only
+// if the persist option is enabled.
 type DB struct {
 	data   []data
 	dbPath string
@@ -29,16 +32,24 @@ type DB struct {
 
 type FilterFn func([]index.SearchResult) []index.SearchResult
 
-func New(dbPath string) *DB {
+func New() *DB {
 	index := &DB{
-		data:   []data{},
-		dbPath: dbPath,
+		data: []data{},
 	}
 
 	return index
 }
 
-func (i DB) save() error {
+func (i *DB) WithPersist(dbPath string) *DB {
+	i.dbPath = dbPath
+	return i
+}
+
+func (i *DB) save() error {
+	if i.dbPath == "" {
+		return nil
+	}
+
 	jsonContent, err := json.Marshal(i.data)
 	if err != nil {
 		return err
@@ -48,6 +59,10 @@ func (i DB) save() error {
 }
 
 func (i *DB) load() error {
+	if i.dbPath == "" {
+		return nil
+	}
+
 	if len(i.data) > 0 {
 		return nil
 	}

@@ -312,9 +312,9 @@ func getDDL(db *sql.DB, dataSourceType DataSourceType, dataSourceName string) (s
 
 		databaseName := dataSourceNameParts[len(dataSourceNameParts)-1]
 		return getMySQLSchema(db, databaseName)
-	} else {
-		return "", fmt.Errorf("unsupported datasource %s", dataSourceType)
 	}
+
+	return "", fmt.Errorf("unsupported datasource %s", dataSourceType)
 }
 
 func getPromptTemplate(dataSourceType DataSourceType) (string, error) {
@@ -322,7 +322,7 @@ func getPromptTemplate(dataSourceType DataSourceType) (string, error) {
 		return dataSourceTypePromptTemplate[DataSourceSqlite], nil
 	} else if dataSourceType == DataSourceMySQL {
 		return dataSourceTypePromptTemplate[DataSourceMySQL], nil
-	} else {
-		return "", fmt.Errorf("unsupported database scheme %s", dataSourceType)
 	}
+
+	return "", fmt.Errorf("unsupported database scheme %s", dataSourceType)
 }

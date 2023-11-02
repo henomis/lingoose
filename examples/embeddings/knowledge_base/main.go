@@ -26,7 +26,7 @@ const (
 func main() {
 
 	index := index.New(
-		jsondb.New("db.json"),
+		jsondb.New().WithPersist("db.json"),
 		openaiembedder.New(openaiembedder.AdaEmbeddingV2),
 	).WithIncludeContents(true)
 

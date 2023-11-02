@@ -42,8 +42,6 @@ type CreateCollectionOptions struct {
 type Options struct {
 	DatabaseName     *string
 	CollectionName   string
-	IncludeContent   bool
-	IncludeValues    bool
 	BatchUpsertSize  *int
 	CreateCollection *CreateCollectionOptions
 }

@@ -23,7 +23,6 @@ func main() {
 		qdrantdb.New(
 			qdrantdb.Options{
 				CollectionName: "test",
-				IncludeContent: true,
 				CreateCollection: &qdrantdb.CreateCollectionOptions{
 					Dimension: 1536,
 					Distance:  qdrantdb.DistanceCosine,
