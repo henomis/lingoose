@@ -16,7 +16,6 @@ import (
 type DB struct {
 	qdrantClient   *qdrantgo.Client
 	collectionName string
-	includeContent bool
 
 	createCollection *CreateCollectionOptions
 }
@@ -37,7 +36,6 @@ type CreateCollectionOptions struct {
 
 type Options struct {
 	CollectionName   string
-	IncludeContent   bool
 	CreateCollection *CreateCollectionOptions
 }
 
@@ -50,7 +48,6 @@ func New(options Options) *DB {
 	return &DB{
 		qdrantClient:     qdrantClient,
 		collectionName:   options.CollectionName,
-		includeContent:   options.IncludeContent,
 		createCollection: options.CreateCollection,
 	}
 }
@@ -122,7 +119,7 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return buildSearchResultsFromQdrantMatches(matches, d.includeContent), nil
+	return buildSearchResultsFromQdrantMatches(matches), nil
 }
 
 func (d *DB) similaritySearch(
@@ -192,15 +189,11 @@ func (d *DB) createCollectionIfRequired(ctx context.Context) error {
 
 func buildSearchResultsFromQdrantMatches(
 	matches []qdrantresponse.PointSearchResult,
-	includeContent bool,
 ) index.SearchResults {
 	searchResults := make([]index.SearchResult, len(matches))
 
 	for i, match := range matches {
 		metadata := index.DeepCopyMetadata(match.Payload)
-		if !includeContent {
-			delete(metadata, index.DefaultKeyContent)
-		}
 
 		searchResults[i] = index.SearchResult{
 			Data: index.Data{

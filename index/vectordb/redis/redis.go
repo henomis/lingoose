@@ -20,9 +20,7 @@ const (
 
 type DB struct {
 	redisearchClient *redisearch.Client
-	includeContent   bool
-
-	createIndex *CreateIndexOptions
+	createIndex      *CreateIndexOptions
 }
 
 type Distance string
@@ -43,15 +41,12 @@ type CreateIndexOptions struct {
 
 type Options struct {
 	RedisearchClient *redisearch.Client
-	IncludeContent   bool
-
-	CreateIndex *CreateIndexOptions
+	CreateIndex      *CreateIndexOptions
 }
 
 func New(options Options) *DB {
 	return &DB{
 		redisearchClient: options.RedisearchClient,
-		includeContent:   options.IncludeContent,
 		createIndex:      options.CreateIndex,
 	}
 }
@@ -110,7 +105,7 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return buildSearchResultsFromQdrantMatches(matches, d.includeContent), nil
+	return buildSearchResultsFromRedisDocuments(matches), nil
 }
 
 func (d *DB) similaritySearch(
@@ -175,17 +170,13 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 	)
 }
 
-func buildSearchResultsFromQdrantMatches(
-	matches []redisearch.Document,
-	includeContent bool,
+func buildSearchResultsFromRedisDocuments(
+	documents []redisearch.Document,
 ) index.SearchResults {
-	searchResults := make([]index.SearchResult, len(matches))
+	searchResults := make([]index.SearchResult, len(documents))
 
-	for i, match := range matches {
+	for i, match := range documents {
 		metadata := index.DeepCopyMetadata(match.Properties)
-		if !includeContent {
-			delete(metadata, index.DefaultKeyContent)
-		}
 
 		score := 0.0
 		scoreField, ok := match.Properties[defaultVectorScoreFieldName]
