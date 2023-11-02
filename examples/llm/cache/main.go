@@ -18,7 +18,7 @@ func main() {
 
 	embedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
 	index := index.New(
-		jsondb.New("db.json"),
+		jsondb.New().WithPersist("db.json"),
 		embedder,
 	)
 	llm := openai.NewCompletion().WithCompletionCache(cache.New(embedder, index).WithTopK(3))

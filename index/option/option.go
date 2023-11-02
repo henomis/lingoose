@@ -4,7 +4,7 @@ type Option func(*Options)
 
 type Options struct {
 	TopK   int
-	Filter interface{}
+	Filter any
 }
 
 func WithTopK(topK int) Option {
@@ -13,7 +13,7 @@ func WithTopK(topK int) Option {
 	}
 }
 
-func WithFilter(filter interface{}) Option {
+func WithFilter(filter any) Option {
 	return func(opts *Options) {
 		opts.Filter = filter
 	}

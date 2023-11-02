@@ -15,7 +15,7 @@ import (
 
 func main() {
 	docs, _ := loader.NewPDFToTextLoader("./kb").WithTextSplitter(textsplitter.NewRecursiveCharacterTextSplitter(2000, 200)).Load(context.Background())
-	index := index.New(jsondb.New("db.json"), openaiembedder.New(openaiembedder.AdaEmbeddingV2)).WithIncludeContents(true)
+	index := index.New(jsondb.New(), openaiembedder.New(openaiembedder.AdaEmbeddingV2)).WithIncludeContents(true)
 	index.LoadFromDocuments(context.Background(), docs)
 	qapipeline.New(openai.NewChat().WithVerbose(true)).WithIndex(index).Query(context.Background(), "What is the NATO purpose?", option.WithTopK(1))
 }
