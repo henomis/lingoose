@@ -107,6 +107,14 @@ func (d *DB) similaritySearch(
 	values []float64,
 	opts *option.Options,
 ) ([]pineconegoresponse.QueryMatch, error) {
+	if opts == nil {
+		opts = index.GetDefaultOptions()
+	}
+
+	if opts.Filter == nil {
+		opts.Filter = map[string]string{}
+	}
+
 	err := d.getProjectID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)

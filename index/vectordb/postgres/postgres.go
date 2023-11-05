@@ -119,6 +119,10 @@ func (d *DB) similaritySearch(
 	values []float64,
 	opts *option.Options,
 ) (index.SearchResults, error) {
+	if opts == nil {
+		opts = index.GetDefaultOptions()
+	}
+
 	if opts.Filter == nil {
 		opts.Filter = ""
 	}
