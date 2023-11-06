@@ -128,11 +128,14 @@ func (i *DB) Search(ctx context.Context, values []float64, options *option.Optio
 }
 
 func (i *DB) similaritySearch(
-	ctx context.Context,
+	_ context.Context,
 	embedding embedder.Embedding,
 	opts *option.Options,
 ) (index.SearchResults, error) {
-	_ = ctx
+	if opts == nil {
+		opts = index.GetDefaultOptions()
+	}
+
 	scores, err := i.cosineSimilarityBatch(embedding)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)

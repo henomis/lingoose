@@ -103,6 +103,10 @@ func (d *DB) similaritySearch(
 	values []float64,
 	opts *option.Options,
 ) ([]milvusgoresponse.VectorData, error) {
+	if opts == nil {
+		opts = index.GetDefaultOptions()
+	}
+
 	if opts.Filter == nil {
 		opts.Filter = ""
 	}

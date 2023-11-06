@@ -232,3 +232,9 @@ func DeepCopyMetadata(metadata types.Meta) types.Meta {
 	}
 	return metadataCopy
 }
+
+func GetDefaultOptions() *option.Options {
+	return &option.Options{
+		TopK: defaultTopK,
+	}
+}
