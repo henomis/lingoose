@@ -91,7 +91,10 @@ func (q *QAPipeline) WithPrompt(chat *chat.Chat) *QAPipeline {
 	tube := pipeline.NewTube(llm)
 
 	return &QAPipeline{
-		pipeline: pipeline.New(tube),
+		llmEngine: q.llmEngine,
+		pipeline:  pipeline.New(tube),
+		index:     q.index,
+		mode:      q.mode,
 	}
 }
 
