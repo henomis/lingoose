@@ -13,6 +13,8 @@ import (
 	qdrantresponse "github.com/henomis/qdrant-go/response"
 )
 
+var _ index.VectorDB = &DB{}
+
 type DB struct {
 	qdrantClient   *qdrantgo.Client
 	collectionName string
@@ -103,14 +105,14 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 	}
 
 	wait := true
-	req := &qdrantrequest.PointUpsert{
+	req := &qdrantrequest.PointsUpsert{
 		Wait:           &wait,
 		CollectionName: d.collectionName,
 		Points:         points,
 	}
-	res := &qdrantresponse.PointUpsert{}
+	res := &qdrantresponse.PointsUpsert{}
 
-	return d.qdrantClient.PointUpsert(ctx, req, res)
+	return d.qdrantClient.PointsUpsert(ctx, req, res)
 }
 
 func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
@@ -122,11 +124,30 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 	return buildSearchResultsFromQdrantMatches(matches), nil
 }
 
+func (d *DB) Drop(ctx context.Context) error {
+	req := &qdrantrequest.CollectionDelete{
+		CollectionName: d.collectionName,
+	}
+	res := &qdrantresponse.CollectionDelete{}
+
+	return d.qdrantClient.CollectionDelete(ctx, req, res)
+}
+
+func (d *DB) Delete(ctx context.Context, ids []string) error {
+	req := &qdrantrequest.PointsDelete{
+		CollectionName: d.collectionName,
+		Points:         ids,
+	}
+	res := &qdrantresponse.PointsDelete{}
+
+	return d.qdrantClient.PointsDelete(ctx, req, res)
+}
+
 func (d *DB) similaritySearch(
 	ctx context.Context,
 	values []float64,
 	opts *option.Options,
-) ([]qdrantresponse.PointSearchResult, error) {
+) ([]qdrantresponse.PointsSearchResult, error) {
 	if opts == nil {
 		opts = index.GetDefaultOptions()
 	}
@@ -137,10 +158,10 @@ func (d *DB) similaritySearch(
 
 	includeMetadata := true
 	includeValues := true
-	res := &qdrantresponse.PointSearch{}
-	err := d.qdrantClient.PointSearch(
+	res := &qdrantresponse.PointsSearch{}
+	err := d.qdrantClient.PointsSearch(
 		ctx,
-		&qdrantrequest.PointSearch{
+		&qdrantrequest.PointsSearch{
 			CollectionName: d.collectionName,
 			Limit:          opts.TopK,
 			Vector:         values,
@@ -192,7 +213,7 @@ func (d *DB) createCollectionIfRequired(ctx context.Context) error {
 }
 
 func buildSearchResultsFromQdrantMatches(
-	matches []qdrantresponse.PointSearchResult,
+	matches []qdrantresponse.PointsSearchResult,
 ) index.SearchResults {
 	searchResults := make([]index.SearchResult, len(matches))
 

@@ -40,6 +40,8 @@ type VectorDB interface {
 	Insert(context.Context, []Data) error
 	IsEmpty(context.Context) (bool, error)
 	Search(context.Context, []float64, *option.Options) (SearchResults, error)
+	Drop(ctx context.Context) error
+	Delete(ctx context.Context, ids []string) error
 }
 
 type Index struct {

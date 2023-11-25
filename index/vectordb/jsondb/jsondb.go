@@ -16,6 +16,8 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+var _ index.VectorDB = &DB{}
+
 type data struct {
 	ID       string     `json:"id"`
 	Metadata types.Meta `json:"metadata"`
@@ -40,57 +42,57 @@ func New() *DB {
 	return index
 }
 
-func (i *DB) WithPersist(dbPath string) *DB {
-	i.dbPath = dbPath
-	return i
+func (d *DB) WithPersist(dbPath string) *DB {
+	d.dbPath = dbPath
+	return d
 }
 
-func (i *DB) save() error {
-	if i.dbPath == "" {
+func (d *DB) save() error {
+	if d.dbPath == "" {
 		return nil
 	}
 
-	jsonContent, err := json.Marshal(i.data)
+	jsonContent, err := json.Marshal(d.data)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(i.dbPath, jsonContent, 0600)
+	return os.WriteFile(d.dbPath, jsonContent, 0600)
 }
 
-func (i *DB) load() error {
-	if i.dbPath == "" {
+func (d *DB) load() error {
+	if d.dbPath == "" {
 		return nil
 	}
 
-	if len(i.data) > 0 {
+	if len(d.data) > 0 {
 		return nil
 	}
 
-	if _, err := os.Stat(i.dbPath); os.IsNotExist(err) {
-		return i.save()
+	if _, err := os.Stat(d.dbPath); os.IsNotExist(err) {
+		return d.save()
 	}
 
-	content, err := os.ReadFile(i.dbPath)
+	content, err := os.ReadFile(d.dbPath)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(content, &i.data)
+	return json.Unmarshal(content, &d.data)
 }
 
-func (i *DB) IsEmpty(_ context.Context) (bool, error) {
-	err := i.load()
+func (d *DB) IsEmpty(_ context.Context) (bool, error) {
+	err := d.load()
 	if err != nil {
 		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return len(i.data) == 0, nil
+	return len(d.data) == 0, nil
 }
 
-func (i *DB) Insert(ctx context.Context, datas []index.Data) error {
+func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 	_ = ctx
-	err := i.load()
+	err := d.load()
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
@@ -113,21 +115,53 @@ func (i *DB) Insert(ctx context.Context, datas []index.Data) error {
 		records = append(records, point)
 	}
 
-	i.data = append(i.data, records...)
+	d.data = append(d.data, records...)
 
-	return i.save()
+	return d.save()
 }
 
-func (i *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
-	err := i.load()
+func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
+	err := d.load()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	return i.similaritySearch(ctx, values, options)
+	return d.similaritySearch(ctx, values, options)
 }
 
-func (i *DB) similaritySearch(
+func (d *DB) Drop(ctx context.Context) error {
+	_ = ctx
+	d.data = []data{}
+	return d.save()
+}
+
+func (d *DB) Delete(ctx context.Context, ids []string) error {
+	_ = ctx
+	err := d.load()
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	var newRecords []data
+	for _, record := range d.data {
+		found := false
+		for _, id := range ids {
+			if record.ID == id {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newRecords = append(newRecords, record)
+		}
+	}
+
+	d.data = newRecords
+
+	return d.save()
+}
+
+func (d *DB) similaritySearch(
 	_ context.Context,
 	embedding embedder.Embedding,
 	opts *option.Options,
@@ -136,7 +170,7 @@ func (i *DB) similaritySearch(
 		opts = index.GetDefaultOptions()
 	}
 
-	scores, err := i.cosineSimilarityBatch(embedding)
+	scores, err := d.cosineSimilarityBatch(embedding)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
@@ -146,9 +180,9 @@ func (i *DB) similaritySearch(
 	for j, score := range scores {
 		searchResults[j] = index.SearchResult{
 			Data: index.Data{
-				ID:       i.data[j].ID,
-				Values:   i.data[j].Values,
-				Metadata: i.data[j].Metadata,
+				ID:       d.data[j].ID,
+				Values:   d.data[j].Values,
+				Metadata: d.data[j].Metadata,
 			},
 			Score: score,
 		}
@@ -161,7 +195,7 @@ func (i *DB) similaritySearch(
 	return filterSearchResults(searchResults, opts.TopK), nil
 }
 
-func (i *DB) cosineSimilarity(a []float64, b []float64) (cosine float64, err error) {
+func (d *DB) cosineSimilarity(a []float64, b []float64) (cosine float64, err error) {
 	var count int
 	lengthA := len(a)
 	lengthB := len(b)
@@ -192,12 +226,12 @@ func (i *DB) cosineSimilarity(a []float64, b []float64) (cosine float64, err err
 	return sumA / (math.Sqrt(s1) * math.Sqrt(s2)), nil
 }
 
-func (i *DB) cosineSimilarityBatch(a embedder.Embedding) ([]float64, error) {
+func (d *DB) cosineSimilarityBatch(a embedder.Embedding) ([]float64, error) {
 	var err error
-	scores := make([]float64, len(i.data))
+	scores := make([]float64, len(d.data))
 
-	for j := range i.data {
-		scores[j], err = i.cosineSimilarity(a, i.data[j].Values)
+	for j := range d.data {
+		scores[j], err = d.cosineSimilarity(a, d.data[j].Values)
 		if err != nil {
 			return nil, err
 		}

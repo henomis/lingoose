@@ -14,6 +14,8 @@ import (
 	pineconegoresponse "github.com/henomis/pinecone-go/response"
 )
 
+var _ index.VectorDB = &DB{}
+
 type DB struct {
 	pineconeClient *pineconego.PineconeGo
 	indexName      string
@@ -100,6 +102,37 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 	}
 
 	return buildSearchResultsFromPineconeMatches(matches), nil
+}
+
+func (d *DB) Drop(ctx context.Context) error {
+	err := d.pineconeClient.IndexDelete(ctx, &pineconegorequest.IndexDelete{
+		IndexName: d.indexName,
+	}, &pineconegoresponse.IndexDelete{})
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
+}
+
+func (d *DB) Delete(ctx context.Context, ids []string) error {
+	err := d.getProjectID(ctx)
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	for _, id := range ids {
+		err := d.pineconeClient.VectorDelete(ctx, &pineconegorequest.VectorDelete{
+			IndexName: d.indexName,
+			ProjectID: *d.projectID,
+			ID:        &id,
+		}, &pineconegoresponse.VectorDelete{})
+		if err != nil {
+			return fmt.Errorf("%w: %w", index.ErrInternal, err)
+		}
+	}
+
+	return nil
 }
 
 func (d *DB) similaritySearch(
