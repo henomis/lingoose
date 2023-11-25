@@ -110,7 +110,7 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 	return buildSearchResultsFromRedisDocuments(matches), nil
 }
 
-func (d *DB) Drop(ctx context.Context) error {
+func (d *DB) Drop(_ context.Context) error {
 	err := d.redisearchClient.Drop()
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
@@ -119,7 +119,7 @@ func (d *DB) Drop(ctx context.Context) error {
 	return nil
 }
 
-func (d *DB) Delete(ctx context.Context, ids []string) error {
+func (d *DB) Delete(_ context.Context, ids []string) error {
 	for _, id := range ids {
 		err := d.redisearchClient.DeleteDocument(id)
 		if err != nil {

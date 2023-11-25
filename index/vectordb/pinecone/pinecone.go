@@ -122,13 +122,15 @@ func (d *DB) Delete(ctx context.Context, ids []string) error {
 	}
 
 	for _, id := range ids {
-		err := d.pineconeClient.VectorDelete(ctx, &pineconegorequest.VectorDelete{
+		idToDelete := id
+
+		deleteErr := d.pineconeClient.VectorDelete(ctx, &pineconegorequest.VectorDelete{
 			IndexName: d.indexName,
 			ProjectID: *d.projectID,
-			ID:        &id,
+			ID:        &idToDelete,
 		}, &pineconegoresponse.VectorDelete{})
-		if err != nil {
-			return fmt.Errorf("%w: %w", index.ErrInternal, err)
+		if deleteErr != nil {
+			return fmt.Errorf("%w: %w", index.ErrInternal, deleteErr)
 		}
 	}
 
