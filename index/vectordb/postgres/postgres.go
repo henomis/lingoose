@@ -14,6 +14,8 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+var _ index.VectorDB = &DB{}
+
 type DB struct {
 	db          *sql.DB
 	table       string
@@ -112,6 +114,28 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 
 func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
 	return d.similaritySearch(ctx, values, options)
+}
+
+func (d *DB) Drop(ctx context.Context) error {
+	_, err := d.db.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", d.table))
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
+}
+
+func (d *DB) Delete(ctx context.Context, ids []string) error {
+	_, err := d.db.ExecContext(
+		ctx,
+		fmt.Sprintf("DELETE FROM %s WHERE id = ANY($1)", d.table),
+		ids,
+	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
 }
 
 func (d *DB) similaritySearch(

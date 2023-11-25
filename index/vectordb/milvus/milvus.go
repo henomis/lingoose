@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
@@ -13,6 +14,8 @@ import (
 	milvusgorequest "github.com/henomis/milvus-go/request"
 	milvusgoresponse "github.com/henomis/milvus-go/response"
 )
+
+var _ index.VectorDB = &DB{}
 
 type DB struct {
 	milvusClient   *milvusgo.Client
@@ -96,6 +99,48 @@ func (d *DB) Search(ctx context.Context, values []float64, options *option.Optio
 	}
 
 	return buildSearchResultsFromMilvusMatches(matches), nil
+}
+
+func (d *DB) Drop(ctx context.Context) error {
+	err := d.milvusClient.CollectionDrop(
+		ctx,
+		&milvusgorequest.CollectionDrop{
+			CollectionName: d.collectionName,
+		},
+		&milvusgoresponse.CollectionDrop{},
+	)
+
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
+}
+
+func (d *DB) Delete(ctx context.Context, ids []string) error {
+	idsAsInt := make([]uint64, len(ids))
+	for i, id := range ids {
+		idAsInt, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			return fmt.Errorf("%w: %w", index.ErrInternal, err)
+		}
+
+		idsAsInt[i] = idAsInt
+	}
+
+	err := d.milvusClient.VectorDelete(
+		ctx,
+		&milvusgorequest.VectorDelete{
+			CollectionName: d.collectionName,
+			ID:             idsAsInt,
+		},
+		&milvusgoresponse.VectorDelete{},
+	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, err)
+	}
+
+	return nil
 }
 
 func (d *DB) similaritySearch(
