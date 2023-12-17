@@ -15,7 +15,7 @@ require (
 	github.com/henomis/qdrant-go v1.1.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/pkoukk/tiktoken-go v0.1.1
-	github.com/sashabaranov/go-openai v1.12.0
+	github.com/sashabaranov/go-openai v1.17.9
 )
 
 require (

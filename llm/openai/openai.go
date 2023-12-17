@@ -32,29 +32,29 @@ const (
 type Model string
 
 const (
-	GPT432K0613             Model = openai.GPT432K0613
-	GPT432K0314             Model = openai.GPT432K0314
-	GPT432K                 Model = openai.GPT432K
-	GPT40613                Model = openai.GPT40613
-	GPT40314                Model = openai.GPT40314
-	GPT4                    Model = openai.GPT4
-	GPT3Dot5Turbo0613       Model = openai.GPT3Dot5Turbo0613
-	GPT3Dot5Turbo0301       Model = openai.GPT3Dot5Turbo0301
-	GPT3Dot5Turbo16K        Model = openai.GPT3Dot5Turbo16K
-	GPT3Dot5Turbo16K0613    Model = openai.GPT3Dot5Turbo16K0613
-	GPT3Dot5Turbo           Model = openai.GPT3Dot5Turbo
-	GPT3TextDavinci003      Model = openai.GPT3TextDavinci003
-	GPT3TextDavinci002      Model = openai.GPT3TextDavinci002
-	GPT3TextCurie001        Model = openai.GPT3TextCurie001
-	GPT3TextBabbage001      Model = openai.GPT3TextBabbage001
-	GPT3TextAda001          Model = openai.GPT3TextAda001
-	GPT3TextDavinci001      Model = openai.GPT3TextDavinci001
-	GPT3DavinciInstructBeta Model = openai.GPT3DavinciInstructBeta
-	GPT3Davinci             Model = openai.GPT3Davinci
-	GPT3CurieInstructBeta   Model = openai.GPT3CurieInstructBeta
-	GPT3Curie               Model = openai.GPT3Curie
-	GPT3Ada                 Model = openai.GPT3Ada
-	GPT3Babbage             Model = openai.GPT3Babbage
+	GPT432K0613           Model = openai.GPT432K0613
+	GPT432K0314           Model = openai.GPT432K0314
+	GPT432K               Model = openai.GPT432K
+	GPT40613              Model = openai.GPT40613
+	GPT40314              Model = openai.GPT40314
+	GPT4TurboPreview      Model = openai.GPT4TurboPreview
+	GPT4VisionPreview     Model = openai.GPT4VisionPreview
+	GPT4                  Model = openai.GPT4
+	GPT3Dot5Turbo1106     Model = openai.GPT3Dot5Turbo1106
+	GPT3Dot5Turbo0613     Model = openai.GPT3Dot5Turbo0613
+	GPT3Dot5Turbo0301     Model = openai.GPT3Dot5Turbo0301
+	GPT3Dot5Turbo16K      Model = openai.GPT3Dot5Turbo16K
+	GPT3Dot5Turbo16K0613  Model = openai.GPT3Dot5Turbo16K0613
+	GPT3Dot5Turbo         Model = openai.GPT3Dot5Turbo
+	GPT3Dot5TurboInstruct Model = openai.GPT3Dot5TurboInstruct
+	GPT3Davinci           Model = openai.GPT3Davinci
+	GPT3Davinci002        Model = openai.GPT3Davinci002
+	GPT3Curie             Model = openai.GPT3Curie
+	GPT3Curie002          Model = openai.GPT3Curie002
+	GPT3Ada               Model = openai.GPT3Ada
+	GPT3Ada002            Model = openai.GPT3Ada002
+	GPT3Babbage           Model = openai.GPT3Babbage
+	GPT3Babbage002        Model = openai.GPT3Babbage002
 )
 
 type UsageCallback func(types.Meta)
@@ -70,6 +70,7 @@ type OpenAI struct {
 	usageCallback          UsageCallback
 	functions              map[string]Function
 	functionsMaxIterations uint
+	toolChoice             *string
 	calledFunctionName     *string
 	finishReason           string
 	cache                  *cache.Cache
@@ -137,6 +138,11 @@ func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
 	return o
 }
 
+func (o *OpenAI) WithToolChoice(toolChoice string) *OpenAI {
+	o.toolChoice = &toolChoice
+	return o
+}
+
 // CalledFunctionName returns the name of the function that was called.
 func (o *OpenAI) CalledFunctionName() *string {
 	return o.calledFunctionName
@@ -149,7 +155,7 @@ func (o *OpenAI) FinishReason() string {
 
 func NewCompletion() *OpenAI {
 	return New(
-		GPT3TextDavinci003,
+		GPT3Dot5TurboInstruct,
 		DefaultOpenAITemperature,
 		DefaultOpenAIMaxTokens,
 		false,
@@ -308,7 +314,17 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	if len(o.functions) > 0 {
-		chatCompletionRequest.Functions = o.getFunctions()
+		chatCompletionRequest.Tools = o.getFunctions()
+		if o.toolChoice != nil {
+			chatCompletionRequest.ToolChoice = openai.ToolChoice{
+				Type: openai.ToolTypeFunction,
+				Function: openai.ToolFunction{
+					Name: *o.toolChoice,
+				},
+			}
+		} else {
+			chatCompletionRequest.ToolChoice = "auto"
+		}
 	}
 
 	response, err := o.openAIClient.CreateChatCompletion(
@@ -332,10 +348,10 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	o.finishReason = string(response.Choices[0].FinishReason)
 	o.calledFunctionName = nil
-	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
+	if len(response.Choices[0].Message.ToolCalls) > 0 && len(o.functions) > 0 {
 		if o.verbose {
-			fmt.Printf("Calling function %s\n", response.Choices[0].Message.FunctionCall.Name)
-			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.FunctionCall.Arguments)
+			fmt.Printf("Calling function %s\n", response.Choices[0].Message.ToolCalls[0].Function.Name)
+			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.ToolCalls[0].Function.Arguments)
 		}
 
 		content, err = o.functionCall(response)
