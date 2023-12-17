@@ -70,6 +70,7 @@ type OpenAI struct {
 	usageCallback          UsageCallback
 	functions              map[string]Function
 	functionsMaxIterations uint
+	toolChoice             *string
 	calledFunctionName     *string
 	finishReason           string
 	cache                  *cache.Cache
@@ -134,6 +135,11 @@ func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
 // WithCache sets the cache to use for the OpenAI instance.
 func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
 	o.cache = cache
+	return o
+}
+
+func (o *OpenAI) WithToolChoice(toolChoice string) *OpenAI {
+	o.toolChoice = &toolChoice
 	return o
 }
 
@@ -308,7 +314,17 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	if len(o.functions) > 0 {
-		chatCompletionRequest.Functions = o.getFunctions()
+		chatCompletionRequest.Tools = o.getFunctions()
+		if o.toolChoice != nil {
+			chatCompletionRequest.ToolChoice = openai.ToolChoice{
+				Type: openai.ToolTypeFunction,
+				Function: openai.ToolFunction{
+					Name: *o.toolChoice,
+				},
+			}
+		} else {
+			chatCompletionRequest.ToolChoice = "auto"
+		}
 	}
 
 	response, err := o.openAIClient.CreateChatCompletion(
@@ -332,10 +348,10 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 
 	o.finishReason = string(response.Choices[0].FinishReason)
 	o.calledFunctionName = nil
-	if response.Choices[0].FinishReason == "function_call" && len(o.functions) > 0 {
+	if len(response.Choices[0].Message.ToolCalls) > 0 && len(o.functions) > 0 {
 		if o.verbose {
-			fmt.Printf("Calling function %s\n", response.Choices[0].Message.FunctionCall.Name)
-			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.FunctionCall.Arguments)
+			fmt.Printf("Calling function %s\n", response.Choices[0].Message.ToolCalls[0].Function.Name)
+			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.ToolCalls[0].Function.Arguments)
 		}
 
 		content, err = o.functionCall(response)
