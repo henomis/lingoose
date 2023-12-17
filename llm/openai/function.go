@@ -175,7 +175,11 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.ToolCalls[0].Function.Name]
 	if !ok {
-		return "", fmt.Errorf("%w: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.ToolCalls[0].Function.Name)
+		return "", fmt.Errorf(
+			"%w: unknown function %s",
+			ErrOpenAIChat,
+			response.Choices[0].Message.ToolCalls[0].Function.Name,
+		)
 	}
 
 	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, response.Choices[0].Message.ToolCalls[0].Function.Arguments)
