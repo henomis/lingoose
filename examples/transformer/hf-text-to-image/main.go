@@ -7,12 +7,10 @@ import (
 )
 
 func main() {
+	t := transformer.NewHFTextToImage().WithPersistImage("test.png")
 
-	d := transformer.NewHFTextToImage().WithPersistImage("test.png")
-
-	_, err := d.Transform(context.Background(), "A cat over the table.")
+	_, err := t.Transform(context.Background(), "A cat over the table.")
 	if err != nil {
 		panic(err)
 	}
-
 }
