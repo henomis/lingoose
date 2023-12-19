@@ -54,8 +54,7 @@ func (h *HFTextToImage) WithPersistImage(mediaFile string) *HFTextToImage {
 }
 
 func (h *HFTextToImage) Transform(ctx context.Context, input string) (any, error) {
-
-	respBody, err := h.hfTextToImageHttpCall(ctx, input)
+	respBody, err := h.hfTextToImageHTTPCall(ctx, input)
 	if err != nil {
 		return "", err
 	}
@@ -63,8 +62,7 @@ func (h *HFTextToImage) Transform(ctx context.Context, input string) (any, error
 	return respBody, nil
 }
 
-func (h *HFTextToImage) hfTextToImageHttpCall(ctx context.Context, input string) ([]byte, error) {
-
+func (h *HFTextToImage) hfTextToImageHTTPCall(ctx context.Context, input string) ([]byte, error) {
 	request := HFTextToImageRequest{
 		Input: input,
 	}
@@ -95,28 +93,19 @@ func (h *HFTextToImage) hfTextToImageHttpCall(ctx context.Context, input string)
 	}
 
 	if h.mediaFile != "" {
-		f, err := os.Create(h.mediaFile)
-		if err != nil {
-			return nil, err
+		f, errCreate := os.Create(h.mediaFile)
+		if errCreate != nil {
+			return nil, errCreate
 		}
 		defer f.Close()
 
-		_, err = io.Copy(f, resp.Body)
-		if err != nil {
-			return nil, err
+		_, errCreate = io.Copy(f, resp.Body)
+		if errCreate != nil {
+			return nil, errCreate
 		}
 
 		return nil, nil
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return respBody, nil
+	return io.ReadAll(resp.Body)
 }
