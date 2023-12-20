@@ -29,4 +29,5 @@ type Prompt interface {
 type LlmEngine interface {
 	Completion(ctx context.Context, prompt string) (string, error)
 	Chat(ctx context.Context, chat *chat.Chat) (string, error)
+	// Generate(ctx context.Context, thread *chat.Thread) (*chat.Thread, error)
 }
