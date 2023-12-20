@@ -5,23 +5,48 @@ import (
 	"fmt"
 
 	"github.com/henomis/lingoose/thread"
-	"github.com/sashabaranov/go-openai"
+	openai "github.com/sashabaranov/go-openai"
 )
 
-func threadToChatCompletionMessages(thread *thread.Thread) []openai.ChatCompletionMessage {
-	chatCompletionMessages := make([]openai.ChatCompletionMessage, len(thread.Messages))
-	for i, message := range thread.Messages {
-		chatMessageParts := threadContentsToChatMessageParts(thread.Messages[i])
+var threadRoleToOpenAIRole = map[thread.Role]string{
+	thread.RoleUser:      "user",
+	thread.RoleAssistant: "assistant",
+	thread.RoleTool:      "tool",
+}
+
+func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMessage {
+	chatCompletionMessages := make([]openai.ChatCompletionMessage, len(t.Messages))
+	for i, message := range t.Messages {
 		chatCompletionMessages[i] = openai.ChatCompletionMessage{
-			Role:         message.Role,
-			MultiContent: chatMessageParts,
+			Role: threadRoleToOpenAIRole[message.Role],
+		}
+
+		if len(message.Contents) > 1 {
+			chatCompletionMessages[i].MultiContent = threadContentsToChatMessageParts(message)
+			continue
+		}
+
+		switch message.Role {
+		case thread.RoleUser, thread.RoleAssistant:
+			if data, ok := message.Contents[0].Data.(string); ok {
+				chatCompletionMessages[i].Content = data
+			} else {
+				continue
+			}
+		case thread.RoleTool:
+			if data, ok := message.Contents[0].Data.(thread.ToolData); ok {
+				chatCompletionMessages[i].ToolCallID = data.ID
+				chatCompletionMessages[i].Content = data.Result
+			} else {
+				continue
+			}
 		}
 	}
 
 	return chatCompletionMessages
 }
 
-func threadContentsToChatMessageParts(m thread.Message) []openai.ChatMessagePart {
+func threadContentsToChatMessageParts(m *thread.Message) []openai.ChatMessagePart {
 	chatMessageParts := make([]openai.ChatMessagePart, len(m.Contents))
 
 	for i, content := range m.Contents {
@@ -39,16 +64,6 @@ func threadContentsToChatMessageParts(m thread.Message) []openai.ChatMessagePart
 				ImageURL: &openai.ChatMessageImageURL{
 					URL:    content.Data.(string),
 					Detail: openai.ImageURLDetailAuto,
-				},
-			}
-		case thread.ContentTypeTool:
-			toolData := content.Data.(thread.ToolData)
-			chatMessagePart = &openai.ChatMessagePart{
-				Type: openai.ChatMessagePartTypeTool,
-				Tool: &openai.ChatMessageTool{
-					ID:     toolData.ID,
-					Name:   toolData.Name,
-					Result: toolData.Result,
 				},
 			}
 		default:
@@ -97,14 +112,14 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) (*thread.Thread
 		return nil, fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 	}
 
-	var messages []thread.Message
+	var messages []*thread.Message
 	if response.Choices[0].FinishReason == "tool_calls" {
 		messages = o.callTools(response)
 	} else {
 		if o.verbose {
 			//TODO
 		}
-		messages = []thread.Message{
+		messages = []*thread.Message{
 			textContentToThreadMessage(response.Choices[0].Message.Content),
 		}
 	}
@@ -131,16 +146,28 @@ func (o *OpenAI) getChatCompletionRequestToolChoice() any {
 	return "auto"
 }
 
-func (o *OpenAI) callTool(openai.ToolCall) (string, error) {
-	return "", nil
+func (o *OpenAI) callTool(toolCall openai.ToolCall) (string, error) {
+	fn, ok := o.functions[toolCall.Function.Name]
+	if !ok {
+		return "", fmt.Errorf("unknown function %s", toolCall.Function.Name)
+	}
+
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, toolCall.Function.Arguments)
+	if err != nil {
+		return "", err
+	}
+
+	o.calledFunctionName = &fn.Name
+
+	return resultAsJSON, nil
 }
 
-func (o *OpenAI) callTools(response openai.ChatCompletionResponse) []thread.Message {
+func (o *OpenAI) callTools(response openai.ChatCompletionResponse) []*thread.Message {
 	if len(o.functions) == 0 || len(response.Choices[0].Message.ToolCalls) == 0 {
 		return nil
 	}
 
-	var messages []thread.Message
+	var messages []*thread.Message
 	for _, toolCall := range response.Choices[0].Message.ToolCalls {
 		if o.verbose {
 			fmt.Printf("Calling function %s\n", toolCall.Function.Name)
@@ -158,30 +185,26 @@ func (o *OpenAI) callTools(response openai.ChatCompletionResponse) []thread.Mess
 	return messages
 }
 
-func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) thread.Message {
-	return thread.Message{
+func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thread.Message {
+	return &thread.Message{
 		Role: thread.RoleTool,
-		Contents: []thread.Content{
-			{
-				Type: thread.ContentTypeTool,
-				Data: thread.ToolData{
+		Contents: []*thread.Content{
+			thread.NewToolContent(
+				&thread.ToolData{
 					ID:     toolCall.ID,
 					Name:   toolCall.Function.Name,
 					Result: result,
 				},
-			},
+			),
 		},
 	}
 }
 
-func textContentToThreadMessage(content string) thread.Message {
-	return thread.Message{
+func textContentToThreadMessage(content string) *thread.Message {
+	return &thread.Message{
 		Role: thread.RoleAssistant,
-		Contents: []thread.Content{
-			{
-				Type: thread.ContentTypeText,
-				Data: content,
-			},
+		Contents: []*thread.Content{
+			thread.NewTextContent(content),
 		},
 	}
 }
