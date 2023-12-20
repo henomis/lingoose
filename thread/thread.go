@@ -78,8 +78,9 @@ func NewToolContent(toolData *ToolData) *Content {
 	}
 }
 
-func (m *Message) AddContent(content *Content) {
+func (m *Message) AddContent(content *Content) *Message {
 	m.Contents = append(m.Contents, content)
+	return m
 }
 
 func NewUserMessage() *Message {
@@ -100,8 +101,9 @@ func NewToolMessage() *Message {
 	}
 }
 
-func (t *Thread) AddMessage(message *Message) {
+func (t *Thread) AddMessage(message *Message) *Thread {
 	t.Messages = append(t.Messages, message)
+	return t
 }
 
 func NewThread() *Thread {

@@ -186,25 +186,19 @@ func (o *OpenAI) callTools(response openai.ChatCompletionResponse) []*thread.Mes
 }
 
 func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thread.Message {
-	return &thread.Message{
-		Role: thread.RoleTool,
-		Contents: []*thread.Content{
-			thread.NewToolContent(
-				&thread.ToolData{
-					ID:     toolCall.ID,
-					Name:   toolCall.Function.Name,
-					Result: result,
-				},
-			),
-		},
-	}
+	return thread.NewToolMessage().AddContent(
+		thread.NewToolContent(
+			&thread.ToolData{
+				ID:     toolCall.ID,
+				Name:   toolCall.Function.Name,
+				Result: result,
+			},
+		),
+	)
 }
 
 func textContentToThreadMessage(content string) *thread.Message {
-	return &thread.Message{
-		Role: thread.RoleAssistant,
-		Contents: []*thread.Content{
-			thread.NewTextContent(content),
-		},
-	}
+	return thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(content),
+	)
 }
