@@ -109,3 +109,23 @@ func (t *Thread) AddMessage(message *Message) *Thread {
 func NewThread() *Thread {
 	return &Thread{}
 }
+
+func (t *Thread) String() string {
+	str := "Thread:\n"
+	for _, message := range t.Messages {
+		str += string(message.Role) + ":\n"
+		for _, content := range message.Contents {
+			str += "\tType: " + string(content.Type) + "\n"
+			switch content.Type {
+			case ContentTypeText:
+				str += "\tText: " + content.Data.(string) + "\n"
+			case ContentTypeImage:
+				str += "\tImage URL: " + *content.Data.(*MediaData).URL + "\n"
+			case ContentTypeTool:
+				str += "\tTool Name: " + content.Data.(*ToolData).Name + "\n"
+				str += "\tTool Result: " + content.Data.(*ToolData).Result + "\n"
+			}
+		}
+	}
+	return str
+}
