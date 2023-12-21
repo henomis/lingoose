@@ -102,12 +102,6 @@ func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thr
 	)
 }
 
-func textContentToThreadMessage(content string) *thread.Message {
-	return thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(content),
-	)
-}
-
 func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
 	if len(toolCalls) == 0 {
 		return nil

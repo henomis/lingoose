@@ -303,7 +303,9 @@ func (o *OpenAI) generate(
 		messages = append(messages, o.callTools(response.Choices[0].Message.ToolCalls)...)
 	} else {
 		messages = []*thread.Message{
-			textContentToThreadMessage(response.Choices[0].Message.Content),
+			thread.NewAssistantMessage().AddContent(
+				thread.NewTextContent(response.Choices[0].Message.Content),
+			),
 		}
 	}
 
