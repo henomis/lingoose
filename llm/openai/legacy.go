@@ -11,8 +11,6 @@ import (
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/types"
-	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -302,22 +300,6 @@ func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prom
 	}
 
 	return nil
-}
-
-// SetStop sets the stop sequences for the completion.
-func (o *OpenAI) SetStop(stop []string) {
-	o.stop = stop
-}
-
-func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
-	callbackMetadata := make(types.Meta)
-
-	err := mapstructure.Decode(usage, &callbackMetadata)
-	if err != nil {
-		return
-	}
-
-	o.usageCallback(callbackMetadata)
 }
 
 func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {

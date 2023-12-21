@@ -5,6 +5,7 @@ import (
 
 	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/types"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -119,4 +120,20 @@ func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
 func (o *OpenAI) WithToolChoice(toolChoice *string) *OpenAI {
 	o.toolChoice = toolChoice
 	return o
+}
+
+// SetStop sets the stop sequences for the completion.
+func (o *OpenAI) SetStop(stop []string) {
+	o.stop = stop
+}
+
+func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
+	callbackMetadata := make(types.Meta)
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.usageCallback(callbackMetadata)
 }
