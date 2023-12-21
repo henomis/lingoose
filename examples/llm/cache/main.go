@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
@@ -46,12 +43,4 @@ func main() {
 
 		fmt.Println(t)
 	}
-}
-
-func askUserInput(question string) string {
-	fmt.Printf("%s > ", question)
-	reader := bufio.NewReader(os.Stdin)
-	name, _ := reader.ReadString('\n')
-	name = strings.TrimSuffix(name, "\n")
-	return name
 }
