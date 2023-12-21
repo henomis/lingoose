@@ -1,0 +1,129 @@
+package openai
+
+import (
+	"github.com/henomis/lingoose/thread"
+	"github.com/sashabaranov/go-openai"
+)
+
+func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMessage {
+	chatCompletionMessages := make([]openai.ChatCompletionMessage, len(t.Messages))
+	for i, message := range t.Messages {
+		chatCompletionMessages[i] = openai.ChatCompletionMessage{
+			Role: threadRoleToOpenAIRole[message.Role],
+		}
+
+		if len(message.Contents) > 1 {
+			chatCompletionMessages[i].MultiContent = threadContentsToChatMessageParts(message)
+			continue
+		}
+
+		switch message.Role {
+		case thread.RoleUser:
+			if data, ok := message.Contents[0].Data.(string); ok {
+				chatCompletionMessages[i].Content = data
+			} else {
+				continue
+			}
+		case thread.RoleAssistant:
+			if data, ok := message.Contents[0].Data.(string); ok {
+				chatCompletionMessages[i].Content = data
+			} else if data, ok := message.Contents[0].Data.([]*thread.ToolCallData); ok {
+				var toolCalls []openai.ToolCall
+				for _, toolCallData := range data {
+					toolCalls = append(toolCalls, openai.ToolCall{
+						ID:   toolCallData.ID,
+						Type: "function",
+						Function: openai.FunctionCall{
+							Name:      toolCallData.Function.Name,
+							Arguments: toolCallData.Function.Arguments,
+						},
+					})
+				}
+				chatCompletionMessages[i].ToolCalls = toolCalls
+			} else {
+				continue
+			}
+		case thread.RoleTool:
+			if data, ok := message.Contents[0].Data.(*thread.ToolResponseData); ok {
+				chatCompletionMessages[i].ToolCallID = data.ID
+				chatCompletionMessages[i].Name = data.Name
+				chatCompletionMessages[i].Content = data.Result
+			} else {
+				continue
+			}
+		}
+	}
+
+	return chatCompletionMessages
+}
+
+func threadContentsToChatMessageParts(m *thread.Message) []openai.ChatMessagePart {
+	chatMessageParts := make([]openai.ChatMessagePart, len(m.Contents))
+
+	for i, content := range m.Contents {
+		var chatMessagePart *openai.ChatMessagePart
+
+		switch content.Type {
+		case thread.ContentTypeText:
+			chatMessagePart = &openai.ChatMessagePart{
+				Type: openai.ChatMessagePartTypeText,
+				Text: content.Data.(string),
+			}
+		case thread.ContentTypeImage:
+			chatMessagePart = &openai.ChatMessagePart{
+				Type: openai.ChatMessagePartTypeImageURL,
+				ImageURL: &openai.ChatMessageImageURL{
+					URL:    content.Data.(string),
+					Detail: openai.ImageURLDetailAuto,
+				},
+			}
+		default:
+			continue
+		}
+
+		chatMessageParts[i] = *chatMessagePart
+	}
+
+	return chatMessageParts
+}
+
+func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thread.Message {
+	return thread.NewToolMessage().AddContent(
+		thread.NewToolResponseContent(
+			&thread.ToolResponseData{
+				ID:     toolCall.ID,
+				Name:   toolCall.Function.Name,
+				Result: result,
+			},
+		),
+	)
+}
+
+func textContentToThreadMessage(content string) *thread.Message {
+	return thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(content),
+	)
+}
+
+func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
+	if len(toolCalls) == 0 {
+		return nil
+	}
+
+	var toolCallData []*thread.ToolCallData
+	for _, toolCall := range toolCalls {
+		toolCallData = append(toolCallData, &thread.ToolCallData{
+			ID: toolCall.ID,
+			Function: thread.ToolCallFunction{
+				Name:      toolCall.Function.Name,
+				Arguments: toolCall.Function.Arguments,
+			},
+		})
+	}
+
+	return thread.NewAssistantMessage().AddContent(
+		thread.NewToolCallContent(
+			toolCallData,
+		),
+	)
+}

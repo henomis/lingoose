@@ -7,11 +7,10 @@ type Thread struct {
 type ContentType string
 
 const (
-	ContentTypeText  ContentType = "text"
-	ContentTypeImage ContentType = "image"
-	// ContentTypeVideo ContentType = "video"
-	// ContentTypeAudio ContentType = "audio"
-	ContentTypeTool ContentType = "tool"
+	ContentTypeText         ContentType = "text"
+	ContentTypeImage        ContentType = "image"
+	ContentTypeToolCall     ContentType = "tool_call"
+	ContentTypeToolResponse ContentType = "tool_response"
 )
 
 type Content struct {
@@ -32,10 +31,20 @@ type Message struct {
 	Contents []*Content
 }
 
-type ToolData struct {
+type ToolResponseData struct {
 	ID     string
 	Name   string
 	Result string
+}
+
+type ToolCallData struct {
+	ID       string
+	Function ToolCallFunction
+}
+
+type ToolCallFunction struct {
+	Name      string
+	Arguments string
 }
 
 type MediaData struct {
@@ -57,24 +66,17 @@ func NewImageContent(mediaData *MediaData) *Content {
 	}
 }
 
-// func NewVideoContent(mediaData *MediaData) *Content {
-// 	return &Content{
-// 		Type: ContentTypeVideo,
-// 		Data: mediaData,
-// 	}
-// }
-
-// func NewAudioContent(mediaData *MediaData) *Content {
-// 	return &Content{
-// 		Type: ContentTypeAudio,
-// 		Data: mediaData,
-// 	}
-// }
-
-func NewToolContent(toolData *ToolData) *Content {
+func NewToolResponseContent(toolResponseData *ToolResponseData) *Content {
 	return &Content{
-		Type: ContentTypeTool,
-		Data: toolData,
+		Type: ContentTypeToolResponse,
+		Data: toolResponseData,
+	}
+}
+
+func NewToolCallContent(data []*ToolCallData) *Content {
+	return &Content{
+		Type: ContentTypeToolCall,
+		Data: data,
 	}
 }
 
@@ -106,6 +108,15 @@ func (t *Thread) AddMessage(message *Message) *Thread {
 	return t
 }
 
+func (t *Thread) AddMessages(messages []*Message) *Thread {
+	t.Messages = append(t.Messages, messages...)
+	return t
+}
+
+func (t *Thread) CountMessages() int {
+	return len(t.Messages)
+}
+
 func NewThread() *Thread {
 	return &Thread{}
 }
@@ -121,9 +132,16 @@ func (t *Thread) String() string {
 				str += "\tText: " + content.Data.(string) + "\n"
 			case ContentTypeImage:
 				str += "\tImage URL: " + *content.Data.(*MediaData).URL + "\n"
-			case ContentTypeTool:
-				str += "\tTool Name: " + content.Data.(*ToolData).Name + "\n"
-				str += "\tTool Result: " + content.Data.(*ToolData).Result + "\n"
+			case ContentTypeToolCall:
+				for _, toolCallData := range content.Data.([]*ToolCallData) {
+					str += "\tTool Call ID: " + toolCallData.ID + "\n"
+					str += "\tTool Call Function Name: " + toolCallData.Function.Name + "\n"
+					str += "\tTool Call Function Arguments: " + toolCallData.Function.Arguments + "\n"
+				}
+			case ContentTypeToolResponse:
+				str += "\tTool ID: " + content.Data.(*ToolResponseData).ID + "\n"
+				str += "\tTool Name: " + content.Data.(*ToolResponseData).Name + "\n"
+				str += "\tTool Result: " + content.Data.(*ToolResponseData).Result + "\n"
 			}
 		}
 	}

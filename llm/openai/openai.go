@@ -1,4 +1,3 @@
-// Package openai provides a wrapper around the OpenAI API.
 package openai
 
 import (
@@ -7,333 +6,106 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
-	"github.com/henomis/lingoose/chat"
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/types"
-	"github.com/mitchellh/mapstructure"
-	"github.com/sashabaranov/go-openai"
-)
-
-var (
-	ErrOpenAICompletion = fmt.Errorf("openai completion error")
-	ErrOpenAIChat       = fmt.Errorf("openai chat error")
+	"github.com/henomis/lingoose/thread"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 const (
-	DefaultOpenAIMaxTokens   = 256
-	DefaultOpenAITemperature = 0.7
-	DefaultOpenAINumResults  = 1
-	DefaultOpenAITopP        = 1.0
-	DefaultMaxIterations     = 3
+	EOS = "\x00"
 )
 
-type Model string
-
-const (
-	GPT432K0613           Model = openai.GPT432K0613
-	GPT432K0314           Model = openai.GPT432K0314
-	GPT432K               Model = openai.GPT432K
-	GPT40613              Model = openai.GPT40613
-	GPT40314              Model = openai.GPT40314
-	GPT4TurboPreview      Model = openai.GPT4TurboPreview
-	GPT4VisionPreview     Model = openai.GPT4VisionPreview
-	GPT4                  Model = openai.GPT4
-	GPT3Dot5Turbo1106     Model = openai.GPT3Dot5Turbo1106
-	GPT3Dot5Turbo0613     Model = openai.GPT3Dot5Turbo0613
-	GPT3Dot5Turbo0301     Model = openai.GPT3Dot5Turbo0301
-	GPT3Dot5Turbo16K      Model = openai.GPT3Dot5Turbo16K
-	GPT3Dot5Turbo16K0613  Model = openai.GPT3Dot5Turbo16K0613
-	GPT3Dot5Turbo         Model = openai.GPT3Dot5Turbo
-	GPT3Dot5TurboInstruct Model = openai.GPT3Dot5TurboInstruct
-	GPT3Davinci           Model = openai.GPT3Davinci
-	GPT3Davinci002        Model = openai.GPT3Davinci002
-	GPT3Curie             Model = openai.GPT3Curie
-	GPT3Curie002          Model = openai.GPT3Curie002
-	GPT3Ada               Model = openai.GPT3Ada
-	GPT3Ada002            Model = openai.GPT3Ada002
-	GPT3Babbage           Model = openai.GPT3Babbage
-	GPT3Babbage002        Model = openai.GPT3Babbage002
-)
-
-type UsageCallback func(types.Meta)
-type StreamCallback func(string)
-
-type OpenAI struct {
-	openAIClient           *openai.Client
-	model                  Model
-	temperature            float32
-	maxTokens              int
-	stop                   []string
-	verbose                bool
-	usageCallback          UsageCallback
-	functions              map[string]Function
-	functionsMaxIterations uint
-	toolChoice             *string
-	calledFunctionName     *string
-	finishReason           string
-	cache                  *cache.Cache
+var threadRoleToOpenAIRole = map[thread.Role]string{
+	thread.RoleUser:      "user",
+	thread.RoleAssistant: "assistant",
+	thread.RoleTool:      "tool",
 }
 
-func New(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
+func New() *OpenAI {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	return &OpenAI{
 		openAIClient:           openai.NewClient(openAIKey),
-		model:                  model,
-		temperature:            temperature,
-		maxTokens:              maxTokens,
-		verbose:                verbose,
+		model:                  GPT3Dot5Turbo,
+		temperature:            DefaultOpenAITemperature,
+		maxTokens:              DefaultOpenAIMaxTokens,
+		verbose:                false,
 		functions:              make(map[string]Function),
 		functionsMaxIterations: DefaultMaxIterations,
 	}
 }
 
-// WithModel sets the model to use for the OpenAI instance.
-func (o *OpenAI) WithModel(model Model) *OpenAI {
-	o.model = model
-	return o
-}
-
-// WithTemperature sets the temperature to use for the OpenAI instance.
-func (o *OpenAI) WithTemperature(temperature float32) *OpenAI {
-	o.temperature = temperature
-	return o
-}
-
-// WithMaxTokens sets the max tokens to use for the OpenAI instance.
-func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
-	o.maxTokens = maxTokens
-	return o
-}
-
-// WithUsageCallback sets the usage callback to use for the OpenAI instance.
-func (o *OpenAI) WithCallback(callback UsageCallback) *OpenAI {
-	o.usageCallback = callback
-	return o
-}
-
-// WithStop sets the stop sequences to use for the OpenAI instance.
-func (o *OpenAI) WithStop(stop []string) *OpenAI {
-	o.stop = stop
-	return o
-}
-
-// WithClient sets the client to use for the OpenAI instance.
-func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
-	o.openAIClient = client
-	return o
-}
-
-// WithVerbose sets the verbose flag to use for the OpenAI instance.
-func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
-	o.verbose = verbose
-	return o
-}
-
-// WithCache sets the cache to use for the OpenAI instance.
-func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
-	o.cache = cache
-	return o
-}
-
-func (o *OpenAI) WithToolChoice(toolChoice string) *OpenAI {
-	o.toolChoice = &toolChoice
-	return o
-}
-
-// CalledFunctionName returns the name of the function that was called.
-func (o *OpenAI) CalledFunctionName() *string {
-	return o.calledFunctionName
-}
-
-// FinishReason returns the LLM finish reason.
-func (o *OpenAI) FinishReason() string {
-	return o.finishReason
-}
-
-func NewCompletion() *OpenAI {
-	return New(
-		GPT3Dot5TurboInstruct,
-		DefaultOpenAITemperature,
-		DefaultOpenAIMaxTokens,
-		false,
-	)
-}
-
-func NewChat() *OpenAI {
-	return New(
-		GPT3Dot5Turbo,
-		DefaultOpenAITemperature,
-		DefaultOpenAIMaxTokens,
-		false,
-	)
-}
-
-// Completion returns a single completion for the given prompt.
-func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
-	var cacheResult *cache.Result
-	var err error
-
-	if o.cache != nil {
-		cacheResult, err = o.cache.Get(ctx, prompt)
-		if err == nil {
-			return strings.Join(cacheResult.Answer, "\n"), nil
-		} else if !errors.Is(err, cache.ErrCacheMiss) {
-			return "", fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
-		}
+func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn StreamCallback) error {
+	if t == nil {
+		return nil
 	}
 
-	outputs, err := o.BatchCompletion(ctx, []string{prompt})
-	if err != nil {
-		return "", err
+	chatCompletionRequest := o.buildChatCompletionRequest(t)
+
+	if len(o.functions) > 0 {
+		chatCompletionRequest.Tools = o.getChatCompletionRequestTools()
+		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
-	if o.cache != nil {
-		err = o.cache.Set(ctx, cacheResult.Embedding, outputs[0])
-		if err != nil {
-			return "", fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
-		}
-	}
-
-	return outputs[0], nil
-}
-
-// BatchCompletion returns multiple completions for the given prompts.
-func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
-	response, err := o.openAIClient.CreateCompletion(
+	stream, err := o.openAIClient.CreateChatCompletionStream(
 		ctx,
-		openai.CompletionRequest{
-			Model:       string(o.model),
-			Prompt:      prompts,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
-	}
-
-	if o.usageCallback != nil {
-		o.setUsageMetadata(response.Usage)
-	}
-
-	if len(response.Choices) == 0 {
-		return nil, fmt.Errorf("%w: no choices returned", ErrOpenAICompletion)
-	}
-
-	var outputs []string
-	for _, choice := range response.Choices {
-		index := choice.Index
-		outputs = append(outputs, strings.TrimSpace(choice.Text))
-		if o.verbose {
-			debugCompletion(prompts[index], choice.Text)
-		}
-	}
-
-	return outputs, nil
-}
-
-// CompletionStream returns a single completion stream for the given prompt.
-func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn StreamCallback, prompt string) error {
-	return o.BatchCompletionStream(ctx, []StreamCallback{callbackFn}, []string{prompt})
-}
-
-// BatchCompletionStream returns multiple completion streams for the given prompts.
-func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamCallback, prompts []string) error {
-	stream, err := o.openAIClient.CreateCompletionStream(
-		ctx,
-		openai.CompletionRequest{
-			Model:       string(o.model),
-			Prompt:      prompts,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
+		chatCompletionRequest,
 	)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrOpenAICompletion, err)
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
-	defer stream.Close()
-
+	var messages []*thread.Message
+	var content string
 	for {
 		response, errRecv := stream.Recv()
 		if errors.Is(errRecv, io.EOF) {
+			callbackFn(EOS)
+
+			if len(content) > 0 {
+				messages = append(messages, thread.NewAssistantMessage().AddContent(
+					thread.NewTextContent(content),
+				))
+			}
 			break
 		}
 
-		if errRecv != nil {
-			return fmt.Errorf("%w: %w", ErrOpenAICompletion, errRecv)
-		}
-
-		if o.usageCallback != nil {
-			o.setUsageMetadata(response.Usage)
-		}
-
 		if len(response.Choices) == 0 {
-			return fmt.Errorf("%w: no choices returned", ErrOpenAICompletion)
+			return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 		}
 
-		for _, choice := range response.Choices {
-			index := choice.Index
-			output := choice.Text
-			if o.verbose {
-				debugCompletion(prompts[index], output)
-			}
-
-			callbackFn[index](output)
+		if response.Choices[0].FinishReason == "tool_calls" || len(response.Choices[0].Delta.ToolCalls) > 0 {
+			messages = append(messages, o.callTools(response.Choices[0].Delta.ToolCalls)...)
+		} else {
+			content += response.Choices[0].Delta.Content
 		}
+
+		callbackFn(response.Choices[0].Delta.Content)
 	}
+
+	t.AddMessages(messages)
 
 	return nil
 }
 
-// Chat returns a single chat completion for the given prompt.
-func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
-	messages, err := buildMessages(prompt)
-	if err != nil {
-		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
+	if t == nil {
+		return nil
 	}
 
-	chatCompletionRequest := openai.ChatCompletionRequest{
-		Model:       string(o.model),
-		Messages:    messages,
-		MaxTokens:   o.maxTokens,
-		Temperature: o.temperature,
-		N:           DefaultOpenAINumResults,
-		TopP:        DefaultOpenAITopP,
-		Stop:        o.stop,
-	}
+	chatCompletionRequest := o.buildChatCompletionRequest(t)
 
 	if len(o.functions) > 0 {
-		chatCompletionRequest.Tools = o.getFunctions()
-		if o.toolChoice != nil {
-			chatCompletionRequest.ToolChoice = openai.ToolChoice{
-				Type: openai.ToolTypeFunction,
-				Function: openai.ToolFunction{
-					Name: *o.toolChoice,
-				},
-			}
-		} else {
-			chatCompletionRequest.ToolChoice = "auto"
-		}
+		chatCompletionRequest.Tools = o.getChatCompletionRequestTools()
+		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
 	response, err := o.openAIClient.CreateChatCompletion(
 		ctx,
 		chatCompletionRequest,
 	)
-
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	if o.usageCallback != nil {
@@ -341,159 +113,105 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
+		return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 	}
 
-	content := response.Choices[0].Message.Content
-
-	o.finishReason = string(response.Choices[0].FinishReason)
-	o.calledFunctionName = nil
-	if len(response.Choices[0].Message.ToolCalls) > 0 && len(o.functions) > 0 {
-		if o.verbose {
-			fmt.Printf("Calling function %s\n", response.Choices[0].Message.ToolCalls[0].Function.Name)
-			fmt.Printf("Function call arguments: %s\n", response.Choices[0].Message.ToolCalls[0].Function.Arguments)
-		}
-
-		content, err = o.functionCall(response)
-		if err != nil {
-			return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+	var messages []*thread.Message
+	if response.Choices[0].FinishReason == "tool_calls" || len(response.Choices[0].Message.ToolCalls) > 0 {
+		messages = append(messages, toolCallsToToolCallMessage(response.Choices[0].Message.ToolCalls))
+		messages = append(messages, o.callTools(response.Choices[0].Message.ToolCalls)...)
+	} else {
+		messages = []*thread.Message{
+			textContentToThreadMessage(response.Choices[0].Message.Content),
 		}
 	}
 
-	if o.verbose {
-		debugChat(prompt, content)
-	}
-
-	return content, nil
-}
-
-// ChatStream returns a single chat stream for the given prompt.
-func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
-	messages, err := buildMessages(prompt)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-	}
-
-	stream, err := o.openAIClient.CreateChatCompletionStream(
-		ctx,
-		openai.ChatCompletionRequest{
-			Model:       string(o.model),
-			Messages:    messages,
-			MaxTokens:   o.maxTokens,
-			Temperature: o.temperature,
-			N:           DefaultOpenAINumResults,
-			TopP:        DefaultOpenAITopP,
-			Stop:        o.stop,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-	}
-
-	for {
-		response, errRecv := stream.Recv()
-		if errors.Is(errRecv, io.EOF) {
-			break
-		}
-
-		// oops no usage here?
-		// if o.usageCallback != nil {
-		// 	o.setUsageMetadata(response.Usage)
-		// }
-
-		if len(response.Choices) == 0 {
-			return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
-		}
-
-		content := response.Choices[0].Delta.Content
-
-		if o.verbose {
-			debugChat(prompt, content)
-		}
-
-		callbackFn(content)
-	}
+	t.Messages = append(t.Messages, messages...)
 
 	return nil
 }
 
-// SetStop sets the stop sequences for the completion.
-func (o *OpenAI) SetStop(stop []string) {
-	o.stop = stop
+func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatCompletionRequest {
+	return openai.ChatCompletionRequest{
+		Model:       string(o.model),
+		Messages:    threadToChatCompletionMessages(t),
+		MaxTokens:   o.maxTokens,
+		Temperature: o.temperature,
+		N:           DefaultOpenAINumResults,
+		TopP:        DefaultOpenAITopP,
+		Stop:        o.stop,
+	}
 }
 
-func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
-	callbackMetadata := make(types.Meta)
+func (o *OpenAI) getChatCompletionRequestTools() []openai.Tool {
+	tools := []openai.Tool{}
 
-	err := mapstructure.Decode(usage, &callbackMetadata)
-	if err != nil {
-		return
+	for _, function := range o.functions {
+		tools = append(tools, openai.Tool{
+			Type: "function",
+			Function: openai.FunctionDefinition{
+				Name:        function.Name,
+				Description: function.Description,
+				Parameters:  function.Parameters,
+			},
+		})
 	}
 
-	o.usageCallback(callbackMetadata)
+	return tools
 }
 
-func buildMessages(prompt *chat.Chat) ([]openai.ChatCompletionMessage, error) {
-	var messages []openai.ChatCompletionMessage
-
-	promptMessages, err := prompt.ToMessages()
-	if err != nil {
-		return nil, err
+func (o *OpenAI) getChatCompletionRequestToolChoice() any {
+	if o.toolChoice == nil {
+		return "none"
 	}
 
-	for _, message := range promptMessages {
-		if message.Type == chat.MessageTypeUser {
-			messages = append(messages, openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleUser,
-				Content: message.Content,
-			})
-		} else if message.Type == chat.MessageTypeAssistant {
-			messages = append(messages, openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleAssistant,
-				Content: message.Content,
-			})
-		} else if message.Type == chat.MessageTypeSystem {
-			messages = append(messages, openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: message.Content,
-			})
-		} else if message.Type == chat.MessageTypeFunction {
-			fnmessage := openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleFunction,
-				Content: message.Content,
-			}
-			if message.Name != nil {
-				fnmessage.Name = *message.Name
-			}
+	if *o.toolChoice == "auto" {
+		return "auto"
+	}
 
-			messages = append(messages, fnmessage)
+	return openai.ToolChoice{
+		Type: openai.ToolTypeFunction,
+		Function: openai.ToolFunction{
+			Name: *o.toolChoice,
+		},
+	}
+}
+
+func (o *OpenAI) callTool(toolCall openai.ToolCall) (string, error) {
+	fn, ok := o.functions[toolCall.Function.Name]
+	if !ok {
+		return "", fmt.Errorf("unknown function %s", toolCall.Function.Name)
+	}
+
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, toolCall.Function.Arguments)
+	if err != nil {
+		return "", err
+	}
+
+	o.calledFunctionName = &fn.Name
+
+	return resultAsJSON, nil
+}
+
+func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
+	if len(o.functions) == 0 || len(toolCalls) == 0 {
+		return nil
+	}
+
+	var messages []*thread.Message
+	for _, toolCall := range toolCalls {
+		if o.verbose {
+			fmt.Printf("Calling function %s\n", toolCall.Function.Name)
+			fmt.Printf("Function call arguments: %s\n", toolCall.Function.Arguments)
 		}
-	}
 
-	return messages, nil
-}
-
-func debugChat(prompt *chat.Chat, content string) {
-	promptMessages, err := prompt.ToMessages()
-	if err != nil {
-		return
-	}
-
-	for _, message := range promptMessages {
-		if message.Type == chat.MessageTypeUser {
-			fmt.Printf("---USER---\n%s\n", message.Content)
-		} else if message.Type == chat.MessageTypeAssistant {
-			fmt.Printf("---AI---\n%s\n", message.Content)
-		} else if message.Type == chat.MessageTypeSystem {
-			fmt.Printf("---SYSTEM---\n%s\n", message.Content)
-		} else if message.Type == chat.MessageTypeFunction {
-			fmt.Printf("---FUNCTION---\n%s()\n%s\n", *message.Name, message.Content)
+		result, err := o.callTool(toolCall)
+		if err != nil {
+			result = fmt.Sprintf("error: %s", err)
 		}
-	}
-	fmt.Printf("---AI---\n%s\n", content)
-}
 
-func debugCompletion(prompt string, content string) {
-	fmt.Printf("---USER---\n%s\n", prompt)
-	fmt.Printf("---AI---\n%s\n", content)
+		messages = append(messages, toolCallResultToThreadMessage(toolCall, result))
+	}
+
+	return messages
 }

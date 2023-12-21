@@ -8,12 +8,25 @@ import (
 	"github.com/henomis/lingoose/thread"
 )
 
+type Answer struct {
+	Answer string `json:"answer" jsonschema:"description=the pirate answer"`
+}
+
+func getAnswer(a Answer) string {
+	return a.Answer
+}
+
+func newStr(str string) *string {
+	return &str
+}
+
 func main() {
-	openaillm := openai.New(
-		openai.GPT3Dot5Turbo0613,
-		0,
-		256,
-		false,
+	openaillm := openai.New()
+	openaillm.WithToolChoice(newStr("getPirateAnswer"))
+	openaillm.BindFunction(
+		getAnswer,
+		"getPirateAnswer",
+		"use this function to get the pirate answer",
 	)
 
 	t := thread.NewThread().AddMessage(
@@ -24,13 +37,32 @@ func main() {
 		),
 	).AddMessage(
 		thread.NewUserMessage().AddContent(
-			thread.NewTextContent("please reply as a pirate."),
+			thread.NewTextContent("please greet me as a pirate."),
 		),
 	)
 
 	fmt.Println(t)
 
-	t, err := openaillm.Generate(context.Background(), t)
+	err := openaillm.Generate(context.Background(), t)
+	if err != nil {
+		panic(err)
+	}
+
+	t.AddMessage(thread.NewUserMessage().AddContent(
+		thread.NewTextContent("now translate to italian as a poem"),
+	))
+
+	fmt.Println(t)
+	// disable functions
+	openaillm.WithToolChoice(nil)
+
+	err = openaillm.Stream(context.Background(), t, func(a string) {
+		if a == openai.EOS {
+			fmt.Printf("\n")
+			return
+		}
+		fmt.Printf("%s", a)
+	})
 	if err != nil {
 		panic(err)
 	}

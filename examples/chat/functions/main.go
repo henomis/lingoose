@@ -33,7 +33,7 @@ func main() {
 		},
 	)
 
-	llmOpenAI := openai.New(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true).
+	llmOpenAI := openai.NewLegacy(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true).
 		WithCallback(func(response types.Meta) {
 			for k, v := range response {
 				if k == "CompletionTokens" {
