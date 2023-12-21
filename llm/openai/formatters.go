@@ -20,15 +20,15 @@ func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMes
 
 		switch message.Role {
 		case thread.RoleUser:
-			if data, ok := message.Contents[0].Data.(string); ok {
+			if data, isUserTextData := message.Contents[0].Data.(string); isUserTextData {
 				chatCompletionMessages[i].Content = data
 			} else {
 				continue
 			}
 		case thread.RoleAssistant:
-			if data, ok := message.Contents[0].Data.(string); ok {
+			if data, isAssistantTextData := message.Contents[0].Data.(string); isAssistantTextData {
 				chatCompletionMessages[i].Content = data
-			} else if data, ok := message.Contents[0].Data.([]*thread.ToolCallData); ok {
+			} else if data, isTollCallData := message.Contents[0].Data.([]*thread.ToolCallData); isTollCallData {
 				var toolCalls []openai.ToolCall
 				for _, toolCallData := range data {
 					toolCalls = append(toolCalls, openai.ToolCall{
@@ -45,7 +45,7 @@ func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMes
 				continue
 			}
 		case thread.RoleTool:
-			if data, ok := message.Contents[0].Data.(*thread.ToolResponseData); ok {
+			if data, isTollResponseData := message.Contents[0].Data.(*thread.ToolResponseData); isTollResponseData {
 				chatCompletionMessages[i].ToolCallID = data.ID
 				chatCompletionMessages[i].Name = data.Name
 				chatCompletionMessages[i].Content = data.Result
