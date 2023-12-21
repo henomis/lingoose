@@ -280,6 +280,7 @@ func (o *Legacy) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	}
 
 	if len(o.functions) > 0 {
+		//nolint:staticcheck
 		chatCompletionRequest.Functions = o.getFunctions()
 	}
 
