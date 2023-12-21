@@ -49,21 +49,18 @@ func (o *OpenAI) BindFunction(
 	return nil
 }
 
-func (o *OpenAI) getFunctions() []openai.Tool {
-	tools := []openai.Tool{}
+func (o *OpenAI) getFunctions() []openai.FunctionDefinition {
+	functions := []openai.FunctionDefinition{}
 
 	for _, function := range o.functions {
-		tools = append(tools, openai.Tool{
-			Type: "function",
-			Function: openai.FunctionDefinition{
-				Name:        function.Name,
-				Description: function.Description,
-				Parameters:  function.Parameters,
-			},
+		functions = append(functions, openai.FunctionDefinition{
+			Name:        function.Name,
+			Description: function.Description,
+			Parameters:  function.Parameters,
 		})
 	}
 
-	return tools
+	return functions
 }
 
 func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
@@ -173,21 +170,15 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 }
 
 func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
-	fn, ok := o.functions[response.Choices[0].Message.ToolCalls[0].Function.Name]
+	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
-		return "", fmt.Errorf(
-			"%w: unknown function %s",
-			ErrOpenAIChat,
-			response.Choices[0].Message.ToolCalls[0].Function.Name,
-		)
+		return "", fmt.Errorf("%w: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
 	}
 
-	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, response.Choices[0].Message.ToolCalls[0].Function.Arguments)
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, response.Choices[0].Message.FunctionCall.Arguments)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
-
 	o.calledFunctionName = &fn.Name
-
 	return resultAsJSON, nil
 }
