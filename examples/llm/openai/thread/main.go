@@ -23,11 +23,14 @@ func newStr(str string) *string {
 func main() {
 	openaillm := openai.New()
 	openaillm.WithToolChoice(newStr("getPirateAnswer"))
-	openaillm.BindFunction(
+	err := openaillm.BindFunction(
 		getAnswer,
 		"getPirateAnswer",
 		"use this function to get the pirate answer",
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	t := thread.NewThread().AddMessage(
 		thread.NewUserMessage().AddContent(
@@ -43,7 +46,7 @@ func main() {
 
 	fmt.Println(t)
 
-	err := openaillm.Generate(context.Background(), t)
+	err = openaillm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
@@ -55,14 +58,15 @@ func main() {
 	fmt.Println(t)
 	// disable functions
 	openaillm.WithToolChoice(nil)
-
-	err = openaillm.Stream(context.Background(), t, func(a string) {
+	openaillm.WithStream(true, func(a string) {
 		if a == openai.EOS {
 			fmt.Printf("\n")
 			return
 		}
 		fmt.Printf("%s", a)
 	})
+
+	err = openaillm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}

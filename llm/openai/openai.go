@@ -24,14 +24,15 @@ var threadRoleToOpenAIRole = map[thread.Role]string{
 }
 
 type OpenAI struct {
-	openAIClient  *openai.Client
-	model         Model
-	temperature   float32
-	maxTokens     int
-	stop          []string
-	usageCallback UsageCallback
-	functions     map[string]Function
-	toolChoice    *string
+	openAIClient     *openai.Client
+	model            Model
+	temperature      float32
+	maxTokens        int
+	stop             []string
+	usageCallback    UsageCallback
+	functions        map[string]Function
+	streamCallbackFn StreamCallback
+	toolChoice       *string
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -53,7 +54,7 @@ func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
 }
 
 // WithUsageCallback sets the usage callback to use for the OpenAI instance.
-func (o *OpenAI) WithCallback(callback UsageCallback) *OpenAI {
+func (o *OpenAI) WithUsageCallback(callback UsageCallback) *OpenAI {
 	o.usageCallback = callback
 	return o
 }
@@ -72,6 +73,16 @@ func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
 
 func (o *OpenAI) WithToolChoice(toolChoice *string) *OpenAI {
 	o.toolChoice = toolChoice
+	return o
+}
+
+func (o *OpenAI) WithStream(enable bool, callbackFn StreamCallback) *OpenAI {
+	if !enable {
+		o.streamCallbackFn = nil
+	} else {
+		o.streamCallbackFn = callbackFn
+	}
+
 	return o
 }
 
@@ -103,7 +114,7 @@ func New() *OpenAI {
 	}
 }
 
-func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn StreamCallback) error {
+func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	if t == nil {
 		return nil
 	}
@@ -115,6 +126,18 @@ func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn Stream
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
+	if o.streamCallbackFn != nil {
+		return o.stream(ctx, t, chatCompletionRequest)
+	}
+
+	return o.generate(ctx, t, chatCompletionRequest)
+}
+
+func (o *OpenAI) stream(
+	ctx context.Context,
+	t *thread.Thread,
+	chatCompletionRequest openai.ChatCompletionRequest,
+) error {
 	stream, err := o.openAIClient.CreateChatCompletionStream(
 		ctx,
 		chatCompletionRequest,
@@ -128,7 +151,7 @@ func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn Stream
 	for {
 		response, errRecv := stream.Recv()
 		if errors.Is(errRecv, io.EOF) {
-			callbackFn(EOS)
+			o.streamCallbackFn(EOS)
 
 			if len(content) > 0 {
 				messages = append(messages, thread.NewAssistantMessage().AddContent(
@@ -148,7 +171,7 @@ func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn Stream
 			content += response.Choices[0].Delta.Content
 		}
 
-		callbackFn(response.Choices[0].Delta.Content)
+		o.streamCallbackFn(response.Choices[0].Delta.Content)
 	}
 
 	t.AddMessages(messages)
@@ -156,18 +179,11 @@ func (o *OpenAI) Stream(ctx context.Context, t *thread.Thread, callbackFn Stream
 	return nil
 }
 
-func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
-	if t == nil {
-		return nil
-	}
-
-	chatCompletionRequest := o.buildChatCompletionRequest(t)
-
-	if len(o.functions) > 0 {
-		chatCompletionRequest.Tools = o.getChatCompletionRequestTools()
-		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
-	}
-
+func (o *OpenAI) generate(
+	ctx context.Context,
+	t *thread.Thread,
+	chatCompletionRequest openai.ChatCompletionRequest,
+) error {
 	response, err := o.openAIClient.CreateChatCompletion(
 		ctx,
 		chatCompletionRequest,
