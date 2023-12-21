@@ -38,11 +38,7 @@ type ToolResponseData struct {
 }
 
 type ToolCallData struct {
-	ID       string
-	Function ToolCallFunction
-}
-
-type ToolCallFunction struct {
+	ID        string
 	Name      string
 	Arguments string
 }
@@ -59,21 +55,21 @@ func NewTextContent(text string) *Content {
 	}
 }
 
-func NewImageContent(mediaData *MediaData) *Content {
+func NewImageContent(mediaData MediaData) *Content {
 	return &Content{
 		Type: ContentTypeImage,
 		Data: mediaData,
 	}
 }
 
-func NewToolResponseContent(toolResponseData *ToolResponseData) *Content {
+func NewToolResponseContent(toolResponseData ToolResponseData) *Content {
 	return &Content{
 		Type: ContentTypeToolResponse,
 		Data: toolResponseData,
 	}
 }
 
-func NewToolCallContent(data []*ToolCallData) *Content {
+func NewToolCallContent(data []ToolCallData) *Content {
 	return &Content{
 		Type: ContentTypeToolCall,
 		Data: data,
@@ -133,15 +129,15 @@ func (t *Thread) String() string {
 			case ContentTypeImage:
 				str += "\tImage URL: " + *content.Data.(*MediaData).URL + "\n"
 			case ContentTypeToolCall:
-				for _, toolCallData := range content.Data.([]*ToolCallData) {
+				for _, toolCallData := range content.Data.([]ToolCallData) {
 					str += "\tTool Call ID: " + toolCallData.ID + "\n"
-					str += "\tTool Call Function Name: " + toolCallData.Function.Name + "\n"
-					str += "\tTool Call Function Arguments: " + toolCallData.Function.Arguments + "\n"
+					str += "\tTool Call Function Name: " + toolCallData.Name + "\n"
+					str += "\tTool Call Function Arguments: " + toolCallData.Arguments + "\n"
 				}
 			case ContentTypeToolResponse:
-				str += "\tTool ID: " + content.Data.(*ToolResponseData).ID + "\n"
-				str += "\tTool Name: " + content.Data.(*ToolResponseData).Name + "\n"
-				str += "\tTool Result: " + content.Data.(*ToolResponseData).Result + "\n"
+				str += "\tTool ID: " + content.Data.(ToolResponseData).ID + "\n"
+				str += "\tTool Name: " + content.Data.(ToolResponseData).Name + "\n"
+				str += "\tTool Result: " + content.Data.(ToolResponseData).Result + "\n"
 			}
 		}
 	}

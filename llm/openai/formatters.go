@@ -28,15 +28,15 @@ func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMes
 		case thread.RoleAssistant:
 			if data, isAssistantTextData := message.Contents[0].Data.(string); isAssistantTextData {
 				chatCompletionMessages[i].Content = data
-			} else if data, isTollCallData := message.Contents[0].Data.([]*thread.ToolCallData); isTollCallData {
+			} else if data, isTollCallData := message.Contents[0].Data.([]thread.ToolCallData); isTollCallData {
 				var toolCalls []openai.ToolCall
 				for _, toolCallData := range data {
 					toolCalls = append(toolCalls, openai.ToolCall{
 						ID:   toolCallData.ID,
 						Type: "function",
 						Function: openai.FunctionCall{
-							Name:      toolCallData.Function.Name,
-							Arguments: toolCallData.Function.Arguments,
+							Name:      toolCallData.Name,
+							Arguments: toolCallData.Arguments,
 						},
 					})
 				}
@@ -45,7 +45,7 @@ func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMes
 				continue
 			}
 		case thread.RoleTool:
-			if data, isTollResponseData := message.Contents[0].Data.(*thread.ToolResponseData); isTollResponseData {
+			if data, isTollResponseData := message.Contents[0].Data.(thread.ToolResponseData); isTollResponseData {
 				chatCompletionMessages[i].ToolCallID = data.ID
 				chatCompletionMessages[i].Name = data.Name
 				chatCompletionMessages[i].Content = data.Result
@@ -93,7 +93,7 @@ func threadContentsToChatMessageParts(m *thread.Message) []openai.ChatMessagePar
 func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thread.Message {
 	return thread.NewToolMessage().AddContent(
 		thread.NewToolResponseContent(
-			&thread.ToolResponseData{
+			thread.ToolResponseData{
 				ID:     toolCall.ID,
 				Name:   toolCall.Function.Name,
 				Result: result,
@@ -113,14 +113,12 @@ func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
 		return nil
 	}
 
-	var toolCallData []*thread.ToolCallData
+	var toolCallData []thread.ToolCallData
 	for _, toolCall := range toolCalls {
-		toolCallData = append(toolCallData, &thread.ToolCallData{
-			ID: toolCall.ID,
-			Function: thread.ToolCallFunction{
-				Name:      toolCall.Function.Name,
-				Arguments: toolCall.Function.Arguments,
-			},
+		toolCallData = append(toolCallData, thread.ToolCallData{
+			ID:        toolCall.ID,
+			Name:      toolCall.Function.Name,
+			Arguments: toolCall.Function.Arguments,
 		})
 	}
 
