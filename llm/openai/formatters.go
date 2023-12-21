@@ -5,6 +5,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+//nolint:gocognit
 func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMessage {
 	chatCompletionMessages := make([]openai.ChatCompletionMessage, len(t.Messages))
 	for i, message := range t.Messages {
@@ -77,6 +78,8 @@ func threadContentsToChatMessageParts(m *thread.Message) []openai.ChatMessagePar
 					Detail: openai.ImageURLDetailAuto,
 				},
 			}
+		case thread.ContentTypeToolCall, thread.ContentTypeToolResponse:
+			continue
 		default:
 			continue
 		}

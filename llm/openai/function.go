@@ -45,7 +45,7 @@ func bindFunction(
 	}, nil
 }
 
-func (o *OpenAILegacy) BindFunction(
+func (o *Legacy) BindFunction(
 	fn interface{},
 	name string,
 	description string,
@@ -77,7 +77,7 @@ func (o *OpenAI) BindFunction(
 	return nil
 }
 
-func (o *OpenAILegacy) getFunctions() []openai.FunctionDefinition {
+func (o *Legacy) getFunctions() []openai.FunctionDefinition {
 	functions := []openai.FunctionDefinition{}
 
 	for _, function := range o.functions {
@@ -197,7 +197,7 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 	return "", nil
 }
 
-func (o *OpenAILegacy) functionCall(response openai.ChatCompletionResponse) (string, error) {
+func (o *Legacy) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
 		return "", fmt.Errorf("%w: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)
