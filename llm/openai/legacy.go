@@ -11,13 +11,94 @@ import (
 
 	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/llm/cache"
+	"github.com/henomis/lingoose/types"
+	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
 
-func NewLegacy(model Model, temperature float32, maxTokens int, verbose bool) *OpenAI {
+type OpenAILegacy struct {
+	openAIClient           *openai.Client
+	model                  Model
+	temperature            float32
+	maxTokens              int
+	stop                   []string
+	verbose                bool
+	usageCallback          UsageCallback
+	functions              map[string]Function
+	functionsMaxIterations uint
+	calledFunctionName     *string
+	finishReason           string
+	cache                  *cache.Cache
+}
+
+// WithModel sets the model to use for the OpenAI instance.
+func (o *OpenAILegacy) WithModel(model Model) *OpenAILegacy {
+	o.model = model
+	return o
+}
+
+// WithTemperature sets the temperature to use for the OpenAI instance.
+func (o *OpenAILegacy) WithTemperature(temperature float32) *OpenAILegacy {
+	o.temperature = temperature
+	return o
+}
+
+// WithMaxTokens sets the max tokens to use for the OpenAI instance.
+func (o *OpenAILegacy) WithMaxTokens(maxTokens int) *OpenAILegacy {
+	o.maxTokens = maxTokens
+	return o
+}
+
+// WithUsageCallback sets the usage callback to use for the OpenAI instance.
+func (o *OpenAILegacy) WithCallback(callback UsageCallback) *OpenAILegacy {
+	o.usageCallback = callback
+	return o
+}
+
+// WithStop sets the stop sequences to use for the OpenAI instance.
+func (o *OpenAILegacy) WithStop(stop []string) *OpenAILegacy {
+	o.stop = stop
+	return o
+}
+
+// WithClient sets the client to use for the OpenAI instance.
+func (o *OpenAILegacy) WithClient(client *openai.Client) *OpenAILegacy {
+	o.openAIClient = client
+	return o
+}
+
+// WithVerbose sets the verbose flag to use for the OpenAI instance.
+func (o *OpenAILegacy) WithVerbose(verbose bool) *OpenAILegacy {
+	o.verbose = verbose
+	return o
+}
+
+// WithCache sets the cache to use for the OpenAI instance.
+func (o *OpenAILegacy) WithCompletionCache(cache *cache.Cache) *OpenAILegacy {
+	o.cache = cache
+	return o
+}
+
+// SetStop sets the stop sequences for the completion.
+func (o *OpenAILegacy) SetStop(stop []string) {
+	o.stop = stop
+}
+
+func (o *OpenAILegacy) setUsageMetadata(usage openai.Usage) {
+	callbackMetadata := make(types.Meta)
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.usageCallback(callbackMetadata)
+}
+
+func NewLegacy(model Model, temperature float32, maxTokens int, verbose bool) *OpenAILegacy {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
-	return &OpenAI{
+	return &OpenAILegacy{
 		openAIClient:           openai.NewClient(openAIKey),
 		model:                  model,
 		temperature:            temperature,
@@ -29,16 +110,16 @@ func NewLegacy(model Model, temperature float32, maxTokens int, verbose bool) *O
 }
 
 // CalledFunctionName returns the name of the function that was called.
-func (o *OpenAI) CalledFunctionName() *string {
+func (o *OpenAILegacy) CalledFunctionName() *string {
 	return o.calledFunctionName
 }
 
 // FinishReason returns the LLM finish reason.
-func (o *OpenAI) FinishReason() string {
+func (o *OpenAILegacy) FinishReason() string {
 	return o.finishReason
 }
 
-func NewCompletion() *OpenAI {
+func NewCompletion() *OpenAILegacy {
 	return NewLegacy(
 		GPT3Dot5TurboInstruct,
 		DefaultOpenAITemperature,
@@ -47,7 +128,7 @@ func NewCompletion() *OpenAI {
 	)
 }
 
-func NewChat() *OpenAI {
+func NewChat() *OpenAILegacy {
 	return NewLegacy(
 		GPT3Dot5Turbo,
 		DefaultOpenAITemperature,
@@ -57,7 +138,7 @@ func NewChat() *OpenAI {
 }
 
 // Completion returns a single completion for the given prompt.
-func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) {
+func (o *OpenAILegacy) Completion(ctx context.Context, prompt string) (string, error) {
 	var cacheResult *cache.Result
 	var err error
 
@@ -86,7 +167,7 @@ func (o *OpenAI) Completion(ctx context.Context, prompt string) (string, error) 
 }
 
 // BatchCompletion returns multiple completions for the given prompts.
-func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
+func (o *OpenAILegacy) BatchCompletion(ctx context.Context, prompts []string) ([]string, error) {
 	response, err := o.openAIClient.CreateCompletion(
 		ctx,
 		openai.CompletionRequest{
@@ -125,12 +206,12 @@ func (o *OpenAI) BatchCompletion(ctx context.Context, prompts []string) ([]strin
 }
 
 // CompletionStream returns a single completion stream for the given prompt.
-func (o *OpenAI) CompletionStream(ctx context.Context, callbackFn StreamCallback, prompt string) error {
+func (o *OpenAILegacy) CompletionStream(ctx context.Context, callbackFn StreamCallback, prompt string) error {
 	return o.BatchCompletionStream(ctx, []StreamCallback{callbackFn}, []string{prompt})
 }
 
 // BatchCompletionStream returns multiple completion streams for the given prompts.
-func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamCallback, prompts []string) error {
+func (o *OpenAILegacy) BatchCompletionStream(ctx context.Context, callbackFn []StreamCallback, prompts []string) error {
 	stream, err := o.openAIClient.CreateCompletionStream(
 		ctx,
 		openai.CompletionRequest{
@@ -182,7 +263,7 @@ func (o *OpenAI) BatchCompletionStream(ctx context.Context, callbackFn []StreamC
 }
 
 // Chat returns a single chat completion for the given prompt.
-func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
+func (o *OpenAILegacy) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	messages, err := buildMessages(prompt)
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", ErrOpenAIChat, err)
@@ -243,7 +324,7 @@ func (o *OpenAI) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 }
 
 // ChatStream returns a single chat stream for the given prompt.
-func (o *OpenAI) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
+func (o *OpenAILegacy) ChatStream(ctx context.Context, callbackFn StreamCallback, prompt *chat.Chat) error {
 	messages, err := buildMessages(prompt)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)

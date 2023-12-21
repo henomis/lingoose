@@ -19,37 +19,65 @@ type Function struct {
 
 type FunctionParameterOption func(map[string]interface{}) error
 
+func bindFunction(
+	fn interface{},
+	name string,
+	description string,
+	functionParamenterOptions ...FunctionParameterOption,
+) (*Function, error) {
+	parameter, err := extractFunctionParameter(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, option := range functionParamenterOptions {
+		err = option(parameter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Function{
+		Name:        name,
+		Description: description,
+		Parameters:  parameter,
+		Fn:          fn,
+	}, nil
+}
+
+func (o *OpenAILegacy) BindFunction(
+	fn interface{},
+	name string,
+	description string,
+	functionParamenterOptions ...FunctionParameterOption,
+) error {
+	function, err := bindFunction(fn, name, description, functionParamenterOptions...)
+	if err != nil {
+		return err
+	}
+
+	o.functions[name] = *function
+
+	return nil
+}
+
 func (o *OpenAI) BindFunction(
 	fn interface{},
 	name string,
 	description string,
 	functionParamenterOptions ...FunctionParameterOption,
 ) error {
-	parameter, err := extractFunctionParameter(fn)
+	function, err := bindFunction(fn, name, description, functionParamenterOptions...)
 	if err != nil {
 		return err
 	}
 
-	for _, option := range functionParamenterOptions {
-		err = option(parameter)
-		if err != nil {
-			return err
-		}
-	}
-
-	function := Function{
-		Name:        name,
-		Description: description,
-		Parameters:  parameter,
-		Fn:          fn,
-	}
-
-	o.functions[name] = function
+	o.functions[name] = *function
 
 	return nil
 }
 
-func (o *OpenAI) getFunctions() []openai.FunctionDefinition {
+func (o *OpenAILegacy) getFunctions() []openai.FunctionDefinition {
 	functions := []openai.FunctionDefinition{}
 
 	for _, function := range o.functions {
@@ -169,7 +197,7 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 	return "", nil
 }
 
-func (o *OpenAI) functionCall(response openai.ChatCompletionResponse) (string, error) {
+func (o *OpenAILegacy) functionCall(response openai.ChatCompletionResponse) (string, error) {
 	fn, ok := o.functions[response.Choices[0].Message.FunctionCall.Name]
 	if !ok {
 		return "", fmt.Errorf("%w: unknown function %s", ErrOpenAIChat, response.Choices[0].Message.FunctionCall.Name)

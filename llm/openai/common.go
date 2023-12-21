@@ -3,9 +3,7 @@ package openai
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/types"
-	"github.com/mitchellh/mapstructure"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -52,88 +50,3 @@ const (
 
 type UsageCallback func(types.Meta)
 type StreamCallback func(string)
-
-type OpenAI struct {
-	openAIClient           *openai.Client
-	model                  Model
-	temperature            float32
-	maxTokens              int
-	stop                   []string
-	verbose                bool
-	usageCallback          UsageCallback
-	functions              map[string]Function
-	functionsMaxIterations uint
-	toolChoice             *string
-	calledFunctionName     *string
-	finishReason           string
-	cache                  *cache.Cache
-}
-
-// WithModel sets the model to use for the OpenAI instance.
-func (o *OpenAI) WithModel(model Model) *OpenAI {
-	o.model = model
-	return o
-}
-
-// WithTemperature sets the temperature to use for the OpenAI instance.
-func (o *OpenAI) WithTemperature(temperature float32) *OpenAI {
-	o.temperature = temperature
-	return o
-}
-
-// WithMaxTokens sets the max tokens to use for the OpenAI instance.
-func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
-	o.maxTokens = maxTokens
-	return o
-}
-
-// WithUsageCallback sets the usage callback to use for the OpenAI instance.
-func (o *OpenAI) WithCallback(callback UsageCallback) *OpenAI {
-	o.usageCallback = callback
-	return o
-}
-
-// WithStop sets the stop sequences to use for the OpenAI instance.
-func (o *OpenAI) WithStop(stop []string) *OpenAI {
-	o.stop = stop
-	return o
-}
-
-// WithClient sets the client to use for the OpenAI instance.
-func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
-	o.openAIClient = client
-	return o
-}
-
-// WithVerbose sets the verbose flag to use for the OpenAI instance.
-func (o *OpenAI) WithVerbose(verbose bool) *OpenAI {
-	o.verbose = verbose
-	return o
-}
-
-// WithCache sets the cache to use for the OpenAI instance.
-func (o *OpenAI) WithCompletionCache(cache *cache.Cache) *OpenAI {
-	o.cache = cache
-	return o
-}
-
-func (o *OpenAI) WithToolChoice(toolChoice *string) *OpenAI {
-	o.toolChoice = toolChoice
-	return o
-}
-
-// SetStop sets the stop sequences for the completion.
-func (o *OpenAI) SetStop(stop []string) {
-	o.stop = stop
-}
-
-func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
-	callbackMetadata := make(types.Meta)
-
-	err := mapstructure.Decode(usage, &callbackMetadata)
-	if err != nil {
-		return
-	}
-
-	o.usageCallback(callbackMetadata)
-}

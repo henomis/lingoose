@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
+	"github.com/mitchellh/mapstructure"
 	openai "github.com/sashabaranov/go-openai"
 )
 
@@ -21,17 +23,83 @@ var threadRoleToOpenAIRole = map[thread.Role]string{
 	thread.RoleTool:      "tool",
 }
 
+type OpenAI struct {
+	openAIClient  *openai.Client
+	model         Model
+	temperature   float32
+	maxTokens     int
+	stop          []string
+	usageCallback UsageCallback
+	functions     map[string]Function
+	toolChoice    *string
+}
+
+// WithModel sets the model to use for the OpenAI instance.
+func (o *OpenAI) WithModel(model Model) *OpenAI {
+	o.model = model
+	return o
+}
+
+// WithTemperature sets the temperature to use for the OpenAI instance.
+func (o *OpenAI) WithTemperature(temperature float32) *OpenAI {
+	o.temperature = temperature
+	return o
+}
+
+// WithMaxTokens sets the max tokens to use for the OpenAI instance.
+func (o *OpenAI) WithMaxTokens(maxTokens int) *OpenAI {
+	o.maxTokens = maxTokens
+	return o
+}
+
+// WithUsageCallback sets the usage callback to use for the OpenAI instance.
+func (o *OpenAI) WithCallback(callback UsageCallback) *OpenAI {
+	o.usageCallback = callback
+	return o
+}
+
+// WithStop sets the stop sequences to use for the OpenAI instance.
+func (o *OpenAI) WithStop(stop []string) *OpenAI {
+	o.stop = stop
+	return o
+}
+
+// WithClient sets the client to use for the OpenAI instance.
+func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
+	o.openAIClient = client
+	return o
+}
+
+func (o *OpenAI) WithToolChoice(toolChoice *string) *OpenAI {
+	o.toolChoice = toolChoice
+	return o
+}
+
+// SetStop sets the stop sequences for the completion.
+func (o *OpenAI) SetStop(stop []string) {
+	o.stop = stop
+}
+
+func (o *OpenAI) setUsageMetadata(usage openai.Usage) {
+	callbackMetadata := make(types.Meta)
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.usageCallback(callbackMetadata)
+}
+
 func New() *OpenAI {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	return &OpenAI{
-		openAIClient:           openai.NewClient(openAIKey),
-		model:                  GPT3Dot5Turbo,
-		temperature:            DefaultOpenAITemperature,
-		maxTokens:              DefaultOpenAIMaxTokens,
-		verbose:                false,
-		functions:              make(map[string]Function),
-		functionsMaxIterations: DefaultMaxIterations,
+		openAIClient: openai.NewClient(openAIKey),
+		model:        GPT3Dot5Turbo,
+		temperature:  DefaultOpenAITemperature,
+		maxTokens:    DefaultOpenAIMaxTokens,
+		functions:    make(map[string]Function),
 	}
 }
 
@@ -188,8 +256,6 @@ func (o *OpenAI) callTool(toolCall openai.ToolCall) (string, error) {
 		return "", err
 	}
 
-	o.calledFunctionName = &fn.Name
-
 	return resultAsJSON, nil
 }
 
@@ -200,11 +266,6 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 
 	var messages []*thread.Message
 	for _, toolCall := range toolCalls {
-		if o.verbose {
-			fmt.Printf("Calling function %s\n", toolCall.Function.Name)
-			fmt.Printf("Function call arguments: %s\n", toolCall.Function.Arguments)
-		}
-
 		result, err := o.callTool(toolCall)
 		if err != nil {
 			result = fmt.Sprintf("error: %s", err)
