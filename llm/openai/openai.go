@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
@@ -33,6 +35,7 @@ type OpenAI struct {
 	functions        map[string]Function
 	streamCallbackFn StreamCallback
 	toolChoice       *string
+	cache            *cache.Cache
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -86,6 +89,11 @@ func (o *OpenAI) WithStream(enable bool, callbackFn StreamCallback) *OpenAI {
 	return o
 }
 
+func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
+	o.cache = cache
+	return o
+}
+
 // SetStop sets the stop sequences for the completion.
 func (o *OpenAI) SetStop(stop []string) {
 	o.stop = stop
@@ -114,9 +122,85 @@ func New() *OpenAI {
 	}
 }
 
+func getCacheableMessages(t *thread.Thread) []string {
+	userMessages := make([]*thread.Message, 0)
+	for _, message := range t.Messages {
+		if message.Role == thread.RoleUser {
+			userMessages = append(userMessages, message)
+		} else {
+			userMessages = make([]*thread.Message, 0)
+		}
+	}
+
+	var messages []string
+	for _, message := range userMessages {
+		for _, content := range message.Contents {
+			if content.Type == thread.ContentTypeText {
+				messages = append(messages, content.Data.(string))
+			} else {
+				messages = make([]string, 0)
+				break
+			}
+		}
+	}
+
+	return messages
+}
+
+func (o *OpenAI) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
+	messages := getCacheableMessages(t)
+	cacheQuery := strings.Join(messages, "\n")
+	cacheResult, err := o.cache.Get(ctx, cacheQuery)
+	if err != nil {
+		return cacheResult, err
+	}
+
+	t.AddMessage(thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(strings.Join(cacheResult.Answer, "\n")),
+	))
+
+	return cacheResult, nil
+}
+
+func (o *OpenAI) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
+	lastMessage := t.Messages[len(t.Messages)-1]
+
+	if lastMessage.Role != thread.RoleAssistant || len(lastMessage.Contents) == 0 {
+		return nil
+	}
+
+	contents := make([]string, 0)
+	for _, content := range lastMessage.Contents {
+		if content.Type == thread.ContentTypeText {
+			contents = append(contents, content.Data.(string))
+		} else {
+			contents = make([]string, 0)
+			break
+		}
+	}
+
+	err := o.cache.Set(ctx, cacheResult.Embedding, strings.Join(contents, "\n"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	if t == nil {
 		return nil
+	}
+
+	var err error
+	var cacheResult *cache.Result
+	if o.cache != nil {
+		cacheResult, err = o.getCache(ctx, t)
+		if err == nil {
+			return nil
+		} else if !errors.Is(err, cache.ErrCacheMiss) {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
 	}
 
 	chatCompletionRequest := o.buildChatCompletionRequest(t)
@@ -127,10 +211,23 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if o.streamCallbackFn != nil {
-		return o.stream(ctx, t, chatCompletionRequest)
+		err = o.stream(ctx, t, chatCompletionRequest)
+	} else {
+		err = o.generate(ctx, t, chatCompletionRequest)
 	}
 
-	return o.generate(ctx, t, chatCompletionRequest)
+	if err != nil {
+		return err
+	}
+
+	if o.cache != nil {
+		err = o.setCache(ctx, t, cacheResult)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
+	}
+
+	return nil
 }
 
 func (o *OpenAI) stream(
