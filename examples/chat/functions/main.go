@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 
@@ -33,22 +33,34 @@ func main() {
 		},
 	)
 
-	llmOpenAI := openai.NewLegacy(openai.GPT3Dot5Turbo0613, openai.DefaultOpenAITemperature, openai.DefaultOpenAIMaxTokens, true).
+	llmOpenAI := openai.NewLegacy(
+		openai.GPT3Dot5Turbo0613,
+		openai.DefaultOpenAITemperature,
+		openai.DefaultOpenAIMaxTokens,
+		true,
+	).
 		WithCallback(func(response types.Meta) {
 			for k, v := range response {
 				if k == "CompletionTokens" {
-					outputToken += v.(int)
+					if t, ok := v.(int); ok {
+						outputToken += t
+					}
 				} else if k == "PromptTokens" {
-					inputToken += v.(int)
+					if t, ok := v.(int); ok {
+						inputToken += t
+					}
 				}
 			}
 		})
 
-	llmOpenAI.BindFunction(
+	err := llmOpenAI.BindFunction(
 		GetNationalitiesForName,
 		"GetNationalitiesForName",
 		"Use this function to get the nationalities for a given name.",
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	response, err := llmOpenAI.Chat(context.Background(), llmChat)
 	if err != nil {
@@ -80,7 +92,6 @@ func main() {
 	inputPrice := float64(inputToken) / 1000 * 0.0015
 	outputPrice := float64(outputToken) / 1000 * 0.002
 	fmt.Printf("You spent $%f\n", inputPrice+outputPrice)
-
 }
 
 type Query struct {
@@ -99,13 +110,14 @@ type NationalizeResponse struct {
 
 func GetNationalitiesForName(query Query) ([]Country, error) {
 	url := fmt.Sprintf("https://api.nationalize.io/?name=%s", query.Name)
+	//nolint:gosec
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
