@@ -1,0 +1,160 @@
+package rag
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/henomis/lingoose/document"
+	"github.com/henomis/lingoose/index"
+	"github.com/henomis/lingoose/index/option"
+	"github.com/henomis/lingoose/loader"
+	"github.com/henomis/lingoose/textsplitter"
+	"github.com/henomis/lingoose/thread"
+)
+
+const (
+	defaultChunkSize    = 1000
+	defaultChunkOverlap = 0
+	defaultTopK         = 1
+)
+
+type LLM interface {
+	Generate(context.Context, *thread.Thread) error
+}
+
+type RAG struct {
+	index        *index.Index
+	chunkSize    uint
+	chunkOverlap uint
+	topK         uint
+}
+
+type FusionRAG struct {
+	RAG
+	llm LLM
+}
+
+func New(index *index.Index) *RAG {
+	return &RAG{
+		index:        index,
+		chunkSize:    defaultChunkSize,
+		chunkOverlap: defaultChunkOverlap,
+		topK:         defaultTopK,
+	}
+}
+
+func NewFusionRAG(index *index.Index, llm LLM) *FusionRAG {
+	return &FusionRAG{
+		RAG: *New(index),
+		llm: llm,
+	}
+}
+
+func (r *RAG) WithChunkSize(chunkSize uint) *RAG {
+	r.chunkSize = chunkSize
+	return r
+}
+
+func (r *RAG) WithChunkOverlap(chunkOverlap uint) *RAG {
+	r.chunkOverlap = chunkOverlap
+	return r
+}
+
+func (r *RAG) WithTopK(topK uint) *RAG {
+	r.topK = topK
+	return r
+}
+
+func (r *RAG) AddFiles(ctx context.Context, filePath ...string) error {
+	for _, f := range filePath {
+		documents, err := r.addFile(ctx, f)
+		if err != nil {
+			return err
+		}
+
+		err = r.index.LoadFromDocuments(ctx, documents)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *RAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
+	results, err := r.index.Query(ctx, query, option.WithTopK(int(r.topK)))
+	return results, err
+}
+
+func (r *FusionRAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
+	if r.llm == nil {
+		return nil, fmt.Errorf("llm is not set")
+	}
+
+	t := thread.NewThread().AddMessage(
+		thread.NewUserMessage().AddContent(
+			thread.NewTextContent(
+				fmt.Sprintf("Based on the provided question, generate 5 similar questions.\n\nQuestion: %s", query),
+			),
+		),
+	)
+
+	err := r.llm.Generate(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+
+	lastMessage := t.Messages[len(t.Messages)-1]
+	content := lastMessage.Contents[0].Data.(string)
+	questions := strings.Split(content, "\n")
+
+	var results index.SearchResults
+	for _, question := range questions {
+		res, err := r.index.Query(ctx, question, option.WithTopK(int(r.topK)))
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, res...)
+	}
+
+	// TODO: rerank results
+
+	//remove dupliocates
+	seen := make(map[string]bool)
+	var uniqueResults index.SearchResults
+	for _, result := range results {
+		if _, ok := seen[result.Content()]; !ok {
+			uniqueResults = append(uniqueResults, result)
+			seen[result.Content()] = true
+		}
+	}
+
+	return results, err
+}
+
+func (r *RAG) addFile(ctx context.Context, filePath string) ([]document.Document, error) {
+	var documents []document.Document
+	var err error
+	switch filepath.Ext(filePath) {
+	case ".pdf":
+		documents, err = loader.NewPDFToTextLoader(filePath).Load(ctx)
+	case ".docx":
+		documents, err = loader.NewLibreOfficeLoader(filePath).Load(ctx)
+	case ".txt":
+		documents, err = loader.NewTextLoader(filePath, nil).Load(ctx)
+	default:
+		return nil, fmt.Errorf("unsupported file type")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return textsplitter.NewRecursiveCharacterTextSplitter(
+		int(r.chunkSize),
+		int(r.chunkOverlap),
+	).SplitDocuments(documents), nil
+}
