@@ -19,7 +19,7 @@ func threadToChatCompletionMessages(t *thread.Thread) []openai.ChatCompletionMes
 		}
 
 		switch message.Role {
-		case thread.RoleUser:
+		case thread.RoleUser, thread.RoleSystem:
 			if data, isUserTextData := message.Contents[0].Data.(string); isUserTextData {
 				chatCompletionMessages[i].Content = data
 			} else {

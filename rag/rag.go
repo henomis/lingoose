@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/index"
@@ -31,7 +30,7 @@ type RAG struct {
 	topK         uint
 }
 
-type FusionRAG struct {
+type RAGFusion struct {
 	RAG
 	llm LLM
 }
@@ -42,13 +41,6 @@ func New(index *index.Index) *RAG {
 		chunkSize:    defaultChunkSize,
 		chunkOverlap: defaultChunkOverlap,
 		topK:         defaultTopK,
-	}
-}
-
-func NewFusionRAG(index *index.Index, llm LLM) *FusionRAG {
-	return &FusionRAG{
-		RAG: *New(index),
-		llm: llm,
 	}
 }
 
@@ -85,53 +77,6 @@ func (r *RAG) AddFiles(ctx context.Context, filePath ...string) error {
 
 func (r *RAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
 	results, err := r.index.Query(ctx, query, option.WithTopK(int(r.topK)))
-	return results, err
-}
-
-func (r *FusionRAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
-	if r.llm == nil {
-		return nil, fmt.Errorf("llm is not set")
-	}
-
-	t := thread.NewThread().AddMessage(
-		thread.NewUserMessage().AddContent(
-			thread.NewTextContent(
-				fmt.Sprintf("Based on the provided question, generate 5 similar questions.\n\nQuestion: %s", query),
-			),
-		),
-	)
-
-	err := r.llm.Generate(ctx, t)
-	if err != nil {
-		return nil, err
-	}
-
-	lastMessage := t.Messages[len(t.Messages)-1]
-	content := lastMessage.Contents[0].Data.(string)
-	questions := strings.Split(content, "\n")
-
-	var results index.SearchResults
-	for _, question := range questions {
-		res, err := r.index.Query(ctx, question, option.WithTopK(int(r.topK)))
-		if err != nil {
-			return nil, err
-		}
-
-		results = append(results, res...)
-	}
-
-	// TODO: rerank results
-
-	//remove dupliocates
-	seen := make(map[string]bool)
-	var uniqueResults index.SearchResults
-	for _, result := range results {
-		if _, ok := seen[result.Content()]; !ok {
-			uniqueResults = append(uniqueResults, result)
-			seen[result.Content()] = true
-		}
-	}
-
 	return results, err
 }
 

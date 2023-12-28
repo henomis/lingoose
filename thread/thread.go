@@ -21,6 +21,7 @@ type Content struct {
 type Role string
 
 const (
+	RoleSystem    Role = "system"
 	RoleUser      Role = "user"
 	RoleAssistant Role = "assistant"
 	RoleTool      Role = "tool"
@@ -87,6 +88,12 @@ func NewUserMessage() *Message {
 	}
 }
 
+func NewSystemMessage() *Message {
+	return &Message{
+		Role: RoleSystem,
+	}
+}
+
 func NewAssistantMessage() *Message {
 	return &Message{
 		Role: RoleAssistant,
@@ -104,7 +111,7 @@ func (t *Thread) AddMessage(message *Message) *Thread {
 	return t
 }
 
-func (t *Thread) AddMessages(messages []*Message) *Thread {
+func (t *Thread) AddMessages(messages ...*Message) *Thread {
 	t.Messages = append(t.Messages, messages...)
 	return t
 }

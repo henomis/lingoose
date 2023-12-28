@@ -20,6 +20,7 @@ const (
 )
 
 var threadRoleToOpenAIRole = map[thread.Role]string{
+	thread.RoleSystem:    "system",
 	thread.RoleUser:      "user",
 	thread.RoleAssistant: "assistant",
 	thread.RoleTool:      "tool",
@@ -271,7 +272,7 @@ func (o *OpenAI) stream(
 		o.streamCallbackFn(response.Choices[0].Delta.Content)
 	}
 
-	t.AddMessages(messages)
+	t.AddMessages(messages...)
 
 	return nil
 }
