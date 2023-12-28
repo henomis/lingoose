@@ -30,7 +30,7 @@ type RAG struct {
 	topK         uint
 }
 
-type RAGFusion struct {
+type Fusion struct {
 	RAG
 	llm LLM
 }

@@ -16,7 +16,7 @@ import (
 // download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
-	r := rag.NewRAGFusion(
+	r := rag.NewFusion(
 		index.New(
 			jsondb.New().WithPersist("db.json"),
 			openaiembedder.New(openaiembedder.AdaEmbeddingV2),

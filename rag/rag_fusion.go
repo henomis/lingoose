@@ -17,14 +17,14 @@ var ragFusionPrompts = []string{
 	"OUTPUT (4 queries):",
 }
 
-func NewRAGFusion(index *index.Index, llm LLM) *RAGFusion {
-	return &RAGFusion{
+func NewFusion(index *index.Index, llm LLM) *Fusion {
+	return &Fusion{
 		RAG: *New(index),
 		llm: llm,
 	}
 }
 
-func (r *RAGFusion) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
+func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
 	if r.llm == nil {
 		return nil, fmt.Errorf("llm is not set")
 	}
@@ -55,15 +55,15 @@ func (r *RAGFusion) Retrieve(ctx context.Context, query string) ([]index.SearchR
 	fmt.Println(t)
 
 	lastMessage := t.Messages[len(t.Messages)-1]
-	content := lastMessage.Contents[0].Data.(string)
+	content, _ := lastMessage.Contents[0].Data.(string)
 	content = strings.TrimSpace(content)
 	questions := strings.Split(content, "\n")
 
 	var results index.SearchResults
 	for _, question := range questions {
-		res, err := r.index.Query(ctx, question, option.WithTopK(int(r.topK)))
-		if err != nil {
-			return nil, err
+		res, queryErr := r.index.Query(ctx, question, option.WithTopK(int(r.topK)))
+		if queryErr != nil {
+			return nil, queryErr
 		}
 
 		results = append(results, res...)
