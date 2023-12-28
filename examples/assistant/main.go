@@ -26,7 +26,10 @@ func main() {
 
 	_, err := os.Stat("db.json")
 	if os.IsNotExist(err) {
-		r.AddFiles(context.Background(), "state_of_the_union.txt")
+		err = r.AddFiles(context.Background(), "state_of_the_union.txt")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	a := assistant.New(
