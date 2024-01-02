@@ -160,10 +160,10 @@ func getCacheableMessages(t *thread.Thread) []string {
 	return messages
 }
 
-func (o *Cohere) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
+func (c *Cohere) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
 	messages := getCacheableMessages(t)
 	cacheQuery := strings.Join(messages, "\n")
-	cacheResult, err := o.cache.Get(ctx, cacheQuery)
+	cacheResult, err := c.cache.Get(ctx, cacheQuery)
 	if err != nil {
 		return cacheResult, err
 	}
@@ -175,7 +175,7 @@ func (o *Cohere) getCache(ctx context.Context, t *thread.Thread) (*cache.Result,
 	return cacheResult, nil
 }
 
-func (o *Cohere) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
+func (c *Cohere) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
 	lastMessage := t.Messages[len(t.Messages)-1]
 
 	if lastMessage.Role != thread.RoleAssistant || len(lastMessage.Contents) == 0 {
@@ -192,7 +192,7 @@ func (o *Cohere) setCache(ctx context.Context, t *thread.Thread, cacheResult *ca
 		}
 	}
 
-	err := o.cache.Set(ctx, cacheResult.Embedding, strings.Join(contents, "\n"))
+	err := c.cache.Set(ctx, cacheResult.Embedding, strings.Join(contents, "\n"))
 	if err != nil {
 		return err
 	}
@@ -200,15 +200,15 @@ func (o *Cohere) setCache(ctx context.Context, t *thread.Thread, cacheResult *ca
 	return nil
 }
 
-func (o *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
+func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 	if t == nil {
 		return nil
 	}
 
 	var err error
 	var cacheResult *cache.Result
-	if o.cache != nil {
-		cacheResult, err = o.getCache(ctx, t)
+	if c.cache != nil {
+		cacheResult, err = c.getCache(ctx, t)
 		if err == nil {
 			return nil
 		} else if !errors.Is(err, cache.ErrCacheMiss) {
@@ -225,7 +225,7 @@ func (o *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		}
 	}
 
-	completionResponse, err := o.Completion(ctx, completionQuery)
+	completionResponse, err := c.Completion(ctx, completionQuery)
 	if err != nil {
 		return err
 	}
@@ -234,8 +234,8 @@ func (o *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		thread.NewTextContent(completionResponse),
 	))
 
-	if o.cache != nil {
-		err = o.setCache(ctx, t, cacheResult)
+	if c.cache != nil {
+		err = c.setCache(ctx, t, cacheResult)
 		if err != nil {
 			return err
 		}
