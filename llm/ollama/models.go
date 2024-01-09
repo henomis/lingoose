@@ -63,7 +63,7 @@ func (r *response) Decode(body io.Reader) error {
 	return json.NewDecoder(body).Decode(r)
 }
 
-func (r *response) SetBody(body io.Reader) error {
+func (r *response) SetBody(_ io.Reader) error {
 	return nil
 }
 
@@ -79,7 +79,7 @@ func (r *response) SetStatusCode(code int) error {
 	return nil
 }
 
-func (r *response) SetHeaders(headers restclientgo.Headers) error { return nil }
+func (r *response) SetHeaders(_ restclientgo.Headers) error { return nil }
 
 type message struct {
 	Role    string `json:"role"`
