@@ -29,7 +29,7 @@ func main() {
 	}
 
 	for _, question := range questions {
-		t := thread.NewThread().AddMessage(
+		t := thread.New().AddMessage(
 			thread.NewUserMessage().AddContent(
 				thread.NewTextContent(question),
 			),

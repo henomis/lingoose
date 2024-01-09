@@ -26,7 +26,7 @@ type RAG interface {
 func New(llm LLM) *Assistant {
 	assistant := &Assistant{
 		llm:    llm,
-		thread: thread.NewThread(),
+		thread: thread.New(),
 	}
 
 	return assistant

@@ -17,8 +17,10 @@ github.com/henomis/pinecone-go v1.1.2 h1:hOEhk/WAT7r3ini12fyyoAIT65nzeqmWG8t4YOb
 github.com/henomis/pinecone-go v1.1.2/go.mod h1:0u2hta1zssq/aaozgS6Nn61CMKlA95Pg6mVsE8zMNus=
 github.com/henomis/qdrant-go v1.1.0 h1:GU5R4ZZKeD0JXLZ0yv37FUzI0spGECRr2WlE3prmLIY=
 github.com/henomis/qdrant-go v1.1.0/go.mod h1:p274sBhQPDnfjCzJentWoNIGFadl5yIcLM4Xnmmwk9k=
-github.com/henomis/restclientgo v1.1.0 h1:qNhBpTwYXuwfy6SL2EWjbfTrlUw70PZYmqQ4jewdu5E=
-github.com/henomis/restclientgo v1.1.0/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
+github.com/henomis/restclientgo v1.1.1-alpha.2 h1:TqZ8AZoY7mVn95ffYaGNE7pp6LXwP49DTc9LhuUMDv4=
+github.com/henomis/restclientgo v1.1.1-alpha.2/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
+github.com/henomis/restclientgo v1.1.1 h1:dHzKj4CD2rJqFkENwlMvXfWLlJtZFL0Yfza9NmTZ5W8=
+github.com/henomis/restclientgo v1.1.1/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
 github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 h1:i462o439ZjprVSFSZLZxcsoAe592sZB1rci2Z8j4wdk=
 github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0/go.mod h1:N0Wam8K1arqPXNWjMo21EXnBPOPp36vB07FNRdD2geA=
 github.com/invopop/jsonschema v0.7.0 h1:2vgQcBz1n256N+FpX3Jq7Y17AjYt46Ig3zIWyy770So=

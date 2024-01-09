@@ -29,7 +29,7 @@ func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResu
 		return nil, fmt.Errorf("llm is not set")
 	}
 
-	t := thread.NewThread().AddMessages(
+	t := thread.New().AddMessages(
 		thread.NewSystemMessage().AddContent(
 			thread.NewTextContent(
 				ragFusionPrompts[0],

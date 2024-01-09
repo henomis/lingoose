@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	t := thread.NewThread().AddMessage(
+	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
 			thread.NewTextContent("Hello, I'm a user"),
 		).AddContent(

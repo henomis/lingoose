@@ -120,7 +120,7 @@ func (t *Thread) CountMessages() int {
 	return len(t.Messages)
 }
 
-func NewThread() *Thread {
+func New() *Thread {
 	return &Thread{}
 }
 
