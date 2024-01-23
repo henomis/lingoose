@@ -68,6 +68,11 @@ func (l *LibreOfficeLoader) Load(ctx context.Context) ([]document.Document, erro
 	return documents, nil
 }
 
+func (l *LibreOfficeLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	l.filename = source
+	return l.Load(ctx)
+}
+
 func (l *LibreOfficeLoader) loadFile(ctx context.Context) ([]document.Document, error) {
 	libreOfficeArgs := append(l.libreOfficeArgs, l.filename)
 

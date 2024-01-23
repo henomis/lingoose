@@ -57,6 +57,11 @@ func (p *PubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 	return documens, nil
 }
 
+func (p *PubMedLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	p.pubMedIDs = []string{source}
+	return p.Load(ctx)
+}
+
 func (p *PubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {
 	url := fmt.Sprintf(pubMedBioCURLFormat, pubMedID)
 

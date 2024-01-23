@@ -61,3 +61,8 @@ func (w *WhisperLoader) Load(ctx context.Context) ([]document.Document, error) {
 
 	return documents, nil
 }
+
+func (w *WhisperLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	w.filename = source
+	return w.Load(ctx)
+}

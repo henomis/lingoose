@@ -97,6 +97,11 @@ func (w *WhisperCppLoader) Load(ctx context.Context) ([]document.Document, error
 	return documents, nil
 }
 
+func (w *WhisperCppLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	w.filename = source
+	return w.Load(ctx)
+}
+
 func (w *WhisperCppLoader) convertAndTrascribe(ctx context.Context) (string, error) {
 	ffmpegArgs := []string{"-i", w.filename}
 	ffmpegArgs = append(ffmpegArgs, w.ffmpegArgs...)

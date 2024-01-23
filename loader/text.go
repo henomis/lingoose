@@ -54,6 +54,11 @@ func (t *TextLoader) Load(ctx context.Context) ([]document.Document, error) {
 	return documents, nil
 }
 
+func (t *TextLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	t.filename = source
+	return t.Load(ctx)
+}
+
 func (t *TextLoader) validate() error {
 	if t.metadata == nil {
 		t.metadata = make(types.Meta)

@@ -68,6 +68,11 @@ func (l *TesseractLoader) Load(ctx context.Context) ([]document.Document, error)
 	return documents, nil
 }
 
+func (l *TesseractLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	l.filename = source
+	return l.Load(ctx)
+}
+
 func (l *TesseractLoader) loadFile(ctx context.Context) ([]document.Document, error) {
 	tesseractArgs := []string{l.filename, "stdout"}
 	tesseractArgs = append(tesseractArgs, l.tesseractArgs...)

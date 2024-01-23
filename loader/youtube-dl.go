@@ -76,6 +76,11 @@ func (y *YoutubeDLLoader) Load(ctx context.Context) ([]document.Document, error)
 	return documents, nil
 }
 
+func (y *YoutubeDLLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	y.path = source
+	return y.Load(ctx)
+}
+
 func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, error) {
 	tempDir, err := os.MkdirTemp("", "youtube-dl")
 	if err != nil {

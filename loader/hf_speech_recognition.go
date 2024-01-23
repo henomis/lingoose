@@ -84,3 +84,8 @@ func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, er
 
 	return documents, nil
 }
+
+func (h *HFSpeechRecognition) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	h.mediaFile = source
+	return h.Load(ctx)
+}
