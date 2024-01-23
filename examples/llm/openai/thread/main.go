@@ -13,7 +13,7 @@ type Answer struct {
 }
 
 func getAnswer(a Answer) string {
-	return a.Answer
+	return "🦜 ☠️ " + a.Answer
 }
 
 func newStr(str string) *string {
