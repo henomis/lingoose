@@ -75,6 +75,10 @@ func (r *RAG) AddFiles(ctx context.Context, filePath ...string) error {
 	return nil
 }
 
+func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) error {
+	return r.index.LoadFromDocuments(ctx, documents)
+}
+
 func (r *RAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
 	results, err := r.index.Query(ctx, query, option.WithTopK(int(r.topK)))
 	return results, err

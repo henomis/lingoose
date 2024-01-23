@@ -52,8 +52,6 @@ func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResu
 		return nil, err
 	}
 
-	fmt.Println(t)
-
 	lastMessage := t.Messages[len(t.Messages)-1]
 	content, _ := lastMessage.Contents[0].Data.(string)
 	content = strings.TrimSpace(content)
