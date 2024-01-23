@@ -69,33 +69,8 @@ func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 	return o
 }
 
-func getCacheableMessages(t *thread.Thread) []string {
-	userMessages := make([]*thread.Message, 0)
-	for _, message := range t.Messages {
-		if message.Role == thread.RoleUser {
-			userMessages = append(userMessages, message)
-		} else {
-			userMessages = make([]*thread.Message, 0)
-		}
-	}
-
-	var messages []string
-	for _, message := range userMessages {
-		for _, content := range message.Contents {
-			if content.Type == thread.ContentTypeText {
-				messages = append(messages, content.Data.(string))
-			} else {
-				messages = make([]string, 0)
-				break
-			}
-		}
-	}
-
-	return messages
-}
-
 func (o *Ollama) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
-	messages := getCacheableMessages(t)
+	messages := t.UserQuery()
 	cacheQuery := strings.Join(messages, "\n")
 	cacheResult, err := o.cache.Get(ctx, cacheQuery)
 	if err != nil {

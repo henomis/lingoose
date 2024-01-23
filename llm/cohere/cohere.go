@@ -135,33 +135,8 @@ func (c *Cohere) Chat(ctx context.Context, prompt *chat.Chat) (string, error) {
 	return "", fmt.Errorf("not implemented")
 }
 
-func getCacheableMessages(t *thread.Thread) []string {
-	userMessages := make([]*thread.Message, 0)
-	for _, message := range t.Messages {
-		if message.Role == thread.RoleUser {
-			userMessages = append(userMessages, message)
-		} else {
-			userMessages = make([]*thread.Message, 0)
-		}
-	}
-
-	var messages []string
-	for _, message := range userMessages {
-		for _, content := range message.Contents {
-			if content.Type == thread.ContentTypeText {
-				messages = append(messages, content.Data.(string))
-			} else {
-				messages = make([]string, 0)
-				break
-			}
-		}
-	}
-
-	return messages
-}
-
 func (c *Cohere) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
-	messages := getCacheableMessages(t)
+	messages := t.UserQuery()
 	cacheQuery := strings.Join(messages, "\n")
 	cacheResult, err := c.cache.Get(ctx, cacheQuery)
 	if err != nil {

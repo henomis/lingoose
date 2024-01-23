@@ -3,7 +3,7 @@ package rag
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"regexp"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/index"
@@ -23,11 +23,16 @@ type LLM interface {
 	Generate(context.Context, *thread.Thread) error
 }
 
+type Loader interface {
+	LoadFromSource(context.Context, string) ([]document.Document, error)
+}
+
 type RAG struct {
 	index        *index.Index
 	chunkSize    uint
 	chunkOverlap uint
 	topK         uint
+	loaders      map[*regexp.Regexp]Loader // this map a regexp as string to a loader
 }
 
 type Fusion struct {
@@ -36,12 +41,15 @@ type Fusion struct {
 }
 
 func New(index *index.Index) *RAG {
-	return &RAG{
+	rag := &RAG{
 		index:        index,
 		chunkSize:    defaultChunkSize,
 		chunkOverlap: defaultChunkOverlap,
 		topK:         defaultTopK,
+		loaders:      make(map[*regexp.Regexp]Loader),
 	}
+
+	return rag.withDefaultLoaders()
 }
 
 func (r *RAG) WithChunkSize(chunkSize uint) *RAG {
@@ -59,9 +67,22 @@ func (r *RAG) WithTopK(topK uint) *RAG {
 	return r
 }
 
-func (r *RAG) AddFiles(ctx context.Context, filePath ...string) error {
-	for _, f := range filePath {
-		documents, err := r.addFile(ctx, f)
+func (r *RAG) withDefaultLoaders() *RAG {
+	r.loaders[regexp.MustCompile(`.*\.pdf`)] = loader.NewPDFToTextLoader("")
+	r.loaders[regexp.MustCompile(`.*\.docx`)] = loader.NewLibreOfficeLoader("")
+	r.loaders[regexp.MustCompile(`.*\.txt`)] = loader.NewTextLoader("", nil)
+
+	return r
+}
+
+func (r *RAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) *RAG {
+	r.loaders[sourceRegexp] = loader
+	return r
+}
+
+func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
+	for _, source := range sources {
+		documents, err := r.addSource(ctx, source)
 		if err != nil {
 			return err
 		}
@@ -84,20 +105,19 @@ func (r *RAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult,
 	return results, err
 }
 
-func (r *RAG) addFile(ctx context.Context, filePath string) ([]document.Document, error) {
-	var documents []document.Document
-	var err error
-	switch filepath.Ext(filePath) {
-	case ".pdf":
-		documents, err = loader.NewPDFToTextLoader(filePath).Load(ctx)
-	case ".docx":
-		documents, err = loader.NewLibreOfficeLoader(filePath).Load(ctx)
-	case ".txt":
-		documents, err = loader.NewTextLoader(filePath, nil).Load(ctx)
-	default:
-		return nil, fmt.Errorf("unsupported file type")
+func (r *RAG) addSource(ctx context.Context, source string) ([]document.Document, error) {
+	var sourceLoader Loader
+	for regexpStr, loader := range r.loaders {
+		if regexpStr.MatchString(source) {
+			sourceLoader = loader
+		}
 	}
 
+	if sourceLoader == nil {
+		return nil, fmt.Errorf("unsupported source type")
+	}
+
+	documents, err := sourceLoader.LoadFromSource(ctx, source)
 	if err != nil {
 		return nil, err
 	}

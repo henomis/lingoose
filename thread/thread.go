@@ -150,3 +150,34 @@ func (t *Thread) String() string {
 	}
 	return str
 }
+
+// LastMessage returns the last message in the thread.
+func (t *Thread) LastMessage() *Message {
+	return t.Messages[len(t.Messages)-1]
+}
+
+// UserQuery returns the last user messages as a slice of strings.
+func (t *Thread) UserQuery() []string {
+	userMessages := make([]*Message, 0)
+	for _, message := range t.Messages {
+		if message.Role == RoleUser {
+			userMessages = append(userMessages, message)
+		} else {
+			userMessages = make([]*Message, 0)
+		}
+	}
+
+	var messages []string
+	for _, message := range userMessages {
+		for _, content := range message.Contents {
+			if content.Type == ContentTypeText {
+				messages = append(messages, content.Data.(string))
+			} else {
+				messages = make([]string, 0)
+				break
+			}
+		}
+	}
+
+	return messages
+}
