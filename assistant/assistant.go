@@ -2,7 +2,6 @@ package assistant
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/prompt"
@@ -42,36 +41,48 @@ func (a *Assistant) WithRAG(rag RAG) *Assistant {
 	return a
 }
 
-func (a *Assistant) Run(ctx context.Context, message any) error {
-	var err error
-	if _, ok := message.(string); !ok {
-		return fmt.Errorf("message must be a string")
+func (a *Assistant) Run(ctx context.Context) error {
+	if a.thread == nil {
+		return nil
 	}
 
 	if a.rag != nil {
-		message, err = a.generateRAGMessage(ctx, message.(string))
+		err := a.generateRAGMessage(ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	a.thread.AddMessage(thread.NewUserMessage().AddContent(
-		thread.NewTextContent(
-			message.(string),
-		),
-	))
-
 	return a.llm.Generate(ctx, a.thread)
+}
+
+func (a *Assistant) RunWithThread(ctx context.Context, thread *thread.Thread) error {
+	a.thread = thread
+	return a.Run(ctx)
 }
 
 func (a *Assistant) Thread() *thread.Thread {
 	return a.thread
 }
 
-func (a *Assistant) generateRAGMessage(ctx context.Context, query string) (string, error) {
+func (a *Assistant) generateRAGMessage(ctx context.Context) error {
+	lastMessage := a.thread.LastMessage()
+	if lastMessage.Role != thread.RoleUser || len(lastMessage.Contents) == 0 {
+		return nil
+	}
+
+	query := ""
+	for _, content := range lastMessage.Contents {
+		if content.Type == thread.ContentTypeText {
+			query += content.Data.(string) + "\n"
+		} else {
+			continue
+		}
+	}
+
 	searchResults, err := a.rag.Retrieve(ctx, query)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	context := ""
@@ -86,8 +97,14 @@ func (a *Assistant) generateRAGMessage(ctx context.Context, query string) (strin
 		"context":  context,
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return ragPrompt.String(), nil
+	a.thread.AddMessage(thread.NewUserMessage().AddContent(
+		thread.NewTextContent(
+			ragPrompt.String(),
+		),
+	))
+
+	return nil
 }

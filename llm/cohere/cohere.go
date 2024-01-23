@@ -176,7 +176,7 @@ func (c *Cohere) getCache(ctx context.Context, t *thread.Thread) (*cache.Result,
 }
 
 func (c *Cohere) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
-	lastMessage := t.Messages[len(t.Messages)-1]
+	lastMessage := t.LastMessage()
 
 	if lastMessage.Role != thread.RoleAssistant || len(lastMessage.Contents) == 0 {
 		return nil
