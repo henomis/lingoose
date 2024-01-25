@@ -17,7 +17,8 @@ import (
 // download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
-
+	replicas := 1
+	shards := 1
 	index := index.New(
 		pineconedb.New(
 			pineconedb.Options{
@@ -25,9 +26,13 @@ func main() {
 				Namespace: "test-namespace",
 				CreateIndexOptions: &pineconedb.CreateIndexOptions{
 					Dimension: 1536,
-					Replicas:  1,
 					Metric:    "cosine",
-					PodType:   "p1.x1",
+					Pod: &pineconedb.Pod{
+						Replicas:    &replicas,
+						Shards:      &shards,
+						PodType:     "s1.x1",
+						Environment: "gcp-starter",
+					},
 				},
 			},
 		),

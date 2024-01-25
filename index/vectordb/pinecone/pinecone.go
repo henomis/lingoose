@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
-	pineconego "github.com/henomis/pinecone-go"
-	pineconegorequest "github.com/henomis/pinecone-go/request"
-	pineconegoresponse "github.com/henomis/pinecone-go/response"
+	pineconego "github.com/henomis/pinecone-go/v2"
+	pineconegorequest "github.com/henomis/pinecone-go/v2/request"
+	pineconegoresponse "github.com/henomis/pinecone-go/v2/response"
 )
 
 var _ index.VectorDB = &DB{}
@@ -19,17 +19,44 @@ var _ index.VectorDB = &DB{}
 type DB struct {
 	pineconeClient *pineconego.PineconeGo
 	indexName      string
-	projectID      *string
 	namespace      string
+	indexHost      *string
 
 	createIndexOptions *CreateIndexOptions
 }
 
 type CreateIndexOptions struct {
-	Dimension int
-	Replicas  int
-	Metric    string
-	PodType   string
+	Dimension  int
+	Metric     string
+	Serverless *Serverless
+	Pod        *Pod
+}
+
+type Serverless struct {
+	Cloud  ServerlessCloud
+	Region string
+}
+
+type ServerlessCloud string
+
+const (
+	ServerlessCloudAWS   ServerlessCloud = "aws"
+	ServerlessCloudGCP   ServerlessCloud = "gcp"
+	ServerlessCloudAzure ServerlessCloud = "azure"
+)
+
+type Pod struct {
+	Environment      string
+	Replicas         *int
+	PodType          string
+	Pods             *int
+	Shards           *int
+	MetadataConfig   *MetadataConfig
+	SourceCollection *string
+}
+
+type MetadataConfig struct {
+	Indexed []string
 }
 
 type Options struct {
@@ -40,9 +67,8 @@ type Options struct {
 
 func New(options Options) *DB {
 	apiKey := os.Getenv("PINECONE_API_KEY")
-	environment := os.Getenv("PINECONE_ENVIRONMENT")
 
-	pineconeClient := pineconego.New(environment, apiKey)
+	pineconeClient := pineconego.New(apiKey)
 
 	return &DB{
 		pineconeClient:     pineconeClient,
@@ -52,9 +78,29 @@ func New(options Options) *DB {
 	}
 }
 
-func (d *DB) WithAPIKeyAndEnvironment(apiKey, environment string) *DB {
-	d.pineconeClient = pineconego.New(environment, apiKey)
+func (d *DB) WithAPIKey(apiKey string) *DB {
+	d.pineconeClient = pineconego.New(apiKey)
 	return d
+}
+
+func (d *DB) getIndexHost(ctx context.Context) error {
+	if d.indexHost != nil {
+		return nil
+	}
+
+	resp := &pineconegoresponse.IndexDescribe{}
+
+	err := d.pineconeClient.IndexDescribe(ctx, &pineconegorequest.IndexDescribe{
+		IndexName: d.indexName,
+	}, resp)
+	if err != nil {
+		return err
+	}
+
+	resp.Host = "https://" + resp.Host
+	d.indexHost = &resp.Host
+
+	return nil
 }
 
 func (d *DB) IsEmpty(ctx context.Context) (bool, error) {
@@ -63,14 +109,13 @@ func (d *DB) IsEmpty(ctx context.Context) (bool, error) {
 		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	err = d.getProjectID(ctx)
+	err = d.getIndexHost(ctx)
 	if err != nil {
 		return true, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
 	req := &pineconegorequest.VectorDescribeIndexStats{
-		IndexName: d.indexName,
-		ProjectID: *d.projectID,
+		IndexHost: *d.indexHost,
 	}
 	res := &pineconegoresponse.VectorDescribeIndexStats{}
 
@@ -93,7 +138,7 @@ func (d *DB) IsEmpty(ctx context.Context) (bool, error) {
 
 func (d *DB) Search(ctx context.Context, values []float64, options *option.Options) (index.SearchResults, error) {
 	if options.Filter == nil {
-		options.Filter = map[string]string{}
+		options.Filter = pineconegorequest.Filter{}
 	}
 
 	matches, err := d.similaritySearch(ctx, values, options)
@@ -116,22 +161,17 @@ func (d *DB) Drop(ctx context.Context) error {
 }
 
 func (d *DB) Delete(ctx context.Context, ids []string) error {
-	err := d.getProjectID(ctx)
+	err := d.getIndexHost(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
 
-	for _, id := range ids {
-		idToDelete := id
-
-		deleteErr := d.pineconeClient.VectorDelete(ctx, &pineconegorequest.VectorDelete{
-			IndexName: d.indexName,
-			ProjectID: *d.projectID,
-			ID:        &idToDelete,
-		}, &pineconegoresponse.VectorDelete{})
-		if deleteErr != nil {
-			return fmt.Errorf("%w: %w", index.ErrInternal, deleteErr)
-		}
+	deleteErr := d.pineconeClient.VectorDelete(ctx, &pineconegorequest.VectorDelete{
+		IndexHost: *d.indexHost,
+		IDs:       ids,
+	}, &pineconegoresponse.VectorDelete{})
+	if deleteErr != nil {
+		return fmt.Errorf("%w: %w", index.ErrInternal, deleteErr)
 	}
 
 	return nil
@@ -147,10 +187,10 @@ func (d *DB) similaritySearch(
 	}
 
 	if opts.Filter == nil {
-		opts.Filter = map[string]string{}
+		opts.Filter = pineconegorequest.Filter{}
 	}
 
-	err := d.getProjectID(ctx)
+	err := d.getIndexHost(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
@@ -161,14 +201,13 @@ func (d *DB) similaritySearch(
 	err = d.pineconeClient.VectorQuery(
 		ctx,
 		&pineconegorequest.VectorQuery{
-			IndexName:       d.indexName,
-			ProjectID:       *d.projectID,
+			IndexHost:       *d.indexHost,
 			TopK:            int32(opts.TopK),
 			Vector:          values,
 			IncludeMetadata: &includeMetadata,
 			IncludeValues:   &includeValues,
 			Namespace:       &d.namespace,
-			Filter:          opts.Filter.(map[string]string),
+			Filter:          opts.Filter.(pineconegorequest.Filter),
 		},
 		res,
 	)
@@ -177,23 +216,6 @@ func (d *DB) similaritySearch(
 	}
 
 	return res.Matches, nil
-}
-
-func (d *DB) getProjectID(ctx context.Context) error {
-	if d.projectID != nil {
-		return nil
-	}
-
-	whoamiResp := &pineconegoresponse.Whoami{}
-
-	err := d.pineconeClient.Whoami(ctx, &pineconegorequest.Whoami{}, whoamiResp)
-	if err != nil {
-		return err
-	}
-
-	d.projectID = &whoamiResp.ProjectID
-
-	return nil
 }
 
 func (d *DB) createIndexIfRequired(ctx context.Context) error {
@@ -208,7 +230,7 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 	}
 
 	for _, index := range resp.Indexes {
-		if index == d.indexName {
+		if index.Name == d.indexName {
 			return nil
 		}
 	}
@@ -218,9 +240,28 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 	req := &pineconegorequest.IndexCreate{
 		Name:      d.indexName,
 		Dimension: d.createIndexOptions.Dimension,
-		Replicas:  &d.createIndexOptions.Replicas,
 		Metric:    &metric,
-		PodType:   &d.createIndexOptions.PodType,
+	}
+
+	if d.createIndexOptions.Serverless != nil {
+		req.Spec = pineconegorequest.Spec{
+			Serverless: &pineconegorequest.ServerlessSpec{
+				Cloud:  pineconegorequest.ServerlessSpecCloud(d.createIndexOptions.Serverless.Cloud),
+				Region: d.createIndexOptions.Serverless.Region,
+			},
+		}
+	} else if d.createIndexOptions.Pod != nil {
+		req.Spec = pineconegorequest.Spec{
+			Pod: &pineconegorequest.PodSpec{
+				Environment:      d.createIndexOptions.Pod.Environment,
+				Replicas:         d.createIndexOptions.Pod.Replicas,
+				PodType:          d.createIndexOptions.Pod.PodType,
+				Pods:             d.createIndexOptions.Pod.Pods,
+				Shards:           d.createIndexOptions.Pod.Shards,
+				MetadataConfig:   (*pineconegorequest.MetadataConfig)(d.createIndexOptions.Pod.MetadataConfig),
+				SourceCollection: d.createIndexOptions.Pod.SourceCollection,
+			},
+		}
 	}
 
 	err = d.pineconeClient.IndexCreate(ctx, req, &pineconegoresponse.IndexCreate{})
@@ -250,7 +291,7 @@ func (d *DB) createIndexIfRequired(ctx context.Context) error {
 }
 
 func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
-	err := d.getProjectID(ctx)
+	err := d.getIndexHost(ctx)
 	if err != nil {
 		return fmt.Errorf("%w: %w", index.ErrInternal, err)
 	}
@@ -274,8 +315,7 @@ func (d *DB) Insert(ctx context.Context, datas []index.Data) error {
 	}
 
 	req := &pineconegorequest.VectorUpsert{
-		IndexName: d.indexName,
-		ProjectID: *d.projectID,
+		IndexHost: *d.indexHost,
 		Vectors:   vectors,
 		Namespace: d.namespace,
 	}
