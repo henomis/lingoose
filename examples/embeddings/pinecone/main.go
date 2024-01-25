@@ -74,7 +74,8 @@ func main() {
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	prompt1 := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
+		"Based on the following context answer to the question.\n\n" +
+			"Context:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
 			"query":   query,
 			"context": content,
@@ -90,11 +91,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func ingestData(index *index.Index) error {
-
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
@@ -110,9 +109,7 @@ func ingestData(index *index.Index) error {
 		fmt.Println(doc.Metadata)
 		fmt.Println("----------")
 		fmt.Println()
-
 	}
 
 	return index.LoadFromDocuments(context.Background(), documentChunks)
-
 }
