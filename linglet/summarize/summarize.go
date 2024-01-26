@@ -69,8 +69,8 @@ func (s *Summarize) Run(ctx context.Context) (*string, error) {
 			),
 		)
 
-		err := s.assistant.Run(ctx)
-		if err != nil {
+		assistantErr := s.assistant.Run(ctx)
+		if assistantErr != nil {
 			return nil, err
 		}
 
@@ -78,7 +78,9 @@ func (s *Summarize) Run(ctx context.Context) (*string, error) {
 			s.callbackFn(s.assistant.Thread(), i+1, nDocuments)
 		}
 
-		summary = s.assistant.Thread().LastMessage().Contents[0].Data.(string)
+		if content, ok := s.assistant.Thread().LastMessage().Contents[0].Data.(string); ok {
+			summary = content
+		}
 	}
 
 	return &summary, nil
