@@ -1,5 +1,12 @@
 package thread
 
+import (
+	"strings"
+
+	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/types"
+)
+
 type Thread struct {
 	Messages []*Message
 }
@@ -180,4 +187,33 @@ func (t *Thread) UserQuery() []string {
 	}
 
 	return messages
+}
+
+func (t *Thread) ClearMessages() *Thread {
+	t.Messages = make([]*Message, 0)
+	return t
+}
+
+func (m *Message) ClearContents() *Message {
+	m.Contents = make([]*Content, 0)
+	return m
+}
+
+func (c *Content) Format(input types.M) *Content {
+	if c.Type != ContentTypeText || input == nil {
+		return c
+	}
+
+	if !strings.Contains(c.Data.(string), "{{") {
+		return c
+	}
+
+	prompt := prompt.NewPromptTemplate(c.Data.(string))
+	err := prompt.Format(input)
+	if err != nil {
+		return c
+	}
+	c.Data = prompt.String()
+
+	return c
 }

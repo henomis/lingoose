@@ -18,6 +18,7 @@ type Assistant struct {
 type LLM interface {
 	Generate(context.Context, *thread.Thread) error
 }
+
 type RAG interface {
 	Retrieve(ctx context.Context, query string) ([]index.SearchResult, error)
 }
