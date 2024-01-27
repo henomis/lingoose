@@ -100,9 +100,14 @@ func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) 
 	return r.index.LoadFromDocuments(ctx, documents)
 }
 
-func (r *RAG) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
+func (r *RAG) Retrieve(ctx context.Context, query string) ([]string, error) {
 	results, err := r.index.Query(ctx, query, option.WithTopK(int(r.topK)))
-	return results, err
+	var resultsAsString []string
+	for _, result := range results {
+		resultsAsString = append(resultsAsString, result.Content())
+	}
+
+	return resultsAsString, err
 }
 
 func (r *RAG) addSource(ctx context.Context, source string) ([]document.Document, error) {

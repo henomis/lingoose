@@ -24,7 +24,7 @@ func NewFusion(index *index.Index, llm LLM) *Fusion {
 	}
 }
 
-func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResult, error) {
+func (r *Fusion) Retrieve(ctx context.Context, query string) ([]string, error) {
 	if r.llm == nil {
 		return nil, fmt.Errorf("llm is not set")
 	}
@@ -52,8 +52,6 @@ func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResu
 		return nil, err
 	}
 
-	fmt.Println(t)
-
 	lastMessage := t.LastMessage()
 	content, _ := lastMessage.Contents[0].Data.(string)
 	content = strings.TrimSpace(content)
@@ -72,7 +70,7 @@ func (r *Fusion) Retrieve(ctx context.Context, query string) ([]index.SearchResu
 	return reciprocalRankFusion(results), nil
 }
 
-func reciprocalRankFusion(searchResults index.SearchResults) index.SearchResults {
+func reciprocalRankFusion(searchResults index.SearchResults) []string {
 	const k = 60.0
 	searchResultsScoreMap := make(map[string]float64)
 	for _, result := range searchResults {
@@ -101,5 +99,10 @@ func reciprocalRankFusion(searchResults index.SearchResults) index.SearchResults
 		return uniqueSearchResults[i].Score > uniqueSearchResults[j].Score
 	})
 
-	return uniqueSearchResults
+	var results []string
+	for _, searchResult := range uniqueSearchResults {
+		results = append(results, searchResult.Content())
+	}
+
+	return results
 }

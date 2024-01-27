@@ -2,9 +2,8 @@ package assistant
 
 import (
 	"context"
+	"strings"
 
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 )
@@ -20,7 +19,7 @@ type LLM interface {
 }
 
 type RAG interface {
-	Retrieve(ctx context.Context, query string) ([]index.SearchResult, error)
+	Retrieve(ctx context.Context, query string) ([]string, error)
 }
 
 func New(llm LLM) *Assistant {
@@ -86,24 +85,16 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 		return err
 	}
 
-	context := ""
-
-	for _, searchResult := range searchResults {
-		context += searchResult.Content() + "\n\n"
-	}
-
-	ragPrompt := prompt.NewPromptTemplate(baseRAGPrompt)
-	err = ragPrompt.Format(types.M{
-		"question": query,
-		"context":  context,
-	})
-	if err != nil {
-		return err
-	}
+	context := strings.Join(searchResults, "\n\n")
 
 	a.thread.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent(
-			ragPrompt.String(),
+			baseRAGPrompt,
+		).Format(
+			types.M{
+				"question": query,
+				"context":  context,
+			},
 		),
 	))
 
