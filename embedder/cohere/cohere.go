@@ -58,7 +58,7 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 		ctx,
 		&request.Embed{
 			Texts: texts,
-			Model: &e.model,
+			Model: e.model,
 		},
 		resp,
 	)
