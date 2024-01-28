@@ -117,7 +117,7 @@ func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) 
 			Prompt:        prompt,
 			Temperature:   &c.temperature,
 			MaxTokens:     &c.maxTokens,
-			Model:         (*model.Model)(&c.model),
+			Model:         &c.model,
 			StopSequences: c.stop,
 		},
 		resp,
