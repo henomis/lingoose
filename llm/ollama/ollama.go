@@ -150,8 +150,6 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 func (o *Ollama) generate(ctx context.Context, t *thread.Thread, chatRequest *request) error {
 	var response chatResponse
 
-	o.restClient.SetStreamCallback(nil)
-
 	err := o.restClient.Post(
 		ctx,
 		chatRequest,
@@ -173,7 +171,7 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	var assistantMessage string
 
 	response.SetAcceptContentType(ndjsonContentType)
-	o.restClient.SetStreamCallback(
+	response.SetStreamCallback(
 		func(data []byte) error {
 			var streamResponse chatStreamResponse
 

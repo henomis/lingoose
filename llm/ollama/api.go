@@ -48,6 +48,8 @@ type chatStreamResponse struct {
 	response
 	Done    bool    `json:"done"`
 	Message message `json:"message"`
+
+	streamCallbackFn restclientgo.StreamCallback
 }
 
 type assistantMessage struct {
@@ -80,6 +82,14 @@ func (r *response) SetStatusCode(code int) error {
 }
 
 func (r *response) SetHeaders(_ restclientgo.Headers) error { return nil }
+
+func (r *chatStreamResponse) SetStreamCallback(fn restclientgo.StreamCallback) {
+	r.streamCallbackFn = fn
+}
+
+func (r *chatStreamResponse) StreamCallback() restclientgo.StreamCallback {
+	return r.streamCallbackFn
+}
 
 type message struct {
 	Role    string `json:"role"`
