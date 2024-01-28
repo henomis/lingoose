@@ -16,13 +16,17 @@ import (
 	"github.com/henomis/lingoose/thread"
 )
 
-type Model model.Model
+var (
+	ErrCohereChat = fmt.Errorf("cohere chat error")
+)
+
+type Model = model.Model
 
 const (
-	ModelCommand             Model = Model(model.ModelCommand)
-	ModelCommandNightly      Model = Model(model.ModelCommandNightly)
-	ModelCommandLight        Model = Model(model.ModelCommandLight)
-	ModelCommandLightNightly Model = Model(model.ModelCommandLightNightly)
+	ModelCommand             Model = model.ModelCommand
+	ModelCommandNightly      Model = model.ModelCommandNightly
+	ModelCommandLight        Model = model.ModelCommandLight
+	ModelCommandLightNightly Model = model.ModelCommandLightNightly
 )
 
 const (
@@ -31,14 +35,17 @@ const (
 	DefaultModel       = ModelCommand
 )
 
+type StreamCallbackFn func(string)
+
 type Cohere struct {
-	client      *coherego.Client
-	model       Model
-	temperature float64
-	maxTokens   int
-	verbose     bool
-	stop        []string
-	cache       *cache.Cache
+	client           *coherego.Client
+	model            Model
+	temperature      float64
+	maxTokens        int
+	verbose          bool
+	stop             []string
+	cache            *cache.Cache
+	streamCallbackFn StreamCallbackFn
 }
 
 func (c *Cohere) WithCache(cache *cache.Cache) *Cohere {
@@ -93,6 +100,11 @@ func (c *Cohere) WithVerbose(verbose bool) *Cohere {
 // WithStop sets the stop sequences to use for the LLM
 func (c *Cohere) WithStop(stop []string) *Cohere {
 	c.stop = stop
+	return c
+}
+
+func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
+	c.streamCallbackFn = callbackFn
 	return c
 }
 
@@ -187,34 +199,73 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		if err == nil {
 			return nil
 		} else if !errors.Is(err, cache.ErrCacheMiss) {
-			return err
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
 		}
 	}
 
-	completionQuery := ""
-	for _, message := range t.Messages {
-		for _, content := range message.Contents {
-			if content.Type == thread.ContentTypeText {
-				completionQuery += content.Data.(string) + "\n"
-			}
-		}
+	chatRequest := c.buildChatCompletionRequest(t)
+
+	if c.streamCallbackFn != nil {
+		err = c.stream(ctx, t, chatRequest)
+	} else {
+		err = c.generate(ctx, t, chatRequest)
 	}
 
-	completionResponse, err := c.Completion(ctx, completionQuery)
 	if err != nil {
 		return err
 	}
 
-	t.AddMessage(thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(completionResponse),
-	))
-
 	if c.cache != nil {
 		err = c.setCache(ctx, t, cacheResult)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
 		}
 	}
+
+	return nil
+}
+
+func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *request.Chat) error {
+	var response response.Chat
+
+	err := c.client.Chat(
+		ctx,
+		chatRequest,
+		&response,
+	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrCohereChat, err)
+	}
+
+	t.AddMessage(thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(response.Text),
+	))
+
+	return nil
+}
+
+func (c *Cohere) stream(ctx context.Context, t *thread.Thread, chatRequest *request.Chat) error {
+	chatResponse := &response.Chat{}
+	var assistantMessage string
+
+	err := c.client.ChatStream(
+		ctx,
+		chatRequest,
+		chatResponse,
+		func(r *response.Chat) {
+			if r.Text != "" {
+				c.streamCallbackFn(r.Text)
+				assistantMessage += r.Text
+			}
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrCohereChat, err)
+	}
+
+	t.AddMessage(thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(assistantMessage),
+	))
 
 	return nil
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/llm/ollama"
+	"github.com/henomis/lingoose/llm/cohere"
 	"github.com/henomis/lingoose/thread"
 )
 
@@ -14,10 +14,12 @@ func main() {
 		thread.NewTextContent("Hello"),
 	))
 
-	err := ollama.New().WithEndpoint("http://localhost:11434/api").WithModel("llama2").
-		WithStream(true, func(s string) {
-			fmt.Print(s)
-		}).Generate(context.Background(), t)
+	err := cohere.New().WithMaxTokens(1000).WithTemperature(0).
+		WithStream(
+			func(s string) {
+				fmt.Print(s)
+			},
+		).Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}

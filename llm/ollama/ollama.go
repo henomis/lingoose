@@ -22,7 +22,7 @@ var (
 	ErrOllamaChat = fmt.Errorf("ollama chat error")
 )
 
-var threadRoleToOpenAIRole = map[thread.Role]string{
+var threadRoleToOllamaRole = map[thread.Role]string{
 	thread.RoleSystem:    "system",
 	thread.RoleUser:      "user",
 	thread.RoleAssistant: "assistant",
@@ -54,13 +54,8 @@ func (o *Ollama) WithModel(model string) *Ollama {
 	return o
 }
 
-func (o *Ollama) WithStream(enable bool, callbackFn StreamCallbackFn) *Ollama {
-	if !enable {
-		o.streamCallbackFn = nil
-	} else {
-		o.streamCallbackFn = callbackFn
-	}
-
+func (o *Ollama) WithStream(callbackFn StreamCallbackFn) *Ollama {
+	o.streamCallbackFn = callbackFn
 	return o
 }
 

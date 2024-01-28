@@ -13,7 +13,7 @@ func threadToChatMessages(t *thread.Thread) []message {
 	chatMessages := make([]message, len(t.Messages))
 	for i, m := range t.Messages {
 		chatMessages[i] = message{
-			Role: threadRoleToOpenAIRole[m.Role],
+			Role: threadRoleToOllamaRole[m.Role],
 		}
 
 		switch m.Role {
