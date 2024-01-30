@@ -24,14 +24,14 @@ func New() *Embedder {
 	}
 }
 
-func (o *Embedder) WithEndpoint(endpoint string) *Embedder {
-	o.restClient.SetEndpoint(endpoint)
-	return o
+func (e *Embedder) WithEndpoint(endpoint string) *Embedder {
+	e.restClient.SetEndpoint(endpoint)
+	return e
 }
 
-func (o *Embedder) WithModel(model string) *Embedder {
-	o.model = model
-	return o
+func (e *Embedder) WithModel(model string) *Embedder {
+	e.model = model
+	return e
 }
 
 // Embed returns the embeddings for the given texts
