@@ -32,24 +32,14 @@ func (r *request) ContentType() string {
 	return "application/json"
 }
 
-type response struct {
+type response[T any] struct {
 	HTTPStatusCode    int    `json:"-"`
 	acceptContentType string `json:"-"`
 	Model             string `json:"model"`
 	CreatedAt         string `json:"created_at"`
-}
-
-type chatResponse struct {
-	response
-	AssistantMessage assistantMessage `json:"message"`
-}
-
-type chatStreamResponse struct {
-	response
-	Done    bool    `json:"done"`
-	Message message `json:"message"`
-
-	streamCallbackFn restclientgo.StreamCallback
+	Message           T      `json:"message"`
+	Done              bool   `json:"done"`
+	streamCallbackFn  restclientgo.StreamCallback
 }
 
 type assistantMessage struct {
@@ -57,37 +47,37 @@ type assistantMessage struct {
 	Content string `json:"content"`
 }
 
-func (r *response) SetAcceptContentType(contentType string) {
+func (r *response[T]) SetAcceptContentType(contentType string) {
 	r.acceptContentType = contentType
 }
 
-func (r *response) Decode(body io.Reader) error {
+func (r *response[T]) Decode(body io.Reader) error {
 	return json.NewDecoder(body).Decode(r)
 }
 
-func (r *response) SetBody(_ io.Reader) error {
+func (r *response[T]) SetBody(_ io.Reader) error {
 	return nil
 }
 
-func (r *response) AcceptContentType() string {
+func (r *response[T]) AcceptContentType() string {
 	if r.acceptContentType != "" {
 		return r.acceptContentType
 	}
 	return "application/json"
 }
 
-func (r *response) SetStatusCode(code int) error {
+func (r *response[T]) SetStatusCode(code int) error {
 	r.HTTPStatusCode = code
 	return nil
 }
 
-func (r *response) SetHeaders(_ restclientgo.Headers) error { return nil }
+func (r *response[T]) SetHeaders(_ restclientgo.Headers) error { return nil }
 
-func (r *chatStreamResponse) SetStreamCallback(fn restclientgo.StreamCallback) {
+func (r *response[T]) SetStreamCallback(fn restclientgo.StreamCallback) {
 	r.streamCallbackFn = fn
 }
 
-func (r *chatStreamResponse) StreamCallback() restclientgo.StreamCallback {
+func (r *response[T]) StreamCallback() restclientgo.StreamCallback {
 	return r.streamCallbackFn
 }
 

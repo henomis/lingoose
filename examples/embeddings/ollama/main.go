@@ -21,7 +21,7 @@ func main() {
 
 	index := index.New(
 		jsondb.New().WithPersist("db.json"),
-		ollamaembedder.New(),
+		ollamaembedder.New().WithModel("mistral"),
 	).WithIncludeContents(true).WithAddDataCallback(func(data *index.Data) error {
 		data.Metadata["contentLen"] = len(data.Metadata["content"].(string))
 		return nil
@@ -40,7 +40,7 @@ func main() {
 	similarities, err := index.Query(
 		context.Background(),
 		query,
-		indexoption.WithTopK(1),
+		indexoption.WithTopK(3),
 	)
 	if err != nil {
 		panic(err)
@@ -58,7 +58,7 @@ func main() {
 		documentContext += similarity.Content() + "\n\n"
 	}
 
-	ollamaLLM := ollama.New()
+	ollamaLLM := ollama.New().WithModel("mistral")
 	t := thread.New()
 	t.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent("Based on the following context answer to the" +

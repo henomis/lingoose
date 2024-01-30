@@ -143,32 +143,32 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 }
 
 func (o *Ollama) generate(ctx context.Context, t *thread.Thread, chatRequest *request) error {
-	var response chatResponse
+	var resp response[assistantMessage]
 
 	err := o.restClient.Post(
 		ctx,
 		chatRequest,
-		&response,
+		&resp,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
 	t.AddMessage(thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(response.AssistantMessage.Content),
+		thread.NewTextContent(resp.Message.Content),
 	))
 
 	return nil
 }
 
 func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *request) error {
-	response := &chatStreamResponse{}
+	var resp response[message]
 	var assistantMessage string
 
-	response.SetAcceptContentType(ndjsonContentType)
-	response.SetStreamCallback(
+	resp.SetAcceptContentType(ndjsonContentType)
+	resp.SetStreamCallback(
 		func(data []byte) error {
-			var streamResponse chatStreamResponse
+			var streamResponse response[message]
 
 			err := json.Unmarshal(data, &streamResponse)
 			if err != nil {
@@ -187,7 +187,7 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	err := o.restClient.Post(
 		ctx,
 		chatRequest,
-		response,
+		&resp,
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
