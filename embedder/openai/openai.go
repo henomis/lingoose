@@ -3,8 +3,6 @@ package openaiembedder
 import (
 	"context"
 	"os"
-	"sort"
-	"strings"
 
 	"github.com/henomis/lingoose/embedder"
 	"github.com/sashabaranov/go-openai"
@@ -40,127 +38,7 @@ func (o *OpenAIEmbedder) WithClient(client *openai.Client) *OpenAIEmbedder {
 
 // Embed returns the embeddings for the given texts
 func (o *OpenAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	maxTokens := o.getMaxTokens()
-
-	embeddings, err := o.concurrentEmbed(ctx, texts, maxTokens)
-	if err != nil {
-		return nil, err
-	}
-
-	return embeddings, nil
-}
-
-func (o *OpenAIEmbedder) concurrentEmbed(
-	ctx context.Context,
-	texts []string,
-	maxTokens int,
-) ([]embedder.Embedding, error) {
-	type indexedEmbeddings struct {
-		index     int
-		embedding embedder.Embedding
-		err       error
-	}
-
-	var embeddings []indexedEmbeddings
-	embeddingsChan := make(chan indexedEmbeddings, len(texts))
-
-	for i, text := range texts {
-		go func(ctx context.Context, i int, text string, maxTokens int) {
-			embedding, err := o.safeEmbed(ctx, text, maxTokens)
-
-			embeddingsChan <- indexedEmbeddings{
-				index:     i,
-				embedding: embedding,
-				err:       err,
-			}
-		}(ctx, i, text, maxTokens)
-	}
-
-	var err error
-	for i := 0; i < len(texts); i++ {
-		embedding := <-embeddingsChan
-		if embedding.err != nil {
-			err = embedding.err
-			continue
-		}
-		embeddings = append(embeddings, embedding)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	sort.Slice(embeddings, func(i, j int) bool {
-		return embeddings[i].index < embeddings[j].index
-	})
-
-	var result []embedder.Embedding
-	for _, embedding := range embeddings {
-		result = append(result, embedding.embedding)
-	}
-
-	return result, nil
-}
-
-func (o *OpenAIEmbedder) safeEmbed(ctx context.Context, text string, maxTokens int) (embedder.Embedding, error) {
-	sanitizedText := text
-	if strings.HasSuffix(string(o.model), "001") {
-		sanitizedText = strings.ReplaceAll(text, "\n", " ")
-	}
-
-	chunkedText, err := o.chunkText(sanitizedText, maxTokens)
-	if err != nil {
-		return nil, err
-	}
-
-	embeddingsForChunks, chunkLens, err := o.getEmebeddingsForChunks(ctx, chunkedText)
-	if err != nil {
-		return nil, err
-	}
-
-	return normalizeEmbeddings(embeddingsForChunks, chunkLens), nil
-}
-
-func (o *OpenAIEmbedder) chunkText(text string, maxTokens int) ([]string, error) {
-	tokens, err := o.textToTokens(text)
-	if err != nil {
-		return nil, err
-	}
-
-	var textChunks []string
-	for i := 0; i < len(tokens); i += maxTokens {
-		end := i + maxTokens
-		if end > len(tokens) {
-			end = len(tokens)
-		}
-
-		textChunk, errToken := o.tokensToText(tokens[i:end])
-		if errToken != nil {
-			return nil, errToken
-		}
-
-		textChunks = append(textChunks, textChunk)
-	}
-
-	return textChunks, nil
-}
-
-func (o *OpenAIEmbedder) getEmebeddingsForChunks(
-	ctx context.Context,
-	chunks []string,
-) ([]embedder.Embedding, []float64, error) {
-	chunkLens := []float64{}
-
-	embeddingsForChunks, err := o.openAICreateEmebeddings(ctx, chunks)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, chunk := range chunks {
-		chunkLens = append(chunkLens, float64(len(chunk)))
-	}
-
-	return embeddingsForChunks, chunkLens, nil
+	return o.openAICreateEmebeddings(ctx, texts)
 }
 
 func (o *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
