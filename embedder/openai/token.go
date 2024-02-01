@@ -5,7 +5,7 @@ import (
 )
 
 func (o *OpenAIEmbedder) textToTokens(text string) ([]int, error) {
-	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
+	tokenizer, err := tiktoken.EncodingForModel(string(o.model))
 	if err != nil {
 		return nil, err
 	}
@@ -14,7 +14,7 @@ func (o *OpenAIEmbedder) textToTokens(text string) ([]int, error) {
 }
 
 func (o *OpenAIEmbedder) getMaxTokens() int {
-	if tiktoken.MODEL_TO_ENCODING[o.model.String()] == "cl100k_base" {
+	if tiktoken.MODEL_TO_ENCODING[string(o.model)] == "cl100k_base" {
 		return 8191
 	}
 
@@ -22,7 +22,7 @@ func (o *OpenAIEmbedder) getMaxTokens() int {
 }
 
 func (o *OpenAIEmbedder) tokensToText(tokens []int) (string, error) {
-	tokenizer, err := tiktoken.EncodingForModel(o.model.String())
+	tokenizer, err := tiktoken.EncodingForModel(string(o.model))
 	if err != nil {
 		return "", err
 	}

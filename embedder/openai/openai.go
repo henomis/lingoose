@@ -10,52 +10,13 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type Model int
+type Model = openai.EmbeddingModel
 
 const (
-	Unknown Model = iota
-	AdaSimilarity
-	BabbageSimilarity
-	CurieSimilarity
-	DavinciSimilarity
-	AdaSearchDocument
-	AdaSearchQuery
-	BabbageSearchDocument
-	BabbageSearchQuery
-	CurieSearchDocument
-	CurieSearchQuery
-	DavinciSearchDocument
-	DavinciSearchQuery
-	AdaCodeSearchCode
-	AdaCodeSearchText
-	BabbageCodeSearchCode
-	BabbageCodeSearchText
-	AdaEmbeddingV2
+	AdaEmbeddingV2  Model = openai.AdaEmbeddingV2
+	SmallEmbedding3 Model = openai.SmallEmbedding3
+	LargeEmbedding3 Model = openai.LargeEmbedding3
 )
-
-func (m Model) String() string {
-	return modelToString[m]
-}
-
-var modelToString = map[Model]string{
-	AdaSimilarity:         "text-similarity-ada-001",
-	BabbageSimilarity:     "text-similarity-babbage-001",
-	CurieSimilarity:       "text-similarity-curie-001",
-	DavinciSimilarity:     "text-similarity-davinci-001",
-	AdaSearchDocument:     "text-search-ada-doc-001",
-	AdaSearchQuery:        "text-search-ada-query-001",
-	BabbageSearchDocument: "text-search-babbage-doc-001",
-	BabbageSearchQuery:    "text-search-babbage-query-001",
-	CurieSearchDocument:   "text-search-curie-doc-001",
-	CurieSearchQuery:      "text-search-curie-query-001",
-	DavinciSearchDocument: "text-search-davinci-doc-001",
-	DavinciSearchQuery:    "text-search-davinci-query-001",
-	AdaCodeSearchCode:     "code-search-ada-code-001",
-	AdaCodeSearchText:     "code-search-ada-text-001",
-	BabbageCodeSearchCode: "code-search-babbage-code-001",
-	BabbageCodeSearchText: "code-search-babbage-text-001",
-	AdaEmbeddingV2:        "text-embedding-ada-002",
-}
 
 type OpenAIEmbedder struct {
 	openAIClient *openai.Client
@@ -143,7 +104,7 @@ func (o *OpenAIEmbedder) concurrentEmbed(
 
 func (o *OpenAIEmbedder) safeEmbed(ctx context.Context, text string, maxTokens int) (embedder.Embedding, error) {
 	sanitizedText := text
-	if strings.HasSuffix(o.model.String(), "001") {
+	if strings.HasSuffix(string(o.model), "001") {
 		sanitizedText = strings.ReplaceAll(text, "\n", " ")
 	}
 
@@ -207,7 +168,7 @@ func (o *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []st
 		ctx,
 		openai.EmbeddingRequest{
 			Input: texts,
-			Model: openai.EmbeddingModel(o.model),
+			Model: o.model,
 		},
 	)
 	if err != nil {
