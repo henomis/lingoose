@@ -28,6 +28,8 @@ const (
 	GPT432K               Model = openai.GPT432K
 	GPT40613              Model = openai.GPT40613
 	GPT40314              Model = openai.GPT40314
+	GPT4Turbo0125         Model = openai.GPT4Turbo0125
+	GPT4Turbo1106         Model = openai.GPT4Turbo1106
 	GPT4TurboPreview      Model = openai.GPT4TurboPreview
 	GPT4VisionPreview     Model = openai.GPT4VisionPreview
 	GPT4                  Model = openai.GPT4

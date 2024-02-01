@@ -9,8 +9,6 @@ github.com/gomodule/redigo v1.8.9 h1:Sl3u+2BI/kk+VEatbj0scLdrFhjPmbxOc1myhDP41ws
 github.com/gomodule/redigo v1.8.9/go.mod h1:7ArFNvsTjH8GMMzB4uy1snslv2BwmginuMs06a1uzZE=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/henomis/cohere-go v1.1.1-alpha.1 h1:QiJe7xK008pHyHYDaJFieEmvdVddxqA9BjW5zjpAN6Q=
-github.com/henomis/cohere-go v1.1.1-alpha.1/go.mod h1:T+d7fIYTYjPWbjWR8A67ze/Fg181YtugJVnfSPkxzH8=
 github.com/henomis/cohere-go v1.1.2 h1:rzEA1JRm26RnaQValoVeVQ1y1nTofuhr/z/fPyhUW/4=
 github.com/henomis/cohere-go v1.1.2/go.mod h1:z+UIgBbNCnLH5M47FYqg4h3CDWxjUv2VDfEwdTb95MU=
 github.com/henomis/milvus-go v0.0.4 h1:ArddXRJx/EGdQ75gB7TyEzD4Z4BqXzW16p8jRcjJOhs=
@@ -19,8 +17,6 @@ github.com/henomis/pinecone-go/v2 v2.0.0 h1:HdAX0nGzBagL6ubn17utIz3FGwXfignBovZe
 github.com/henomis/pinecone-go/v2 v2.0.0/go.mod h1:enUHclL18IBnq6POF20hd7YMIawUQZ9NznJ22NJD0/w=
 github.com/henomis/qdrant-go v1.1.0 h1:GU5R4ZZKeD0JXLZ0yv37FUzI0spGECRr2WlE3prmLIY=
 github.com/henomis/qdrant-go v1.1.0/go.mod h1:p274sBhQPDnfjCzJentWoNIGFadl5yIcLM4Xnmmwk9k=
-github.com/henomis/restclientgo v1.2.0-alpha.1 h1:cmffFMiRdUzHDuNEGHVvQ/oSDUM7EuiPIlDxtQ0vzBo=
-github.com/henomis/restclientgo v1.2.0-alpha.1/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
 github.com/henomis/restclientgo v1.2.0 h1:KINVh4zW4qAeqgO8qbsI1QhiQcn4xgMv3Px4H7++BCk=
 github.com/henomis/restclientgo v1.2.0/go.mod h1:xIeTCu2ZstvRn0fCukNpzXLN3m/kRTU0i0RwAbv7Zug=
 github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 h1:i462o439ZjprVSFSZLZxcsoAe592sZB1rci2Z8j4wdk=
@@ -33,8 +29,8 @@ github.com/pkoukk/tiktoken-go v0.1.1 h1:jtkYlIECjyM9OW1w4rjPmTohK4arORP9V25y6TM6
 github.com/pkoukk/tiktoken-go v0.1.1/go.mod h1:boMWvk9pQCOTx11pgu0DrIdrAKgQzzJKUP6vLXaz7Rw=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/sashabaranov/go-openai v1.17.9 h1:QEoBiGKWW68W79YIfXWEFZ7l5cEgZBV4/Ow3uy+5hNY=
-github.com/sashabaranov/go-openai v1.17.9/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
+github.com/sashabaranov/go-openai v1.19.2 h1:+dkuCADSnwXV02YVJkdphY8XD9AyHLUWwk6V7LB6EL8=
+github.com/sashabaranov/go-openai v1.19.2/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
