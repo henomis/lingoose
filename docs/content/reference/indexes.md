@@ -37,3 +37,24 @@ qdrantIndex := index.New(
 
 An Index instance requires an Embedder to be passed in. The Embedder is used to convert text into vectors and perform similarity searches. In this example, we use the `openaiembedder` package to create an instance of the OpenAI Embedding service. This examples uses a local Qdrant instance. Every Index provider has its own configuration options, in this case we are creating a collection with a dimension of 1536 and using the cosine distance metric and forcing the index to include the metadata contents.
 
+To ingest a document into the index, you can use the `LoadFromDocuments` method:
+
+```go
+err := qdrantIndex.LoadFromDocuments(context.Background(), documents)
+```
+
+To search for similar documents, you can use the `Search` method:
+
+```go
+query := "What is the purpose of the NATO Alliance?"
+similarities, err := index.Query(
+    context.Background(),
+    query,
+    indexoption.WithTopK(3),
+)
+if err != nil {
+    panic(err)
+}
+```
+
+The `Query` method returns a list of `SearchResult` objects, which contain the document ID and the similarity score. The `WithTopK` option is used to specify the number of similar documents to return.
