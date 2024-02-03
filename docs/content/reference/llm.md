@@ -115,3 +115,34 @@ fmt.Println(myThread)
 ```
 
 LinGoose allows you to bind a function describing its scope and input's schema. The function will be called by the OpenAI LLM automatically depending on the user's input. Here we force the tool choice to be "auto" to let OpenAI decide which tool to use. If, after an LLM generation, the last message is a tool call, you can enrich the thread with a new LLM generation based on the tool call result.
+
+
+## Private LLMs
+If you want to run your model or use a private LLM provider, you have many options.
+
+### Implementing a custom LLM provider
+LinGoose LLM is an interface that can be implemented by any LLM provider. You can create your own LLM by satisfying the LLM interface.
+
+### Using a local LLM
+LinGoose allows you to use to use a local LLM. You can use either LocalAI or Ollama, which are both local LLM providers.
+- **LocalAI** is fully compatible with OpenAI API, so you can use it as an OpenAI LLM with a custom client configuration (`WithClient(client *openai.Client)`) pointing to your local LLM endpoint.
+- **Ollama** is a local LLM provider that can be used with various LLMs, such as `llama`, `mistral`, and others.
+
+Here is an example of how to use Ollama as LLM:
+
+```go
+myThread := thread.New()
+myThread.AddMessage(thread.NewUserMessage().AddContent(
+    thread.NewTextContent("How are you?"),
+))
+
+err := ollama.New().WithEndpoint("http://localhost:11434/api").WithModel("mistral").
+    WithStream(func(s string) {
+        fmt.Print(s)
+    }).Generate(context.Background(), myThread)
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(myThread)
+```
