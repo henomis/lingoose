@@ -217,3 +217,24 @@ func (c *Content) Format(input types.M) *Content {
 
 	return c
 }
+
+func (c *Content) AsString() string {
+	if contentAsString, ok := c.Data.(string); ok {
+		return contentAsString
+	}
+	return ""
+}
+
+func (c *Content) AsToolResponseData() *ToolResponseData {
+	if contentAsToolResponseData, ok := c.Data.(ToolResponseData); ok {
+		return &contentAsToolResponseData
+	}
+	return nil
+}
+
+func (c *Content) AsToolCallData() []ToolCallData {
+	if contentAsToolCallData, ok := c.Data.([]ToolCallData); ok {
+		return contentAsToolCallData
+	}
+	return nil
+}

@@ -18,3 +18,5 @@ bin/
 # vendor/
 llama.cpp/
 whisper.cpp/
+
+*/.hugo_build.lock
