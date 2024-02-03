@@ -40,6 +40,13 @@ func NewHFImageToTextLoader(mediaFile string) *HFImageToText {
 	}
 }
 
+func NewHFImageToText() *HFImageToText {
+	return &HFImageToText{
+		model: hfDefaultImageToTextModel,
+		token: os.Getenv("HUGGING_FACE_HUB_TOKEN"),
+	}
+}
+
 func (h *HFImageToText) WithToken(token string) *HFImageToText {
 	h.token = token
 	return h

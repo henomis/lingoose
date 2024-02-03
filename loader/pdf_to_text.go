@@ -31,6 +31,12 @@ func NewPDFToTextLoader(path string) *PDFLoader {
 	}
 }
 
+func NewPDFToText() *PDFLoader {
+	return &PDFLoader{
+		pdfToTextPath: defaultPdfToTextPath,
+	}
+}
+
 func (p *PDFLoader) WithPDFToTextPath(pdfToTextPath string) *PDFLoader {
 	p.pdfToTextPath = pdfToTextPath
 	return p

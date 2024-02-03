@@ -23,8 +23,17 @@ func NewTextLoader(filename string, metadata types.Meta) *TextLoader {
 	}
 }
 
+func NewText() *TextLoader {
+	return &TextLoader{}
+}
+
 func (t *TextLoader) WithTextSplitter(textSplitter TextSplitter) *TextLoader {
 	t.loader.textSplitter = textSplitter
+	return t
+}
+
+func (t *TextLoader) WithMetadata(metadata types.Meta) *TextLoader {
+	t.metadata = metadata
 	return t
 }
 

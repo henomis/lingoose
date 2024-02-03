@@ -35,6 +35,13 @@ func NewHFSpeechRecognitionLoader(mediaFile string) *HFSpeechRecognition {
 	}
 }
 
+func NewHFSpeechRecognition() *HFSpeechRecognition {
+	return &HFSpeechRecognition{
+		model: hfDefaultSpeechRecognitionModel,
+		token: os.Getenv("HUGGING_FACE_HUB_TOKEN"),
+	}
+}
+
 func (h *HFSpeechRecognition) WithToken(token string) *HFSpeechRecognition {
 	h.token = token
 	return h

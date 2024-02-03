@@ -35,6 +35,16 @@ func NewWhisperCppLoader(filename string) *WhisperCppLoader {
 	}
 }
 
+func NewWhisperCpp() *WhisperCppLoader {
+	return &WhisperCppLoader{
+		ffmpegPath:          "/usr/bin/ffmpeg",
+		ffmpegArgs:          []string{"-nostdin", "-f", "wav", "-ar", "16000", "-ac", "1", "-acodec", "pcm_s16le", "-"},
+		whisperCppPath:      "./whisper.cpp/main",
+		whisperCppArgs:      []string{},
+		whisperCppModelPath: "./whisper.cpp/models/ggml-base.bin",
+	}
+}
+
 func (w *WhisperCppLoader) WithTextSplitter(textSplitter TextSplitter) *WhisperCppLoader {
 	w.loader.textSplitter = textSplitter
 	return w

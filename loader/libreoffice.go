@@ -30,6 +30,13 @@ func NewLibreOfficeLoader(filename string) *LibreOfficeLoader {
 	}
 }
 
+func NewLibreOffice() *LibreOfficeLoader {
+	return &LibreOfficeLoader{
+		libreOfficePath: defaultLibreOfficePath,
+		libreOfficeArgs: []string{"--headless", "--convert-to", "txt:Text", "--cat"},
+	}
+}
+
 func (l *LibreOfficeLoader) WithLibreOfficePath(libreOfficePath string) *LibreOfficeLoader {
 	l.libreOfficePath = libreOfficePath
 	return l

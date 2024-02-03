@@ -33,6 +33,10 @@ func NewPubmedLoader(pubMedIDs []string) *PubMedLoader {
 	}
 }
 
+func NewPubmed() *PubMedLoader {
+	return &PubMedLoader{}
+}
+
 func (p *PubMedLoader) WithTextSplitter(textSplitter TextSplitter) *PubMedLoader {
 	p.loader.textSplitter = textSplitter
 	return p

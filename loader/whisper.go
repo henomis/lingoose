@@ -26,6 +26,14 @@ func NewWhisperLoader(filename string) *WhisperLoader {
 	}
 }
 
+func NewWhisper() *WhisperLoader {
+	openAIApiKey := os.Getenv("OPENAI_API_KEY")
+
+	return &WhisperLoader{
+		openAIClient: openai.NewClient(openAIApiKey),
+	}
+}
+
 func (w *WhisperLoader) WithClient(client *openai.Client) *WhisperLoader {
 	w.openAIClient = client
 	return w

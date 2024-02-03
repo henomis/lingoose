@@ -30,6 +30,13 @@ func NewTesseractLoader(filename string) *TesseractLoader {
 	}
 }
 
+func NewTesseract() *TesseractLoader {
+	return &TesseractLoader{
+		tesseractPath: defaultTesseractPath,
+		tesseractArgs: []string{},
+	}
+}
+
 func (l *TesseractLoader) WithTesseractPath(tesseractPath string) *TesseractLoader {
 	l.tesseractPath = tesseractPath
 	return l
