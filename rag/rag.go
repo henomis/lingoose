@@ -68,9 +68,9 @@ func (r *RAG) WithTopK(topK uint) *RAG {
 }
 
 func (r *RAG) withDefaultLoaders() *RAG {
-	r.loaders[regexp.MustCompile(`.*\.pdf`)] = loader.NewPDFToTextLoader("")
-	r.loaders[regexp.MustCompile(`.*\.docx`)] = loader.NewLibreOfficeLoader("")
-	r.loaders[regexp.MustCompile(`.*\.txt`)] = loader.NewTextLoader("", nil)
+	r.loaders[regexp.MustCompile(`.*\.pdf`)] = loader.NewPDFToText()
+	r.loaders[regexp.MustCompile(`.*\.docx`)] = loader.NewLibreOffice()
+	r.loaders[regexp.MustCompile(`.*\.txt`)] = loader.NewText()
 
 	return r
 }
