@@ -1,6 +1,6 @@
 ---
-title: "Your AI assistant"
-description: "Your AI assistant"
-linkTitle: "Assistant"  
-menu: { main: { parent: 'reference', weight: -99 } }
+title: "AI Assistant"
+description:
+linkTitle: "Assistant"
+menu: { main: { parent: 'reference', weight: -90 } }
 ---

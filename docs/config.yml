@@ -18,6 +18,9 @@ menu:
     - name: Reference
       identifier: reference
       weight: 5
+    - name: Legacy
+      identifier: legacy
+      weight: 6
     - name: pkg.go.dev →
       parent: reference
       url: https://pkg.go.dev/github.com/henomis/lingoose

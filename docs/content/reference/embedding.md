@@ -1,8 +1,8 @@
 ---
 title: "LLM Embeddings"
-description:
+description: ""
 linkTitle: "Embedding"
-menu: { main: { parent: 'reference', weight: -99 } }
+menu: { main: { parent: 'reference', weight: -97 } }
 ---
 
 Embeddings are a fundamental concept in machine learning and natural language processing. They are vector representations of words, phrases, or documents in a high-dimensional space. These vectors capture semantic and contextual information about the text, allowing algorithms to understand relationships and similarities between words.
