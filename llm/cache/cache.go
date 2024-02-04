@@ -4,19 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/types"
 )
 
-type Embedder interface {
-	Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error)
-}
-
 type Index interface {
 	Search(context.Context, []float64, ...indexoption.Option) (index.SearchResults, error)
 	Add(context.Context, *index.Data) error
+	Embedder() index.Embedder
 }
 
 var ErrCacheMiss = fmt.Errorf("cache miss")
@@ -28,7 +24,7 @@ const (
 )
 
 type Cache struct {
-	embedder       Embedder
+	embedder       index.Embedder
 	index          Index
 	topK           int
 	scoreThreshold float64
@@ -39,9 +35,9 @@ type Result struct {
 	Embedding []float64
 }
 
-func New(embedder Embedder, index Index) *Cache {
+func New(index Index) *Cache {
 	return &Cache{
-		embedder:       embedder,
+		embedder:       index.Embedder(),
 		index:          index,
 		topK:           defaultTopK,
 		scoreThreshold: defaultScoreThreshold,

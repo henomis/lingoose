@@ -125,6 +125,10 @@ func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 	return i.Search(ctx, embeddings[0], opts...)
 }
 
+func (i *Index) Embedder() Embedder {
+	return i.embedder
+}
+
 func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) error {
 	for j := 0; j < len(documents); j += i.batchInsertSize {
 		batchEnd := j + i.batchInsertSize

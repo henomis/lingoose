@@ -14,12 +14,14 @@ import (
 
 func main() {
 
-	embedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	index := index.New(
-		jsondb.New().WithPersist("index.json"),
-		embedder,
+	llm := openai.New().WithCache(
+		cache.New(
+			index.New(
+				jsondb.New().WithPersist("index.json"),
+				openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+			),
+		).WithTopK(3),
 	)
-	llm := openai.New().WithCache(cache.New(embedder, index).WithTopK(3))
 
 	questions := []string{
 		"what's github",
