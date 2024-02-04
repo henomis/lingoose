@@ -66,15 +66,25 @@ func threadContentsToChatMessageParts(m *thread.Message) []openai.ChatMessagePar
 
 		switch content.Type {
 		case thread.ContentTypeText:
+			contentAsString, ok := content.Data.(string)
+			if !ok {
+				continue
+			}
+
 			chatMessagePart = &openai.ChatMessagePart{
 				Type: openai.ChatMessagePartTypeText,
-				Text: content.Data.(string),
+				Text: contentAsString,
 			}
 		case thread.ContentTypeImage:
+			contentAsString, ok := content.Data.(string)
+			if !ok {
+				continue
+			}
+
 			chatMessagePart = &openai.ChatMessagePart{
 				Type: openai.ChatMessagePartTypeImageURL,
 				ImageURL: &openai.ChatMessageImageURL{
-					URL:    content.Data.(string),
+					URL:    contentAsString,
 					Detail: openai.ImageURLDetailAuto,
 				},
 			}

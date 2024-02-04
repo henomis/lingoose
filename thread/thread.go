@@ -51,11 +51,6 @@ type ToolCallData struct {
 	Arguments string
 }
 
-type MediaData struct {
-	Raw any
-	URL *string
-}
-
 func NewTextContent(text string) *Content {
 	return &Content{
 		Type: ContentTypeText,
@@ -63,10 +58,10 @@ func NewTextContent(text string) *Content {
 	}
 }
 
-func NewImageContent(mediaData MediaData) *Content {
+func NewImageContentFromURL(url string) *Content {
 	return &Content{
 		Type: ContentTypeImage,
-		Data: mediaData,
+		Data: url,
 	}
 }
 
@@ -141,7 +136,9 @@ func (t *Thread) String() string {
 			case ContentTypeText:
 				str += "\tText: " + content.Data.(string) + "\n"
 			case ContentTypeImage:
-				str += "\tImage URL: " + *content.Data.(*MediaData).URL + "\n"
+				if contentAsString, ok := content.Data.(string); ok {
+					str += "\tImage URL: " + contentAsString + "\n"
+				}
 			case ContentTypeToolCall:
 				for _, toolCallData := range content.Data.([]ToolCallData) {
 					str += "\tTool Call ID: " + toolCallData.ID + "\n"
