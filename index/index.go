@@ -106,6 +106,10 @@ func (i *Index) IsEmpty(ctx context.Context) (bool, error) {
 	return i.vectorDB.IsEmpty(ctx)
 }
 
+func (i *Index) Drop(ctx context.Context) error {
+	return i.vectorDB.Drop(ctx)
+}
+
 func (i *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (SearchResults, error) {
 	options := &option.Options{
 		TopK: defaultTopK,
@@ -123,6 +127,10 @@ func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 		return nil, err
 	}
 	return i.Search(ctx, embeddings[0], opts...)
+}
+
+func (i *Index) Embedder() Embedder {
+	return i.embedder
 }
 
 func (i *Index) batchUpsert(ctx context.Context, documents []document.Document) error {

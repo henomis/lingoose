@@ -17,7 +17,8 @@ import (
 // download https://raw.githubusercontent.com/hwchase17/chat-your-data/master/state_of_the_union.txt
 
 func main() {
-
+	replicas := 1
+	shards := 1
 	index := index.New(
 		pineconedb.New(
 			pineconedb.Options{
@@ -25,9 +26,13 @@ func main() {
 				Namespace: "test-namespace",
 				CreateIndexOptions: &pineconedb.CreateIndexOptions{
 					Dimension: 1536,
-					Replicas:  1,
 					Metric:    "cosine",
-					PodType:   "p1.x1",
+					Pod: &pineconedb.Pod{
+						Replicas:    &replicas,
+						Shards:      &shards,
+						PodType:     "s1.x1",
+						Environment: "gcp-starter",
+					},
 				},
 			},
 		),
@@ -69,7 +74,8 @@ func main() {
 	llmOpenAI := openai.NewCompletion().WithVerbose(true)
 
 	prompt1 := prompt.NewPromptTemplate(
-		"Based on the following context answer to the question.\n\nContext:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
+		"Based on the following context answer to the question.\n\n" +
+			"Context:\n{{.context}}\n\nQuestion: {{.query}}").WithInputs(
 		map[string]string{
 			"query":   query,
 			"context": content,
@@ -85,11 +91,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func ingestData(index *index.Index) error {
-
 	documents, err := loader.NewDirectoryLoader(".", ".txt").Load(context.Background())
 	if err != nil {
 		return err
@@ -105,9 +109,7 @@ func ingestData(index *index.Index) error {
 		fmt.Println(doc.Metadata)
 		fmt.Println("----------")
 		fmt.Println()
-
 	}
 
 	return index.LoadFromDocuments(context.Background(), documentChunks)
-
 }

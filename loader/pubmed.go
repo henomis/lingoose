@@ -33,6 +33,10 @@ func NewPubmedLoader(pubMedIDs []string) *PubMedLoader {
 	}
 }
 
+func NewPubmed() *PubMedLoader {
+	return &PubMedLoader{}
+}
+
 func (p *PubMedLoader) WithTextSplitter(textSplitter TextSplitter) *PubMedLoader {
 	p.loader.textSplitter = textSplitter
 	return p
@@ -55,6 +59,11 @@ func (p *PubMedLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documens, nil
+}
+
+func (p *PubMedLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	p.pubMedIDs = []string{source}
+	return p.Load(ctx)
 }
 
 func (p *PubMedLoader) load(ctx context.Context, pubMedID string) (*document.Document, error) {

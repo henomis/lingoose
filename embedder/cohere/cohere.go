@@ -16,15 +16,23 @@ type EmbedderModel = model.EmbedModel
 const (
 	defaultEmbedderModel EmbedderModel = model.EmbedModelEnglishV20
 
-	EmbedderModelEnglishV20      EmbedderModel = model.EmbedModelEnglishV20
-	EmbedderModelEnglishLightV20 EmbedderModel = model.EmbedModelEnglishLightV20
-	EmbedderModelMultilingualV20 EmbedderModel = model.EmbedModelMultilingualV20
+	EmbedderModelEnglishV20           EmbedderModel = model.EmbedModelEnglishV20
+	EmbedderModelEnglishLightV20      EmbedderModel = model.EmbedModelEnglishLightV20
+	EmbedderModelMultilingualV20      EmbedderModel = model.EmbedModelMultilingualV20
+	EmbedderModelEnglishV30           EmbedderModel = model.EmbedModelEnglishV30
+	EmbedderModelEnglishLightV30      EmbedderModel = model.EmbedModelEnglishLightV30
+	EmbedderModelMultilingualV30      EmbedderModel = model.EmbedModelMultilingualV30
+	EmbedderModelMultilingualLightV30 EmbedderModel = model.EmbedModelMultilingualLightV30
 )
 
 var EmbedderModelsSize = map[EmbedderModel]int{
-	EmbedderModelEnglishLightV20: 1024,
-	EmbedderModelEnglishV20:      4096,
-	EmbedderModelMultilingualV20: 768,
+	EmbedderModelEnglishV30:           1024,
+	EmbedderModelEnglishLightV30:      384,
+	EmbedderModelEnglishV20:           4096,
+	EmbedderModelEnglishLightV20:      1024,
+	EmbedderModelMultilingualV30:      1024,
+	EmbedderModelMultilingualLightV30: 384,
+	EmbedderModelMultilingualV20:      768,
 }
 
 type Embedder struct {
@@ -58,7 +66,7 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 		ctx,
 		&request.Embed{
 			Texts: texts,
-			Model: &e.model,
+			Model: e.model,
 		},
 		resp,
 	)

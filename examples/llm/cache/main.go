@@ -1,45 +1,48 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/vectordb/jsondb"
 	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/llm/openai"
+	"github.com/henomis/lingoose/thread"
 )
 
 func main() {
 
-	embedder := openaiembedder.New(openaiembedder.AdaEmbeddingV2)
-	index := index.New(
-		jsondb.New().WithPersist("db.json"),
-		embedder,
+	llm := openai.New().WithCache(
+		cache.New(
+			index.New(
+				jsondb.New().WithPersist("index.json"),
+				openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+			),
+		).WithTopK(3),
 	)
-	llm := openai.NewCompletion().WithCompletionCache(cache.New(embedder, index).WithTopK(3))
 
-	for {
-		text := askUserInput("What is your question?")
+	questions := []string{
+		"what's github",
+		"can you explain what GitHub is",
+		"can you tell me more about GitHub",
+		"what is the purpose of GitHub",
+	}
 
-		response, err := llm.Completion(context.Background(), text)
+	for _, question := range questions {
+		t := thread.New().AddMessage(
+			thread.NewUserMessage().AddContent(
+				thread.NewTextContent(question),
+			),
+		)
+
+		err := llm.Generate(context.Background(), t)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 
-		fmt.Println(response)
+		fmt.Println(t)
 	}
-}
-
-func askUserInput(question string) string {
-	fmt.Printf("%s > ", question)
-	reader := bufio.NewReader(os.Stdin)
-	name, _ := reader.ReadString('\n')
-	name = strings.TrimSuffix(name, "\n")
-	return name
 }

@@ -31,6 +31,12 @@ func NewPDFToTextLoader(path string) *PDFLoader {
 	}
 }
 
+func NewPDFToText() *PDFLoader {
+	return &PDFLoader{
+		pdfToTextPath: defaultPdfToTextPath,
+	}
+}
+
 func (p *PDFLoader) WithPDFToTextPath(pdfToTextPath string) *PDFLoader {
 	p.pdfToTextPath = pdfToTextPath
 	return p
@@ -62,6 +68,11 @@ func (p *PDFLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documents, nil
+}
+
+func (p *PDFLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	p.path = source
+	return p.Load(ctx)
 }
 
 func (p *PDFLoader) loadFile(ctx context.Context) ([]document.Document, error) {

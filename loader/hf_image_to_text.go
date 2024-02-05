@@ -40,6 +40,13 @@ func NewHFImageToTextLoader(mediaFile string) *HFImageToText {
 	}
 }
 
+func NewHFImageToText() *HFImageToText {
+	return &HFImageToText{
+		model: hfDefaultImageToTextModel,
+		token: os.Getenv("HUGGING_FACE_HUB_TOKEN"),
+	}
+}
+
 func (h *HFImageToText) WithToken(token string) *HFImageToText {
 	h.token = token
 	return h
@@ -93,6 +100,11 @@ func (h *HFImageToText) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documents, nil
+}
+
+func (h *HFImageToText) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	h.mediaFile = source
+	return h.Load(ctx)
 }
 
 func hfMediaHTTPCall(ctx context.Context, token, model, mediaFile string) ([]byte, error) {

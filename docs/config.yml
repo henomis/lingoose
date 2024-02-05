@@ -1,0 +1,39 @@
+baseurl: https://lingoose.io/
+metadataformat: yaml
+title: lingoose
+enableGitInfo: true
+pygmentsCodeFences: true
+pygmentsUseClasses: true
+canonifyURLs: true
+
+params:
+  name: lingoose
+  description: Go framework for building awesome AI/LLM applications
+
+menu:
+  main:
+    - name: Introduction
+      url: /
+      weight: -10
+    - name: Reference
+      identifier: reference
+      weight: 5
+    - name: Legacy
+      identifier: legacy
+      weight: 6
+    - name: pkg.go.dev →
+      parent: reference
+      url: https://pkg.go.dev/github.com/henomis/lingoose
+
+security:
+  funcs:
+    getenv:
+      - '^HUGO_'
+      - 'VERSIONS'
+      - 'CURRENT_VERSION'
+
+go_initialisms:
+  replace_defaults: false
+  initialisms:
+    - 'CC'
+    - 'BCC'

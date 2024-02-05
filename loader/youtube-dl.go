@@ -38,6 +38,14 @@ func NewYoutubeDLLoader(url string) *YoutubeDLLoader {
 	}
 }
 
+func NewYoutubeDL() *YoutubeDLLoader {
+	return &YoutubeDLLoader{
+		youtubeDlPath: defaultYoutubeDLPath,
+		language:      defaultYoutubeDLSubtitleLanguage,
+		subtitlesMode: defaultYoutubeDLSubtitleMode,
+	}
+}
+
 func (y *YoutubeDLLoader) WithYoutubeDLPath(youtubeDLPath string) *YoutubeDLLoader {
 	y.youtubeDlPath = youtubeDLPath
 	return y
@@ -74,6 +82,11 @@ func (y *YoutubeDLLoader) Load(ctx context.Context) ([]document.Document, error)
 	}
 
 	return documents, nil
+}
+
+func (y *YoutubeDLLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	y.path = source
+	return y.Load(ctx)
 }
 
 func (y *YoutubeDLLoader) loadVideo(ctx context.Context) ([]document.Document, error) {

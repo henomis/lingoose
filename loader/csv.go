@@ -27,6 +27,12 @@ func NewCSVLoader(filename string) *CSVLoader {
 	}
 }
 
+func NewCSV() *CSVLoader {
+	return &CSVLoader{
+		separator: ',',
+	}
+}
+
 func (c *CSVLoader) WithLazyQuotes() *CSVLoader {
 	c.lazyQuotes = true
 	return c
@@ -56,6 +62,11 @@ func (c *CSVLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documents, nil
+}
+
+func (c *CSVLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	c.filename = source
+	return c.Load(ctx)
 }
 
 func (c *CSVLoader) validate() error {

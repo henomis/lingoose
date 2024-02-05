@@ -35,6 +35,13 @@ func NewHFSpeechRecognitionLoader(mediaFile string) *HFSpeechRecognition {
 	}
 }
 
+func NewHFSpeechRecognition() *HFSpeechRecognition {
+	return &HFSpeechRecognition{
+		model: hfDefaultSpeechRecognitionModel,
+		token: os.Getenv("HUGGING_FACE_HUB_TOKEN"),
+	}
+}
+
 func (h *HFSpeechRecognition) WithToken(token string) *HFSpeechRecognition {
 	h.token = token
 	return h
@@ -83,4 +90,9 @@ func (h *HFSpeechRecognition) Load(ctx context.Context) ([]document.Document, er
 	}
 
 	return documents, nil
+}
+
+func (h *HFSpeechRecognition) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	h.mediaFile = source
+	return h.Load(ctx)
 }

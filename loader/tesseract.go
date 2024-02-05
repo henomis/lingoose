@@ -30,6 +30,13 @@ func NewTesseractLoader(filename string) *TesseractLoader {
 	}
 }
 
+func NewTesseract() *TesseractLoader {
+	return &TesseractLoader{
+		tesseractPath: defaultTesseractPath,
+		tesseractArgs: []string{},
+	}
+}
+
 func (l *TesseractLoader) WithTesseractPath(tesseractPath string) *TesseractLoader {
 	l.tesseractPath = tesseractPath
 	return l
@@ -66,6 +73,11 @@ func (l *TesseractLoader) Load(ctx context.Context) ([]document.Document, error)
 	}
 
 	return documents, nil
+}
+
+func (l *TesseractLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	l.filename = source
+	return l.Load(ctx)
 }
 
 func (l *TesseractLoader) loadFile(ctx context.Context) ([]document.Document, error) {

@@ -23,8 +23,17 @@ func NewTextLoader(filename string, metadata types.Meta) *TextLoader {
 	}
 }
 
+func NewText() *TextLoader {
+	return &TextLoader{}
+}
+
 func (t *TextLoader) WithTextSplitter(textSplitter TextSplitter) *TextLoader {
 	t.loader.textSplitter = textSplitter
+	return t
+}
+
+func (t *TextLoader) WithMetadata(metadata types.Meta) *TextLoader {
+	t.metadata = metadata
 	return t
 }
 
@@ -52,6 +61,11 @@ func (t *TextLoader) Load(ctx context.Context) ([]document.Document, error) {
 	}
 
 	return documents, nil
+}
+
+func (t *TextLoader) LoadFromSource(ctx context.Context, source string) ([]document.Document, error) {
+	t.filename = source
+	return t.Load(ctx)
 }
 
 func (t *TextLoader) validate() error {
