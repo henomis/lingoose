@@ -24,7 +24,10 @@ func main() {
 		db,
 	)
 
-	result, err := lingletSQL.Run(context.Background(), "list the top 3 albums most present in playlists.")
+	result, err := lingletSQL.Run(
+		context.Background(),
+		"list the top 3 albums that are most frequently present in playlists.",
+	)
 	if err != nil {
 		panic(err)
 	}
