@@ -106,6 +106,10 @@ func (i *Index) IsEmpty(ctx context.Context) (bool, error) {
 	return i.vectorDB.IsEmpty(ctx)
 }
 
+func (i *Index) Drop(ctx context.Context) error {
+	return i.vectorDB.Drop(ctx)
+}
+
 func (i *Index) Search(ctx context.Context, values []float64, opts ...option.Option) (SearchResults, error) {
 	options := &option.Options{
 		TopK: defaultTopK,

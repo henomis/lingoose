@@ -9,12 +9,6 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
-type Index interface {
-	Search(context.Context, []float64, ...indexoption.Option) (index.SearchResults, error)
-	Add(context.Context, *index.Data) error
-	Embedder() index.Embedder
-}
-
 var ErrCacheMiss = fmt.Errorf("cache miss")
 
 const (
@@ -25,7 +19,7 @@ const (
 
 type Cache struct {
 	embedder       index.Embedder
-	index          Index
+	index          *index.Index
 	topK           int
 	scoreThreshold float64
 }
@@ -35,7 +29,7 @@ type Result struct {
 	Embedding []float64
 }
 
-func New(index Index) *Cache {
+func New(index *index.Index) *Cache {
 	return &Cache{
 		embedder:       index.Embedder(),
 		index:          index,
@@ -83,6 +77,10 @@ func (c *Cache) Set(ctx context.Context, embedding []float64, answer string) err
 			cacheAnswerMetadataKey: answer,
 		},
 	})
+}
+
+func (c *Cache) Clear(ctx context.Context) error {
+	return c.index.Drop(ctx)
 }
 
 func (c *Cache) extractResults(results index.SearchResults) ([]string, bool) {
