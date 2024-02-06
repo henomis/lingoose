@@ -77,7 +77,7 @@ If you think you've found a bug, or something isn't behaving the way you think i
 
 We welcome contributions, Read our [Contribution Guidelines](https://github.com/henomis/lingoose/blob/master/CONTRIBUTING.md) to learn more about contributing to **LinGoose**
 
-## Connect with me
+## Connect with the author
 
 [![Twitter](https://img.shields.io/twitter/follow/simonevellei?label=Follow:%20Simone%20Vellei&style=social)](https://twitter.com/simonevellei) [![GitHub](https://img.shields.io/badge/Follow-henomis-green?logo=github&link=https%3A%2F%2Fgithub.com%2Fhenomis)](https://github.com/henomis) [![Linkedin](https://img.shields.io/badge/Connect-Simone%20Vellei-blue?logo=linkedin&link=https%3A%2F%2Fwww.linkedin.com%2Fin%2Fsimonevellei%2F)](https://www.linkedin.com/in/simonevellei/)
 
