@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/henomis/lingoose/llm/cache"
@@ -15,6 +16,7 @@ import (
 const (
 	defaultModel      = "llama2"
 	ndjsonContentType = "application/x-ndjson"
+	jsonContentType   = "application/json"
 	defaultEndpoint   = "http://localhost:11434/api"
 )
 
@@ -31,10 +33,13 @@ var threadRoleToOllamaRole = map[thread.Role]string{
 type StreamCallbackFn func(string)
 
 type Ollama struct {
-	model            string
-	restClient       *restclientgo.RestClient
-	streamCallbackFn StreamCallbackFn
-	cache            *cache.Cache
+	model                     string
+	temperature               float64
+	visionModel               *string
+	convertImageContentToText bool
+	restClient                *restclientgo.RestClient
+	streamCallbackFn          StreamCallbackFn
+	cache                     *cache.Cache
 }
 
 func New() *Ollama {
@@ -61,6 +66,21 @@ func (o *Ollama) WithStream(callbackFn StreamCallbackFn) *Ollama {
 
 func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 	o.cache = cache
+	return o
+}
+
+func (o *Ollama) WithVisionModel(visionModel string) *Ollama {
+	o.visionModel = &visionModel
+	return o
+}
+
+func (o *Ollama) WithConvertImageContentToText(convert bool) *Ollama {
+	o.convertImageContentToText = convert
+	return o
+}
+
+func (o *Ollama) WithTemperature(temperature float64) *Ollama {
+	o.temperature = temperature
 	return o
 }
 
@@ -120,7 +140,7 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 		}
 	}
 
-	chatRequest := o.buildChatCompletionRequest(t)
+	chatRequest := o.buildChatCompletionRequest(ctx, t)
 
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
@@ -193,9 +213,32 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
+	if resp.HTTPStatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
+	}
+
 	t.AddMessage(thread.NewAssistantMessage().AddContent(
 		thread.NewTextContent(assistantMessage),
 	))
 
 	return nil
+}
+
+func (o *Ollama) vision(ctx context.Context, chatRequest *visionRequest) (*string, error) {
+	var resp visionResponse
+
+	err := o.restClient.Post(
+		ctx,
+		chatRequest,
+		&resp,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrOllamaChat, err)
+	}
+
+	if resp.HTTPStatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
+	}
+
+	return &resp.Response, nil
 }
