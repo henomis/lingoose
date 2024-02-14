@@ -88,80 +88,13 @@ func (r *response[T]) StreamCallback() restclientgo.StreamCallback {
 }
 
 type message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string   `json:"role"`
+	Content string   `json:"content,omitempty"`
+	Images  []string `json:"images,omitempty"`
 }
 
 type options struct {
 	Temperature float64 `json:"temperature"`
-}
-
-//-------------------
-// VISION
-//-------------------
-
-type visionRequest struct {
-	Model  string   `json:"model"`
-	Prompt string   `json:"prompt"`
-	Images []string `json:"images"`
-}
-
-func (r *visionRequest) Path() (string, error) {
-	return "/generate", nil
-}
-
-func (r *visionRequest) Encode() (io.Reader, error) {
-	jsonBytes, err := json.Marshal(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(jsonBytes), nil
-}
-
-func (r *visionRequest) ContentType() string {
-	return ""
-}
-
-type visionResponse struct {
-	Model          string `json:"model"`
-	CreatedAt      string `json:"created_at"`
-	Response       string `json:"response"`
-	Done           bool   `json:"done"`
-	HTTPStatusCode int    `json:"-"`
-	RawBody        []byte `json:"-"`
-}
-
-func (r *visionResponse) Decode(body io.Reader) error {
-	return json.NewDecoder(body).Decode(r)
-}
-
-func (r *visionResponse) SetBody(body io.Reader) error {
-	r.RawBody, _ = io.ReadAll(body)
-	return nil
-}
-
-func (r *visionResponse) AcceptContentType() string {
-	return ndjsonContentType
-}
-
-func (r *visionResponse) SetStatusCode(code int) error {
-	r.HTTPStatusCode = code
-	return nil
-}
-
-func (r *visionResponse) SetHeaders(_ restclientgo.Headers) error { return nil }
-
-func (r *visionResponse) StreamCallback() restclientgo.StreamCallback {
-	return func(data []byte) error {
-		var resp visionResponse
-		err := json.Unmarshal(data, &resp)
-		if err != nil {
-			return err
-		}
-		r.Response += resp.Response
-		return nil
-	}
 }
 
 func getImageDataAsBase64(imageURL string) (string, error) {

@@ -33,13 +33,11 @@ var threadRoleToOllamaRole = map[thread.Role]string{
 type StreamCallbackFn func(string)
 
 type Ollama struct {
-	model                     string
-	temperature               float64
-	visionModel               *string
-	convertImageContentToText bool
-	restClient                *restclientgo.RestClient
-	streamCallbackFn          StreamCallbackFn
-	cache                     *cache.Cache
+	model            string
+	temperature      float64
+	restClient       *restclientgo.RestClient
+	streamCallbackFn StreamCallbackFn
+	cache            *cache.Cache
 }
 
 func New() *Ollama {
@@ -66,16 +64,6 @@ func (o *Ollama) WithStream(callbackFn StreamCallbackFn) *Ollama {
 
 func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 	o.cache = cache
-	return o
-}
-
-func (o *Ollama) WithVisionModel(visionModel string) *Ollama {
-	o.visionModel = &visionModel
-	return o
-}
-
-func (o *Ollama) WithConvertImageContentToText(convert bool) *Ollama {
-	o.convertImageContentToText = convert
 	return o
 }
 
@@ -140,7 +128,7 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 		}
 	}
 
-	chatRequest := o.buildChatCompletionRequest(ctx, t)
+	chatRequest := o.buildChatCompletionRequest(t)
 
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
@@ -222,23 +210,4 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	))
 
 	return nil
-}
-
-func (o *Ollama) vision(ctx context.Context, chatRequest *visionRequest) (*string, error) {
-	var resp visionResponse
-
-	err := o.restClient.Post(
-		ctx,
-		chatRequest,
-		&resp,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrOllamaChat, err)
-	}
-
-	if resp.HTTPStatusCode >= http.StatusBadRequest {
-		return nil, fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
-	}
-
-	return &resp.Response, nil
 }
