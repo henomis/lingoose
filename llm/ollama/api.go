@@ -169,9 +169,10 @@ func getImageDataAsBase64(imageURL string) (string, error) {
 	var err error
 
 	if strings.HasPrefix(imageURL, "http://") || strings.HasPrefix(imageURL, "https://") {
+		//nolint:gosec
 		resp, fetchErr := http.Get(imageURL)
 		if fetchErr != nil {
-			return "", err
+			return "", fetchErr
 		}
 		defer resp.Body.Close()
 

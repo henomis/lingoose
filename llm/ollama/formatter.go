@@ -8,6 +8,8 @@ import (
 )
 
 const visionPrompt = "What is in this picture?"
+
+//nolint:lll
 const contentImageAsText = "The original content was an image, however the image content has been converted by an AI to text as an image description and can be used as context.\n\nImage description: %s"
 
 func (o *Ollama) buildChatCompletionRequest(ctx context.Context, t *thread.Thread) *request {
@@ -33,6 +35,7 @@ func (o *Ollama) buildVisionRequest(imageURL string) (*visionRequest, error) {
 	}, nil
 }
 
+//nolint:gocognit
 func (o *Ollama) threadToChatMessages(ctx context.Context, t *thread.Thread) []message {
 	var chatMessages []message
 	for messageIndex, m := range t.Messages {
