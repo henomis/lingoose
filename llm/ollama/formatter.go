@@ -38,6 +38,8 @@ func threadToChatMessages(t *thread.Thread) []message {
 						continue
 					}
 					chatMessage.Images = []string{imageData}
+				} else {
+					continue
 				}
 
 				chatMessages = append(chatMessages, chatMessage)
