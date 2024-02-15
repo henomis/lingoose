@@ -83,7 +83,7 @@ func (r *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	}
 	// Now that we have the separator, split the text
 	var splits []string
-	splits = strings.Split(text, "")
+	splits = strings.Split(text, separator)
 	// Now go merging things, recursively splitting longer texts.
 	goodSplits := []string{}
 	for _, s := range splits {
