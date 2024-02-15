@@ -7,7 +7,7 @@ import (
 func (o *Ollama) buildChatCompletionRequest(t *thread.Thread) *request {
 	return &request{
 		Model:    o.model,
-		Messages: o.threadToChatMessages(t),
+		Messages: threadToChatMessages(t),
 		Options: options{
 			Temperature: o.temperature,
 		},
@@ -15,7 +15,7 @@ func (o *Ollama) buildChatCompletionRequest(t *thread.Thread) *request {
 }
 
 //nolint:gocognit
-func (o *Ollama) threadToChatMessages(t *thread.Thread) []message {
+func threadToChatMessages(t *thread.Thread) []message {
 	var chatMessages []message
 	for _, m := range t.Messages {
 		switch m.Role {
