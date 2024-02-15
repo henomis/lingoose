@@ -68,10 +68,15 @@ func (r *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	finalChunks := []string{}
 	// Get appropriate separator to use
 	separator := r.separators[len(r.separators)-1]
-	newSeparators := []string{}
-	for i, c := range r.separators {
-		if c == "" || strings.Contains(text, c) {
-			separator = c
+        newSeparators := []string{}
+	for i, s := range r.separators {
+		if s == "" {
+			separator = s
+			break
+		}
+
+		if strings.Contains(text, s) {
+			separator = s
 			newSeparators = r.separators[i+1:]
 			break
 		}
