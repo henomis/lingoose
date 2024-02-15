@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/henomis/lingoose/llm/cache"
@@ -15,6 +16,7 @@ import (
 const (
 	defaultModel      = "llama2"
 	ndjsonContentType = "application/x-ndjson"
+	jsonContentType   = "application/json"
 	defaultEndpoint   = "http://localhost:11434/api"
 )
 
@@ -32,6 +34,7 @@ type StreamCallbackFn func(string)
 
 type Ollama struct {
 	model            string
+	temperature      float64
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
@@ -61,6 +64,11 @@ func (o *Ollama) WithStream(callbackFn StreamCallbackFn) *Ollama {
 
 func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 	o.cache = cache
+	return o
+}
+
+func (o *Ollama) WithTemperature(temperature float64) *Ollama {
+	o.temperature = temperature
 	return o
 }
 
@@ -191,6 +199,10 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+	}
+
+	if resp.HTTPStatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
 	}
 
 	t.AddMessage(thread.NewAssistantMessage().AddContent(
