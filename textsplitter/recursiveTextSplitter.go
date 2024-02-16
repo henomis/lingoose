@@ -68,7 +68,7 @@ func (r *RecursiveCharacterTextSplitter) SplitText(text string) []string {
 	finalChunks := []string{}
 	// Get appropriate separator to use
 	separator := r.separators[len(r.separators)-1]
-        newSeparators := []string{}
+	newSeparators := []string{}
 	for i, s := range r.separators {
 		if s == "" {
 			separator = s
