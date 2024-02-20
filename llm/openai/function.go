@@ -23,14 +23,14 @@ func bindFunction(
 	fn interface{},
 	name string,
 	description string,
-	functionParamenterOptions ...FunctionParameterOption,
+	functionParameterOptions ...FunctionParameterOption,
 ) (*Function, error) {
 	parameter, err := extractFunctionParameter(fn)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, option := range functionParamenterOptions {
+	for _, option := range functionParameterOptions {
 		err = option(parameter)
 		if err != nil {
 			return nil, err
@@ -49,9 +49,9 @@ func (o *Legacy) BindFunction(
 	fn interface{},
 	name string,
 	description string,
-	functionParamenterOptions ...FunctionParameterOption,
+	functionParameterOptions ...FunctionParameterOption,
 ) error {
-	function, err := bindFunction(fn, name, description, functionParamenterOptions...)
+	function, err := bindFunction(fn, name, description, functionParameterOptions...)
 	if err != nil {
 		return err
 	}
@@ -65,9 +65,9 @@ func (o *OpenAI) BindFunction(
 	fn interface{},
 	name string,
 	description string,
-	functionParamenterOptions ...FunctionParameterOption,
+	functionParameterOptions ...FunctionParameterOption,
 ) error {
-	function, err := bindFunction(fn, name, description, functionParamenterOptions...)
+	function, err := bindFunction(fn, name, description, functionParameterOptions...)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (o *OpenAI) BindFunction(
 }
 
 func (o *Legacy) getFunctions() []openai.FunctionDefinition {
-	functions := []openai.FunctionDefinition{}
+	var functions []openai.FunctionDefinition
 
 	for _, function := range o.functions {
 		functions = append(functions, openai.FunctionDefinition{
