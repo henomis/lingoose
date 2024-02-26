@@ -208,7 +208,7 @@ func (c *Content) Format(input types.M) *Content {
 	prompt := prompt.NewPromptTemplate(c.Data.(string))
 	err := prompt.Format(input)
 	if err != nil {
-		return c
+		panic(c)
 	}
 	c.Data = prompt.String()
 
