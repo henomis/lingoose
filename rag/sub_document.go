@@ -23,6 +23,7 @@ type SubDocumentRAG struct {
 	llm            LLM
 }
 
+//nolint:lll
 var SubDocumentRAGSummarizePrompt = "Please give a concise summary of the context in 1-2 sentences.\n\nContext: {{.context}}"
 
 func NewSubDocumentRAG(index *index.Index, llm LLM) *SubDocumentRAG {
