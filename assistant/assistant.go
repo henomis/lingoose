@@ -2,6 +2,7 @@ package assistant
 
 import (
 	"context"
+	"strings"
 
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -91,14 +92,8 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 		return nil
 	}
 
-	query := ""
-	for _, content := range lastMessage.Contents {
-		if content.Type == thread.ContentTypeText {
-			query += content.Data.(string) + "\n"
-		} else {
-			continue
-		}
-	}
+	query := strings.Join(a.thread.UserQuery(), "\n")
+	a.thread.Messages = a.thread.Messages[:len(a.thread.Messages)-1]
 
 	searchResults, err := a.rag.Retrieve(ctx, query)
 	if err != nil {
