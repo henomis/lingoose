@@ -58,24 +58,3 @@ func threadToChatMessages(t *thread.Thread) (string, []model.ChatMessage) {
 
 	return message, history
 }
-
-// 	chatMessages := make([]message, len(t.Messages))
-// 	for i, m := range t.Messages {
-// 		chatMessages[i] = message{
-// 			Role: threadRoleToOpenAIRole[m.Role],
-// 		}
-
-// 		switch m.Role {
-// 		case thread.RoleUser, thread.RoleSystem, thread.RoleAssistant:
-// 			for _, content := range m.Contents {
-// 				if content.Type == thread.ContentTypeText {
-// 					chatMessages[i].Content += content.Data.(string) + "\n"
-// 				}
-// 			}
-// 		case thread.RoleTool:
-// 			continue
-// 		}
-// 	}
-
-// 	return chatMessages
-// }
