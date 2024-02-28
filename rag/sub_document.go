@@ -40,7 +40,7 @@ func (r *SubDocumentRAG) WithChunkSize(chunkSize uint) *SubDocumentRAG {
 	return r
 }
 
-func (r *SubDocumentRAG) WithChilChunkSize(childChunkSize uint) *SubDocumentRAG {
+func (r *SubDocumentRAG) WithChildChunkSize(childChunkSize uint) *SubDocumentRAG {
 	r.childChunkSize = childChunkSize
 	return r
 }
