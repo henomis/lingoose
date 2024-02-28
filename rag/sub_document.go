@@ -22,7 +22,7 @@ type SubDocumentRAG struct {
 	llm LLM
 }
 
-var SubDocumentRAGSummarizePrompt = "Write a concise summary of the following text:\n\n{{.text}}"
+var SubDocumentRAGSummarizePrompt = "Please give a concise summary of the context in 1-2 sentences.\n\nContext: {{.context}}"
 
 func NewSubDocumentRAG(index *index.Index, llm LLM) *SubDocumentRAG {
 	return &SubDocumentRAG{
@@ -80,12 +80,12 @@ func (r *SubDocumentRAG) generateSubDocuments(
 ) ([]document.Document, error) {
 	var subDocuments []document.Document
 
-	for _, chunk := range documents {
+	for _, doc := range documents {
 		t := thread.New().AddMessages(
 			thread.NewUserMessage().AddContent(
 				thread.NewTextContent(SubDocumentRAGSummarizePrompt).Format(
 					types.M{
-						"text": chunk.Content,
+						"context": doc.Content,
 					},
 				),
 			),
@@ -100,7 +100,7 @@ func (r *SubDocumentRAG) generateSubDocuments(
 		subChunks := textsplitter.NewRecursiveCharacterTextSplitter(
 			defaultSubDocumentRAGChildChunkSize,
 			0,
-		).SplitDocuments(documents)
+		).SplitDocuments([]document.Document{doc})
 
 		for i := range subChunks {
 			subChunks[i].Content = summary + "\n" + subChunks[i].Content
