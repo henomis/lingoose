@@ -17,6 +17,11 @@ var ragFusionPrompts = []string{
 	"OUTPUT (4 queries):",
 }
 
+type Fusion struct {
+	RAG
+	llm LLM
+}
+
 func NewFusion(index *index.Index, llm LLM) *Fusion {
 	return &Fusion{
 		RAG: *New(index),
