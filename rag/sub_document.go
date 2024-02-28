@@ -19,7 +19,8 @@ const (
 
 type SubDocumentRAG struct {
 	RAG
-	llm LLM
+	childChunkSize uint
+	llm            LLM
 }
 
 var SubDocumentRAGSummarizePrompt = "Please give a concise summary of the context in 1-2 sentences.\n\nContext: {{.context}}"
@@ -29,12 +30,18 @@ func NewSubDocumentRAG(index *index.Index, llm LLM) *SubDocumentRAG {
 		RAG: *New(index).
 			WithChunkSize(defaultSubDocumentRAGChunkSize).
 			WithChunkOverlap(defaultSubDocumentRAGChunkOverlap),
-		llm: llm,
+		childChunkSize: defaultSubDocumentRAGChildChunkSize,
+		llm:            llm,
 	}
 }
 
 func (r *SubDocumentRAG) WithChunkSize(chunkSize uint) *SubDocumentRAG {
 	r.chunkSize = chunkSize
+	return r
+}
+
+func (r *SubDocumentRAG) WithChilChunkSize(childChunkSize uint) *SubDocumentRAG {
+	r.childChunkSize = childChunkSize
 	return r
 }
 
@@ -98,7 +105,7 @@ func (r *SubDocumentRAG) generateSubDocuments(
 		summary := t.LastMessage().Contents[0].AsString()
 
 		subChunks := textsplitter.NewRecursiveCharacterTextSplitter(
-			defaultSubDocumentRAGChildChunkSize,
+			int(r.childChunkSize),
 			0,
 		).SplitDocuments([]document.Document{doc})
 
