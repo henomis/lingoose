@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	customConfig := goopenai.DefaultConfig("")
+	customConfig := goopenai.DefaultConfig("YOUR_API_KEY")
 	customConfig.BaseURL = "http://localhost:8080"
 	customClient := goopenai.NewClientWithConfig(customConfig)
 
