@@ -6,6 +6,9 @@ func (o *Ollama) buildChatCompletionRequest(t *thread.Thread) *request {
 	return &request{
 		Model:    o.model,
 		Messages: threadToChatMessages(t),
+		Options: options{
+			Temperature: o.temperature,
+		},
 	}
 }
 
