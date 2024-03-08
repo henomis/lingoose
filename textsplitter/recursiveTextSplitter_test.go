@@ -3,11 +3,13 @@ package textsplitter
 import (
 	"reflect"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/types"
 )
 
+//nolint:dupword,funlen
 func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 	type fields struct {
 		textSplitter TextSplitter
@@ -49,6 +51,66 @@ func TestRecursiveCharacterTextSplitter_SplitDocuments(t *testing.T) {
 				},
 				{
 					Content:  "test",
+					Metadata: types.Meta{},
+				},
+			},
+		},
+		{
+			name: "TestRecursiveCharacterTextSplitter_SplitDocuments",
+			fields: fields{
+				textSplitter: TextSplitter{
+					chunkSize:    20,
+					chunkOverlap: 1,
+					lengthFunction: func(s string) int {
+						return len(s)
+					},
+				},
+				separators: []string{"\n", "$"},
+			},
+			args: args{
+				documents: []document.Document{
+					{
+						Content:  "Hi, Harrison. \nI am glad to meet you",
+						Metadata: types.Meta{},
+					},
+				},
+			},
+			want: []document.Document{
+				{
+					Content:  "Hi, Harrison.",
+					Metadata: types.Meta{},
+				},
+				{
+					Content:  "I am glad to meet you",
+					Metadata: types.Meta{},
+				},
+			},
+		},
+		{
+			name: "TestRecursiveCharacterTextSplitter_SplitDocuments",
+			fields: fields{
+				textSplitter: TextSplitter{
+					chunkSize:      10,
+					chunkOverlap:   0,
+					lengthFunction: utf8.RuneCountInString,
+				},
+				separators: []string{"\n\n", "\n", " "},
+			},
+			args: args{
+				documents: []document.Document{
+					{
+						Content:  "哈里森\n很高兴遇见你\n欢迎来中国",
+						Metadata: types.Meta{},
+					},
+				},
+			},
+			want: []document.Document{
+				{
+					Content:  "哈里森\n很高兴遇见你",
+					Metadata: types.Meta{},
+				},
+				{
+					Content:  "欢迎来中国",
 					Metadata: types.Meta{},
 				},
 			},
