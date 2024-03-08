@@ -38,7 +38,6 @@ type Ollama struct {
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
-	temperature      float64
 }
 
 func New() *Ollama {
