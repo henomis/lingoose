@@ -1,5 +1,6 @@
 package qa
 
+//nolint:lll
 const (
 	refinementPrompt = `
 You are a Prompt Engineer with 10 years of experience. given a prompt , refine the prompt to reflect these tatics Include details in your query to get more relevant answers. 
