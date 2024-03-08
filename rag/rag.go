@@ -35,11 +35,6 @@ type RAG struct {
 	loaders      map[*regexp.Regexp]Loader // this map a regexp as string to a loader
 }
 
-type Fusion struct {
-	RAG
-	llm LLM
-}
-
 func New(index *index.Index) *RAG {
 	rag := &RAG{
 		index:        index,

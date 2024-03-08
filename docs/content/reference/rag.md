@@ -51,3 +51,29 @@ There are default loader already attached to the RAG that you can override or ex
 - `.*\.pdf` via `loader.NewPDFToText()`
 - `.*\.txt` via `loader.NewText()`
 - `.*\.docx` via `loader.NewLibreOffice()`
+
+## Fusion RAG
+This is an advance RAG algorithm that uses an LLM to generate additional queries based on the original one. New queries will be used to retrieve more documents that will be reranked and used to generate the final response.
+
+```go
+fusionRAG := rag.NewFusion(
+    index.New(
+        jsondb.New().WithPersist("index.json"),
+        openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+    ),
+    openai.New(),
+)
+```
+
+## Subdocument RAG
+This is an advance RAG algorithm that ingest documents chunking them in subdocuments and attaching a summary of the parent document. This will allow the RAG to retrieve more relevant documents and generate better responses.
+
+```go
+fusionRAG := rag.NewSubDocument(
+    index.New(
+        jsondb.New().WithPersist("index.json"),
+        openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+    ),
+    openai.New(),
+)
+```
