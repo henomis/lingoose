@@ -66,3 +66,36 @@ fmt.Println(*summary)
 ```
 
 The summarize linglet chunks the input text into smaller pieces and then iterate over each chunk to summarize the result. It also provides a callback function to track the progress of the summarization process.
+
+## Using QA Linglet
+
+There is a dedicated linglet to handle question answering. It can be used to answer questions based on the given context. 
+
+```go
+func main() {
+	qa := qa.New(
+		openai.New().WithTemperature(0),
+		index.New(
+			jsondb.New().WithPersist("db.json"),
+			openaiembedder.New(openaiembedder.AdaEmbeddingV2),
+		),
+	)
+
+	_, err := os.Stat("db.json")
+	if os.IsNotExist(err) {
+		err = qa.AddSource(context.Background(), "state_of_the_union.txt")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	response, err := qa.Run(context.Background(), "What is the NATO purpose?")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
+}
+```
+
+This linglet will use a powerful RAG algorith to ingest and retrieve context from the given source and then use an LLM to generate the response.

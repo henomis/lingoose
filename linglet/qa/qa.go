@@ -28,7 +28,7 @@ func New(
 	llm LLM,
 	index *index.Index,
 ) *QA {
-	subDocumentRAG := rag.NewSubDocumentRAG(index, llm).WithTopK(defaultTopK)
+	subDocumentRAG := rag.NewSubDocument(index, llm).WithTopK(defaultTopK)
 
 	return &QA{
 		llm:            llm,

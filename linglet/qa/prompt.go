@@ -3,7 +3,7 @@ package qa
 //nolint:lll
 const (
 	refinementPrompt = `
-You are a Prompt Engineer with 10 years of experience. given a prompt , refine the prompt to reflect these tatics Include details in your query to get more relevant answers. 
+You are a Prompt Engineer with 10 years of experience. Given a prompt, refine the prompt to reflect these tatics, include details in your query to get more relevant answers. 
 The refined prompt should: 
 
 1. Include details in  prompt to get more relevant answers.   
