@@ -33,7 +33,7 @@ func threadToChatMessages(t *thread.Thread) ([]message, string) {
 			}
 		case thread.RoleUser, thread.RoleAssistant:
 			chatMessage := message{
-				Role: threadRoleToOllamaRole[m.Role],
+				Role: threadRoleToAnthropicRole[m.Role],
 			}
 			for _, c := range m.Contents {
 				contentData, ok := c.Data.(string)

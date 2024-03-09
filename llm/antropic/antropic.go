@@ -15,17 +15,17 @@ import (
 )
 
 const (
-	defaultModel           = "llama2"
+	defaultModel           = "claude-3-opus-20240229"
 	eventStreamContentType = "text/event-stream"
 	jsonContentType        = "application/json"
 	defaultEndpoint        = "https://api.anthropic.com/v1"
 )
 
 var (
-	ErrOllamaChat = fmt.Errorf("ollama chat error")
+	ErrAnthropicChat = fmt.Errorf("anthropic chat error")
 )
 
-var threadRoleToOllamaRole = map[thread.Role]string{
+var threadRoleToAnthropicRole = map[thread.Role]string{
 	thread.RoleSystem:    "system",
 	thread.RoleUser:      "user",
 	thread.RoleAssistant: "assistant",
@@ -145,7 +145,7 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 		if err == nil {
 			return nil
 		} else if !errors.Is(err, cache.ErrCacheMiss) {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 		}
 	}
 
@@ -164,7 +164,7 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 	if o.cache != nil {
 		err = o.setCache(ctx, t, cacheResult)
 		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 		}
 	}
 
@@ -180,7 +180,7 @@ func (o *Antropic) generate(ctx context.Context, t *thread.Thread, chatRequest *
 		&resp,
 	)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
 
 	m := thread.NewAssistantMessage()
@@ -236,11 +236,11 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 		&resp,
 	)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
 
 	if resp.HTTPStatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
+		return fmt.Errorf("%w: %s", ErrAnthropicChat, resp.RawBody)
 	}
 
 	t.AddMessage(thread.NewAssistantMessage().AddContent(
