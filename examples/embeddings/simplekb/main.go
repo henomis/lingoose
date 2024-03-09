@@ -7,9 +7,9 @@ import (
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/index/vectordb/jsondb"
+	qapipeline "github.com/henomis/lingoose/legacy/pipeline/qa"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
-	qapipeline "github.com/henomis/lingoose/pipeline/qa"
 	"github.com/henomis/lingoose/textsplitter"
 )
 

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
