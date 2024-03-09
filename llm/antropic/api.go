@@ -131,8 +131,6 @@ const (
 	messageTypeImage contentType = "image"
 )
 
-// {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
-
 type event struct {
 	Type  string `json:"type"`
 	Index *int   `json:"index,omitempty"`
