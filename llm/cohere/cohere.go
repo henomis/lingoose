@@ -11,7 +11,7 @@ import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
-	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/thread"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	sqlpipeline "github.com/henomis/lingoose/legacy/pipeline/sql"
 	"github.com/henomis/lingoose/llm/openai"
-	sqlpipeline "github.com/henomis/lingoose/pipeline/sql"
 	"github.com/henomis/lingoose/types"
 	// enable sqlite3 driver
 	// _ "github.com/mattn/go-sqlite3"

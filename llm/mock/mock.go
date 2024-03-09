@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/legacy/chat"
 )
 
 type LlmMock struct {
