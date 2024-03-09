@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/henomis/lingoose/chat"
 	"github.com/henomis/lingoose/history"
+	"github.com/henomis/lingoose/legacy/chat"
+	"github.com/henomis/lingoose/legacy/pipeline"
 	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/pipeline"
 	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
 )
