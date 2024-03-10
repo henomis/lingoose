@@ -80,6 +80,7 @@ func (h *HFTextToImage) hfTextToImageHTTPCall(ctx context.Context, input string)
 		return nil, errors.New("nil request created")
 	}
 	req.Header.Set("Content-Type", "application/json")
+	//nolint:goconst
 	req.Header.Set("Authorization", "Bearer "+h.token)
 
 	resp, err := http.DefaultClient.Do(req)

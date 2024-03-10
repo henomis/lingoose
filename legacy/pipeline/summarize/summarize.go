@@ -32,7 +32,7 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 	}
 
 	summary := pipeline.NewTube(summarizeLLM)
-	preSummaryCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
+	preSummaryCB := pipeline.Callback(func(ctx context.Context, _ types.M) (types.M, error) {
 		var err error
 		docs, err = loader.Load(ctx)
 		if err != nil {
@@ -48,7 +48,7 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 			"text": docs[iterator].Content,
 		}, nil
 	})
-	postSummaryCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
+	postSummaryCB := pipeline.Callback(func(_ context.Context, output types.M) (types.M, error) {
 		remainigDocs--
 		iterator++
 		if remainigDocs == 0 {
@@ -59,12 +59,12 @@ func New(llmEngine pipeline.LlmEngine, loader Loader) *pipeline.Pipeline {
 	})
 
 	refine := pipeline.NewTube(refineLLM)
-	preRefineCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
+	preRefineCB := pipeline.Callback(func(_ context.Context, input types.M) (types.M, error) {
 		input["text"] = docs[iterator].Content
 		return input, nil
 	})
 
-	postRefineCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
+	postRefineCB := pipeline.Callback(func(_ context.Context, output types.M) (types.M, error) {
 		remainigDocs--
 		iterator++
 		if remainigDocs == 0 {
