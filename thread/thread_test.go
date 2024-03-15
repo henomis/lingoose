@@ -54,7 +54,7 @@ func TestContent_Format(t *testing.T) {
 			},
 		},
 		{
-			name: "Test 2",
+			name: "Test 3",
 			fields: fields{
 				Type: ContentTypeText,
 				Data: "{{.text}}, {{.key}}!",
