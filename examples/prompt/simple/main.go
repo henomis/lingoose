@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/legacy/prompt"
 )
 
 func main() {

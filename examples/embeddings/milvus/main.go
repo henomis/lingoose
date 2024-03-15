@@ -8,9 +8,9 @@ import (
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
 	milvusdb "github.com/henomis/lingoose/index/vectordb/milvus"
+	"github.com/henomis/lingoose/legacy/prompt"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 )
 

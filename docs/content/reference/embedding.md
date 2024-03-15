@@ -17,6 +17,7 @@ LinGoose provides an interface for working with embeddings, allowing developers 
 - [Ollama](https://ollama.ai)
 - [LocalAI](https://localai.io/) (_via OpenAI API compatibility_)
 - [Atlas Nomic](https://atlas.nomic.ai)
+- [Voyage AI](https://www.voyageai.com/)
 
 ## Using Embeddings
 
