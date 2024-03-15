@@ -10,8 +10,8 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/legacy/chat"
+	"github.com/henomis/lingoose/legacy/prompt"
 	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
 )
 
