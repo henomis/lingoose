@@ -209,7 +209,7 @@ func (c *Content) Format(input types.M) *Content {
 	templateEngine, err := template.New("prompt").
 		Option("missingkey=zero").Parse(c.Data.(string))
 	if err != nil {
-		return c
+		panic(c)
 	}
 
 	var buffer bytes.Buffer

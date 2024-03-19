@@ -37,6 +37,7 @@ type OpenAI struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
+	responseFormat   openai.ChatCompletionResponseFormatType
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -75,8 +76,19 @@ func (o *OpenAI) WithClient(client *openai.Client) *OpenAI {
 	return o
 }
 
+// WithFunctions sets the functions to use for the OpenAI instance.
+func (o *OpenAI) WithFunctions(functions map[string]Function) *OpenAI {
+	o.functions = functions
+	return o
+}
+
 func (o *OpenAI) WithToolChoice(toolChoice *string) *OpenAI {
 	o.toolChoice = toolChoice
+	return o
+}
+
+func (o *OpenAI) WithResponseFormat(format openai.ChatCompletionResponseFormatType) *OpenAI {
+	o.responseFormat = format
 	return o
 }
 
@@ -115,11 +127,12 @@ func New() *OpenAI {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 
 	return &OpenAI{
-		openAIClient: openai.NewClient(openAIKey),
-		model:        GPT3Dot5Turbo,
-		temperature:  DefaultOpenAITemperature,
-		maxTokens:    DefaultOpenAIMaxTokens,
-		functions:    make(map[string]Function),
+		openAIClient:   openai.NewClient(openAIKey),
+		model:          GPT3Dot5Turbo,
+		temperature:    DefaultOpenAITemperature,
+		maxTokens:      DefaultOpenAIMaxTokens,
+		functions:      make(map[string]Function),
+		responseFormat: openai.ChatCompletionResponseFormatTypeText,
 	}
 }
 
@@ -299,6 +312,9 @@ func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatComplet
 		N:           DefaultOpenAINumResults,
 		TopP:        DefaultOpenAITopP,
 		Stop:        o.stop,
+		ResponseFormat: &openai.ChatCompletionResponseFormat{
+			Type: o.responseFormat,
+		},
 	}
 }
 
