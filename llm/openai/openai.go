@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/henomis/lingoose/llm/cache"
+	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
+
 	openai "github.com/sashabaranov/go-openai"
 )
 
@@ -37,6 +39,7 @@ type OpenAI struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
+	observer         *observer.Observer
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -92,6 +95,11 @@ func (o *OpenAI) WithStream(enable bool, callbackFn StreamCallback) *OpenAI {
 
 func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	o.cache = cache
+	return o
+}
+
+func (o *OpenAI) WithObserver(observer *observer.Observer) *OpenAI {
+	o.observer = observer
 	return o
 }
 
@@ -186,11 +194,29 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
+	o.dispatch(
+		observer.NewEvent(
+			"openai.generate.start",
+			types.M{
+				"messages": t.Messages,
+			},
+		),
+	)
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatCompletionRequest)
 	} else {
 		err = o.generate(ctx, t, chatCompletionRequest)
 	}
+
+	o.dispatch(
+		observer.NewEvent(
+			"openai.generate.end",
+			types.M{
+				"messages": t.Messages,
+			},
+		),
+	)
 
 	if err != nil {
 		return err
@@ -268,6 +294,15 @@ func (o *OpenAI) generate(
 	if o.usageCallback != nil {
 		o.setUsageMetadata(response.Usage)
 	}
+
+	o.dispatch(
+		observer.NewEvent(
+			"openai.generate.usage",
+			types.M{
+				"usage": response.Usage,
+			},
+		),
+	)
 
 	if len(response.Choices) == 0 {
 		return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
@@ -366,4 +401,12 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 	}
 
 	return messages
+}
+
+func (o *OpenAI) dispatch(e *observer.Event) {
+	if o.observer == nil {
+		return
+	}
+
+	o.observer.Dispatch(e)
 }
