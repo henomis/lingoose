@@ -307,8 +307,8 @@ func (o *OpenAI) getChatCompletionRequestTools() []openai.Tool {
 
 	for _, function := range o.functions {
 		tools = append(tools, openai.Tool{
-			Type: "function",
-			Function: openai.FunctionDefinition{
+			Type: openai.AssistantToolTypeFunction,
+			Function: &openai.FunctionDefinition{
 				Name:        function.Name,
 				Description: function.Description,
 				Parameters:  function.Parameters,
