@@ -19,3 +19,10 @@ You need to set the `HUGGING_FACE_HUB_TOKEN` environment variable to your Huggin
 
 ## Nomic
 You need to set the `NOMIC_API_KEY` environment variable to your Nomic API key. To get your API key refer to the [Nomic website](https://nomic.ai/).
+
+
+## Anthropic
+You need to set the `ANTHROPIC_API_KEY` environment variable to your Anthropic API key. To get your API key refer to the [Anthropic website](https://anthropic.com/).
+
+## Voyage AI
+You need to set the `VOYAGE_API_KEY` environment variable to your Voyage AI API key. To get your API key refer to the [Voyage AI website](https://www.voyageai.com/).

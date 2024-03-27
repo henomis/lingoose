@@ -13,6 +13,7 @@ import (
 
 const (
 	hfDefaultTextToImageModel = "stabilityai/stable-diffusion-xl-base-1.0"
+	hfBearerPrefix            = "Bearer "
 )
 
 type HFTextToImage struct {
@@ -80,8 +81,7 @@ func (h *HFTextToImage) hfTextToImageHTTPCall(ctx context.Context, input string)
 		return nil, errors.New("nil request created")
 	}
 	req.Header.Set("Content-Type", "application/json")
-	//nolint:goconst
-	req.Header.Set("Authorization", "Bearer "+h.token)
+	req.Header.Set("Authorization", hfBearerPrefix+h.token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

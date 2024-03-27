@@ -6,7 +6,7 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/legacy/pipeline"
-	"github.com/henomis/lingoose/prompt"
+	"github.com/henomis/lingoose/legacy/prompt"
 	"github.com/henomis/lingoose/types"
 )
 
