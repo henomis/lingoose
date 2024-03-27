@@ -92,7 +92,7 @@ func New(
 	// ********** QUERY TUBE ************//
 	query := pipeline.NewTube(queryLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preQueryCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
+	preQueryCB := pipeline.Callback(func(_ context.Context, input types.M) (types.M, error) {
 		if q, ok := input[questionKey].(string); ok {
 			memory[questionKey] = q
 		}
@@ -100,7 +100,7 @@ func New(
 		return preQueryCBFn(input, sqlDDL)
 	})
 
-	postQueryCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
+	postQueryCB := pipeline.Callback(func(_ context.Context, output types.M) (types.M, error) {
 		return postQueryCBFn(output, db, sqlDDL, memory)
 	})
 	// ********** END QUERY TUBE ************//
@@ -116,11 +116,11 @@ func New(
 
 	refine := pipeline.NewTube(refineLLM).WithDecoder(decoder.NewRegExDecoder(sqlQueryRegexExpr))
 
-	preRefineCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
+	preRefineCB := pipeline.Callback(func(_ context.Context, input types.M) (types.M, error) {
 		return preRefineCBFn(input, sqlDDL, memory)
 	})
 
-	postRefineCBFn := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
+	postRefineCBFn := pipeline.Callback(func(_ context.Context, output types.M) (types.M, error) {
 		return postRefineCBFn(output, db, sqlDDL, memory)
 	})
 
@@ -138,11 +138,11 @@ func New(
 
 	describe := pipeline.NewTube(describeLLM)
 
-	preDescribeCB := pipeline.Callback(func(ctx context.Context, input types.M) (types.M, error) {
+	preDescribeCB := pipeline.Callback(func(_ context.Context, input types.M) (types.M, error) {
 		return preDescribeCBFn(input, sqlDDL, memory)
 	})
 
-	postDescribeCB := pipeline.Callback(func(ctx context.Context, output types.M) (types.M, error) {
+	postDescribeCB := pipeline.Callback(func(_ context.Context, output types.M) (types.M, error) {
 		output[sqlQueryKey] = memory[sqlQueryKey]
 		output[sqlResultKey] = memory[sqlResultKey]
 		return output, nil

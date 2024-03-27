@@ -1,8 +1,8 @@
 module github.com/henomis/lingoose
 
-go 1.21
+go 1.22
 
-toolchain go1.21.1
+toolchain go1.22.0
 
 require github.com/mitchellh/mapstructure v1.5.0
 
