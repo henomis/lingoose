@@ -9,9 +9,9 @@ import (
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/index/vectordb/postgres"
+	"github.com/henomis/lingoose/legacy/prompt"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 	// uncomment to use postgres
 	// _ "github.com/lib/pq"

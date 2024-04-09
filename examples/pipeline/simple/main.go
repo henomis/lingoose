@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/decoder"
+	"github.com/henomis/lingoose/legacy/decoder"
+	"github.com/henomis/lingoose/legacy/pipeline"
+	"github.com/henomis/lingoose/legacy/prompt"
 	llmmock "github.com/henomis/lingoose/llm/mock"
-	"github.com/henomis/lingoose/pipeline"
-	"github.com/henomis/lingoose/prompt"
 )
 
 func main() {

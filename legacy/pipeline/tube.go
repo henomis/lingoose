@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 )
