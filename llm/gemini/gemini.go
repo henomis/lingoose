@@ -138,28 +138,34 @@ func (g *Gemini) Generate(ctx context.Context, t *thread.Thread) error {
 			return fmt.Errorf("%w: %w", ErrGeminiChat, err)
 		}
 	}
-
+	var (
+		errChat error
+		errGen  error
+		parts   []genai.Part
+	)
 	if g.session != nil {
-		parts, err := g.buildChatRequest(t)
-		if err != nil {
+		parts, errChat = g.buildChatRequest(t)
+		if errChat != nil {
 			return err
 		}
 		if g.streamCallbackFn != nil {
-			err = g.streamChat(ctx, t, parts)
+			errChat = g.streamChat(ctx, t, parts)
 		} else {
-			err = g.generateChat(ctx, t, parts)
+			errChat = g.generateChat(ctx, t, parts)
 		}
-
+		if errChat != nil {
+			return errChat
+		}
 	} else {
-		parts := g.buildRequest(t)
+		parts = g.buildRequest(t)
 		if g.streamCallbackFn != nil {
-			err = g.stream(ctx, t, parts)
+			errGen = g.stream(ctx, t, parts)
 		} else {
-			err = g.generate(ctx, t, parts)
+			errGen = g.generate(ctx, t, parts)
 		}
-	}
-	if err != nil {
-		return err
+		if errGen != nil {
+			return errGen
+		}
 	}
 
 	if g.cache != nil {
