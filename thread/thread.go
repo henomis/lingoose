@@ -22,8 +22,9 @@ const (
 )
 
 type Content struct {
-	Type ContentType
-	Data any
+	Type      ContentType
+	Data      any
+	Processed bool
 }
 
 type Role string

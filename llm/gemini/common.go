@@ -3,10 +3,15 @@ package gemini
 import "fmt"
 
 var (
-	ErrGeminiChat = fmt.Errorf("gemini chat error")
+	ErrGeminiChat   = fmt.Errorf("gemini chat error")
+	ErrGeminiNoChat = fmt.Errorf("gemini no chat message recieved")
 )
 
 type Model string
+
+func (m Model) String() string {
+	return string(m)
+}
 
 const (
 	Gemini1Pro        Model = "gemini-1.0-pro"

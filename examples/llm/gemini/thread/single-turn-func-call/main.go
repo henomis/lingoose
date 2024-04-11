@@ -21,13 +21,67 @@ func init() {
 	GCP_KEY_PATH = os.Getenv("GCP_KEY_PATH")
 }
 
+type Answer struct {
+	Answer string `json:"answer" jsonschema:"description=the pirate answer"`
+}
+
+func getAnswer(a Answer) string {
+	return "🦜 ☠️ " + a.Answer
+}
+
+func buildFuncTool() []*genai.Tool {
+	var tools []*genai.Tool
+
+	schema := &genai.Schema{
+		Type: genai.TypeObject,
+
+		Properties: map[string]*genai.Schema{
+			"answer": {
+				Type:        genai.TypeString,
+				Description: "the pirate answer",
+			},
+		},
+		Required: []string{"answer"},
+	}
+
+	answerTool := &genai.Tool{
+		FunctionDeclarations: []*genai.FunctionDeclaration{{
+			Name:        "getAnswer",
+			Description: "run this function to get pirate answer",
+			Parameters:  schema,
+		}},
+	}
+
+	tools = append(tools, answerTool)
+	return tools
+}
+
+func streamCallBack(s string) {
+	if s == gemini.EOS {
+		fmt.Printf("\n")
+		return
+	}
+	fmt.Printf("%s \n", s)
+}
+
 func main() {
 	ctx := context.Background()
+
 	client, err := genai.NewClient(ctx, PROJECT, REGION, option.WithCredentialsFile(GCP_KEY_PATH))
 	if err != nil {
 		return
 	}
-	geminiLLM := gemini.New(client, gemini.Gemini1Pro001).WithStream(true, func(string) {})
+	geminiLLM := gemini.New(client, gemini.Gemini1Pro001).WithStream(true,
+		streamCallBack).WithTools(buildFuncTool())
+
+	err = geminiLLM.BindFunction(
+		getAnswer,
+		"getAnswer",
+		"use this function when pirate finishes his answer")
+
+	if err != nil {
+		panic(err)
+	}
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
@@ -51,8 +105,10 @@ func main() {
 	fmt.Println("PREDICTION THREAD ::")
 	fmt.Println(t.String())
 
+	//Clear thread
+	t.ClearMessages()
 	t.AddMessage(thread.NewUserMessage().AddContent(
-		thread.NewTextContent("now translate to italian as a poem"),
+		thread.NewTextContent("Have you ever looted any ship?"),
 	))
 
 	fmt.Println("INPUT THREAD ::")

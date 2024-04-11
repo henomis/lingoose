@@ -27,6 +27,7 @@ type Gemini struct {
 	client           *genai.Client
 	model            Model
 	genModel         *genai.GenerativeModel
+	session          *genai.ChatSession
 	temperature      float32
 	maxTokens        int
 	stop             []string
@@ -62,13 +63,25 @@ func (g *Gemini) WithCache(cache *cache.Cache) *Gemini {
 	return g
 }
 
+func (g *Gemini) WithChatMode() *Gemini {
+	g.session = g.genModel.StartChat()
+	return g
+}
+
 func New(client *genai.Client, model Model) *Gemini {
 	gemini := &Gemini{}
 	gemini.model = model
 	gemini.client = client
 	gemini.functions = make(map[string]Function)
-	gemini.genModel = gemini.client.GenerativeModel(string(model))
+	gemini.genModel = gemini.client.GenerativeModel(model.String())
 	return gemini
+}
+
+func (g *Gemini) GetChatHistory() []*genai.Content {
+	if g.session != nil {
+		return g.session.History
+	}
+	return nil
 }
 
 func (g *Gemini) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
@@ -126,12 +139,24 @@ func (g *Gemini) Generate(ctx context.Context, t *thread.Thread) error {
 		}
 	}
 
-	//build thread to gemini message
-	parts := g.buildRequest(t)
-	if g.streamCallbackFn != nil {
-		err = g.stream(ctx, t, parts)
+	if g.session != nil {
+		parts, err := g.buildChatRequest(t)
+		if err != nil {
+			return err
+		}
+		if g.streamCallbackFn != nil {
+			err = g.streamChat(ctx, t, parts)
+		} else {
+			err = g.generateChat(ctx, t, parts)
+		}
+
 	} else {
-		err = g.generate(ctx, t, parts)
+		parts := g.buildRequest(t)
+		if g.streamCallbackFn != nil {
+			err = g.stream(ctx, t, parts)
+		} else {
+			err = g.generate(ctx, t, parts)
+		}
 	}
 	if err != nil {
 		return err
@@ -191,8 +216,8 @@ func (g *Gemini) stream(ctx context.Context, t *thread.Thread, parts []genai.Par
 			allFuncToolCall = append(allFuncToolCall, funCall)
 			currentFuncToolCall = funCall
 		} else {
-			content.WriteString(partsTostring(response.Candidates[0].Content.Parts))
-			g.streamCallbackFn(partsTostring(response.Candidates[0].Content.Parts))
+			content.WriteString(PartsTostring(response.Candidates[0].Content.Parts))
+			g.streamCallbackFn(PartsTostring(response.Candidates[0].Content.Parts))
 		}
 	}
 	t.AddMessages(messages...)
@@ -222,7 +247,7 @@ func (g *Gemini) generate(ctx context.Context, t *thread.Thread, parts []genai.P
 	} else {
 		messages = []*thread.Message{
 			thread.NewAssistantMessage().AddContent(
-				thread.NewTextContent(partsTostring(response.Candidates[0].Content.Parts)),
+				thread.NewTextContent(PartsTostring(response.Candidates[0].Content.Parts)),
 			),
 		}
 	}
@@ -234,6 +259,10 @@ func (g *Gemini) generate(ctx context.Context, t *thread.Thread, parts []genai.P
 
 func (g *Gemini) buildRequest(t *thread.Thread) []genai.Part {
 	return threadToPartMessage(t)
+}
+
+func (g *Gemini) buildChatRequest(t *thread.Thread) ([]genai.Part, error) {
+	return threadToChatPartMessage(t)
 }
 
 func (g *Gemini) callFuncTools(toolCalls []genai.FunctionCall) []*thread.Message {
