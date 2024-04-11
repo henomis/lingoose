@@ -21,6 +21,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Your First Code Contribution](#your-first-code-contribution)
   - [Improving The Documentation](#improving-the-documentation)
+  - [Policy on unattended Pull Requests](#policy-on-unattended-pull-requests)
 - [Styleguides](#styleguides)
   - [Commit Messages](#commit-messages)
 - [Join The Project Team](#join-the-project-team)
@@ -127,6 +128,19 @@ Follow the [first contribution guide](https://github.com/firstcontributions/firs
 ### Improving The Documentation
 
 LinGoose could always use more documentation, whether as part of the official LinGoose docs, in docstrings, or even on the web in blog posts, articles, and such.
+
+## Policy on unattended Pull Requests
+
+As part of our commitment to maintaining an active and collaborative development environment, it's important for pull requests (PRs) to receive timely attention and feedback. PRs left unattended for an extended period can impede progress and create bottlenecks in the development process.
+
+Therefore, if a PR remains unapproved and unmodified following a review for an extended period, the author of the PR reserves the right to implement the suggested modifications at their discretion.
+
+The specific duration of time before this policy is enacted may vary depending on the circumstances and urgency of the changes. However, as a general guideline, a reasonable timeframe for review and action might be 2 weeks.
+
+This policy aims to ensure the continued progress of the project while respecting the contributions and efforts of all team members. It encourages timely collaboration and feedback while preventing PRs from stagnating indefinitely.
+
+If you anticipate being unable to review or address a PR within the specified timeframe, please communicate this with the team to avoid invoking this policy unnecessarily.
+
 
 ## Styleguides
 
