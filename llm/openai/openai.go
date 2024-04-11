@@ -206,6 +206,22 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	return nil
 }
 
+func isStreamToolCallResponse(response *openai.ChatCompletionStreamResponse) bool {
+	return response.Choices[0].FinishReason == openai.FinishReasonToolCalls || len(response.Choices[0].Delta.ToolCalls) > 0
+}
+
+func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse, currentToolCall *openai.ToolCall) (updatedToolCall openai.ToolCall, isNewTool bool) {
+	if len(response.Choices[0].Delta.ToolCalls) > 0 {
+		if response.Choices[0].Delta.ToolCalls[0].ID != "" {
+			isNewTool = true
+			updatedToolCall = response.Choices[0].Delta.ToolCalls[0]
+		} else {
+			currentToolCall.Function.Arguments += response.Choices[0].Delta.ToolCalls[0].Function.Arguments
+		}
+	}
+	return
+}
+
 func (o *OpenAI) stream(
 	ctx context.Context,
 	t *thread.Thread,
@@ -244,16 +260,13 @@ func (o *OpenAI) stream(
 			return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
 		}
 
-		if response.Choices[0].FinishReason == "tool_calls" || len(response.Choices[0].Delta.ToolCalls) > 0 {
-			if len(response.Choices[0].Delta.ToolCalls) > 0 {
-				if response.Choices[0].Delta.ToolCalls[0].ID != "" {
-					if currentToolCall.ID != "" {
-						allToolCalls = append(allToolCalls, currentToolCall)
-					}
-					currentToolCall = response.Choices[0].Delta.ToolCalls[0]
-				} else {
-					currentToolCall.Function.Arguments += response.Choices[0].Delta.ToolCalls[0].Function.Arguments
+		if isStreamToolCallResponse(&response) {
+			updatedToolCall, isNewTool := consumeToolCallResponse(&response, &currentToolCall)
+			if isNewTool {
+				if currentToolCall.ID != "" {
+					allToolCalls = append(allToolCalls, currentToolCall)
 				}
+				currentToolCall = updatedToolCall
 			}
 		} else {
 			content += response.Choices[0].Delta.Content
