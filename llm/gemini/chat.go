@@ -50,14 +50,16 @@ func (g *Gemini) streamChat(ctx context.Context, t *thread.Thread, parts []genai
 		}
 
 		//check func tool call
-		part := response.Candidates[0].Content.Parts[0]
-		funCall, ok := part.(genai.FunctionCall)
-		if ok {
-			allFuncToolCall = append(allFuncToolCall, funCall)
-			currentFuncToolCall = funCall
-		} else {
-			content.WriteString(PartsTostring(response.Candidates[0].Content.Parts))
-			g.streamCallbackFn(PartsTostring(response.Candidates[0].Content.Parts))
+		if response.Candidates[0].Content != nil {
+			part := response.Candidates[0].Content.Parts[0]
+			funCall, ok := part.(genai.FunctionCall)
+			if ok {
+				allFuncToolCall = append(allFuncToolCall, funCall)
+				currentFuncToolCall = funCall
+			} else {
+				content.WriteString(PartsTostring(response.Candidates[0].Content.Parts))
+				g.streamCallbackFn(PartsTostring(response.Candidates[0].Content.Parts))
+			}
 		}
 	}
 	t.AddMessages(messages...)
