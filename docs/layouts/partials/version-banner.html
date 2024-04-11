@@ -3,9 +3,9 @@
 {{ $versions := split $versionString "," }}
 {{ $latestVersion := index $versions 0 }}
 
-{{ if (eq $currentVersion "master") }}
+{{ if (eq $currentVersion "main") }}
 	<div class="alert-warning">
-		You are looking at the docs for the unreleased <code>master</code> branch. The latest version is <a href="/{{$latestVersion}}">{{ $latestVersion }}</a>.
+		You are looking at the docs for the unreleased <code>main</code> branch. The latest version is <a href="/{{$latestVersion}}">{{ $latestVersion }}</a>.
 	</div>
 {{ else if not (eq $latestVersion $currentVersion) }}
 	<div class="alert-warning">
