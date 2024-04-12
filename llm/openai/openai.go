@@ -210,14 +210,16 @@ func isStreamToolCallResponse(response *openai.ChatCompletionStreamResponse) boo
 	return response.Choices[0].FinishReason == openai.FinishReasonToolCalls || len(response.Choices[0].Delta.ToolCalls) > 0
 }
 
-func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse, currentToolCall *openai.ToolCall) (updatedToolCall openai.ToolCall, isNewTool bool) {
-	if len(response.Choices[0].Delta.ToolCalls) > 0 {
-		if response.Choices[0].Delta.ToolCalls[0].ID != "" {
-			isNewTool = true
-			updatedToolCall = response.Choices[0].Delta.ToolCalls[0]
-		} else {
-			currentToolCall.Function.Arguments += response.Choices[0].Delta.ToolCalls[0].Function.Arguments
-		}
+func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
+	currentToolCall *openai.ToolCall) (updatedToolCall openai.ToolCall, isNewTool bool) {
+	if len(response.Choices[0].Delta.ToolCalls) == 0 {
+		return
+	}
+	if response.Choices[0].Delta.ToolCalls[0].ID != "" {
+		isNewTool = true
+		updatedToolCall = response.Choices[0].Delta.ToolCalls[0]
+	} else {
+		currentToolCall.Function.Arguments += response.Choices[0].Delta.ToolCalls[0].Function.Arguments
 	}
 	return
 }
