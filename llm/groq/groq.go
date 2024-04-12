@@ -16,7 +16,7 @@ type Groq struct {
 }
 
 func New() *Groq {
-	customConfig := goopenai.DefaultConfig(os.Getenv("OPENAI_API_KEY"))
+	customConfig := goopenai.DefaultConfig(os.Getenv("GROQ_API_KEY"))
 	customConfig.BaseURL = groqAPIEndpoint
 	customClient := goopenai.NewClientWithConfig(customConfig)
 
