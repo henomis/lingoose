@@ -35,3 +35,15 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] I have checked my code and corrected any misspellings
+
+## Policy on Unattended Pull Requests
+
+As part of our commitment to maintaining an active and collaborative development environment, it's important for pull requests (PRs) to receive timely attention and feedback. PRs left unattended for an extended period can impede progress and create bottlenecks in the development process.
+
+Therefore, if a PR remains unapproved and unmodified following a review for an extended period, the author of the PR reserves the right to implement the suggested modifications at their discretion.
+
+The specific duration of time before this policy is enacted may vary depending on the circumstances and urgency of the changes. However, as a general guideline, a reasonable timeframe for review and action might be 2 weeks.
+
+This policy aims to ensure the continued progress of the project while respecting the contributions and efforts of all team members. It encourages timely collaboration and feedback while preventing PRs from stagnating indefinitely.
+
+If you anticipate being unable to review or address a PR within the specified timeframe, please communicate this with the team to avoid invoking this policy unnecessarily.
