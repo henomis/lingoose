@@ -33,6 +33,8 @@ const (
 	GPT4TurboPreview      Model = openai.GPT4TurboPreview
 	GPT4VisionPreview     Model = openai.GPT4VisionPreview
 	GPT4                  Model = openai.GPT4
+	GPT4Turbo             Model = openai.GPT4Turbo
+	GPT4Turbo20240409     Model = openai.GPT4Turbo20240409
 	GPT3Dot5Turbo1106     Model = openai.GPT3Dot5Turbo1106
 	GPT3Dot5Turbo0613     Model = openai.GPT3Dot5Turbo0613
 	GPT3Dot5Turbo0301     Model = openai.GPT3Dot5Turbo0301
