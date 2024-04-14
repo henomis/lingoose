@@ -1,4 +1,4 @@
-package antropic
+package anthropic
 
 import (
 	"context"
@@ -32,32 +32,46 @@ var threadRoleToAnthropicRole = map[thread.Role]string{
 }
 
 const (
-	defaultAPIVersion = "2023-06-01"
-	defaultMaxTokens  = 1024
-	EOS               = "\x00"
+	defaultAPIVersion  = "2023-06-01"
+	defaultBetaVersion = "tools-2024-04-04"
+	defaultMaxTokens   = 1024
+	EOS                = "\x00"
+)
+
+type Model string
+
+const (
+	Claude3Opus20240229   Model = "claude-3-opus-20240229"
+	Claude3Opus           Model = "claude-3-opus-20240229"
+	Claude3Sonnet20240229 Model = "claude-3-sonnet-20240229"
+	Claude3Sonnet         Model = "claude-3-sonnet-20240229"
+	Claude3Haiku20240307  Model = "claude-3-haiku-20240307"
+	Claude3Haiku          Model = "claude-3-haiku-20240307"
 )
 
 type StreamCallbackFn func(string)
 
-type Antropic struct {
-	model            string
+type Anthropic struct {
+	model            Model
 	temperature      float64
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
+	functions        map[string]Function
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
 }
 
-func New() *Antropic {
+func New() *Anthropic {
 	apiKey := os.Getenv("ANTHROPIC_API_KEY")
 
-	return &Antropic{
+	return &Anthropic{
 		restClient: restclientgo.New(defaultEndpoint).WithRequestModifier(
 			func(req *http.Request) *http.Request {
 				req.Header.Set("x-api-key", apiKey)
 				req.Header.Set("anthropic-version", defaultAPIVersion)
+				req.Header.Set("anthropic-beta", defaultBetaVersion)
 				return req
 			},
 		),
@@ -65,35 +79,36 @@ func New() *Antropic {
 		apiVersion: defaultAPIVersion,
 		apiKey:     apiKey,
 		maxTokens:  defaultMaxTokens,
+		functions:  make(map[string]Function),
 	}
 }
 
-func (o *Antropic) WithModel(model string) *Antropic {
+func (o *Anthropic) WithModel(model Model) *Anthropic {
 	o.model = model
 	return o
 }
 
-func (o *Antropic) WithStream(callbackFn StreamCallbackFn) *Antropic {
+func (o *Anthropic) WithStream(callbackFn StreamCallbackFn) *Anthropic {
 	o.streamCallbackFn = callbackFn
 	return o
 }
 
-func (o *Antropic) WithCache(cache *cache.Cache) *Antropic {
+func (o *Anthropic) WithCache(cache *cache.Cache) *Anthropic {
 	o.cache = cache
 	return o
 }
 
-func (o *Antropic) WithTemperature(temperature float64) *Antropic {
+func (o *Anthropic) WithTemperature(temperature float64) *Anthropic {
 	o.temperature = temperature
 	return o
 }
 
-func (o *Antropic) WithMaxTokens(maxTokens int) *Antropic {
+func (o *Anthropic) WithMaxTokens(maxTokens int) *Anthropic {
 	o.maxTokens = maxTokens
 	return o
 }
 
-func (o *Antropic) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
+func (o *Anthropic) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
 	messages := t.UserQuery()
 	cacheQuery := strings.Join(messages, "\n")
 	cacheResult, err := o.cache.Get(ctx, cacheQuery)
@@ -108,7 +123,7 @@ func (o *Antropic) getCache(ctx context.Context, t *thread.Thread) (*cache.Resul
 	return cacheResult, nil
 }
 
-func (o *Antropic) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
+func (o *Anthropic) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
 	lastMessage := t.LastMessage()
 
 	if lastMessage.Role != thread.RoleAssistant || len(lastMessage.Contents) == 0 {
@@ -133,7 +148,7 @@ func (o *Antropic) setCache(ctx context.Context, t *thread.Thread, cacheResult *
 	return nil
 }
 
-func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
+func (o *Anthropic) Generate(ctx context.Context, t *thread.Thread) error {
 	if t == nil {
 		return nil
 	}
@@ -171,7 +186,7 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 	return nil
 }
 
-func (o *Antropic) generate(ctx context.Context, t *thread.Thread, chatRequest *request) error {
+func (o *Anthropic) generate(ctx context.Context, t *thread.Thread, chatRequest *request) error {
 	var resp response
 
 	err := o.restClient.Post(
@@ -184,21 +199,32 @@ func (o *Antropic) generate(ctx context.Context, t *thread.Thread, chatRequest *
 	}
 
 	m := thread.NewAssistantMessage()
+	mr := thread.NewUserMessage()
 
-	for _, content := range resp.Content {
-		if content.Type == messageTypeText && content.Text != nil {
+	for _, c := range resp.Content {
+		if c.Type == messageTypeText && c.Text != nil {
 			m.AddContent(
-				thread.NewTextContent(*content.Text),
+				thread.NewTextContent(*c.Text),
 			)
+		} else if c.Type == messageTypeToolUse {
+			m.AddContent(toolCallsToToolCallContent(c))
+			toolResponse, err := o.callTool(c)
+			if err != nil {
+				return err
+			}
+			mr.AddContent(toolResponse)
 		}
 	}
 
 	t.AddMessage(m)
+	if mr.Contents != nil {
+		t.AddMessages(mr)
+	}
 
 	return nil
 }
 
-func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *request) error {
+func (o *Anthropic) stream(ctx context.Context, t *thread.Thread, chatRequest *request) error {
 	var resp response
 	var assistantMessage string
 
@@ -248,4 +274,23 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 	))
 
 	return nil
+}
+
+func (o *Anthropic) callTool(toolCall content) (*thread.Content, error) {
+	fn, ok := o.functions[toolCall.Name]
+	if !ok {
+		return nil, fmt.Errorf("unknown function %s", toolCall.Name)
+	}
+
+	toolResponseData := thread.ToolResponseData{
+		ID:   toolCall.Id,
+		Name: toolCall.Name,
+	}
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, string(toolCall.Input))
+	if err != nil {
+		toolResponseData.Result = "Error: " + err.Error()
+	} else {
+		toolResponseData.Result = resultAsJSON
+	}
+	return thread.NewToolResponseContent(toolResponseData), nil
 }

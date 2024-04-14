@@ -1,4 +1,4 @@
-package antropic
+package anthropic
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 type request struct {
 	Model         string    `json:"model"`
 	Messages      []message `json:"messages"`
+	Tools         []tool    `json:"tools,omitempty"`
 	System        string    `json:"system"`
 	MaxTokens     int       `json:"max_tokens"`
 	Metadata      metadata  `json:"metadata"`
@@ -23,6 +24,12 @@ type request struct {
 	Temperature   float64   `json:"temperature"`
 	TopP          float64   `json:"top_p"`
 	TopK          int       `json:"top_k"`
+}
+
+type tool struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	InputSchema any    `json:"input_schema"`
 }
 
 type metadata struct {
@@ -68,9 +75,15 @@ type aerror struct {
 }
 
 type content struct {
-	Type   contentType    `json:"type"`
-	Text   *string        `json:"text,omitempty"`
-	Source *contentSource `json:"source,omitempty"`
+	Type      contentType     `json:"type"`
+	Text      *string         `json:"text,omitempty"`
+	Source    *contentSource  `json:"source,omitempty"`
+	Id        string          `json:"id,omitempty"`
+	Name      string          `json:"name,omitempty"`
+	Input     json.RawMessage `json:"input,omitempty"`
+	ToolUseId string          `json:"tool_use_id,omitempty"`
+	Content   json.RawMessage `json:"content,omitempty"`
+	IsError   bool            `json:"is_error,omitempty"`
 }
 
 type contentSource struct {
@@ -127,8 +140,10 @@ type message struct {
 type contentType string
 
 const (
-	messageTypeText  contentType = "text"
-	messageTypeImage contentType = "image"
+	messageTypeText       contentType = "text"
+	messageTypeImage      contentType = "image"
+	messageTypeToolUse    contentType = "tool_use"
+	messageTypeToolResult contentType = "tool_result"
 )
 
 type event struct {

@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/henomis/lingoose/llm/anthropic"
 
-	"github.com/henomis/lingoose/llm/antropic"
 	"github.com/henomis/lingoose/thread"
 )
 
 func main() {
-	antropicllm := antropic.New().WithModel("claude-3-opus-20240229").WithStream(
+	antropicllm := anthropic.New().WithModel("claude-3-opus-20240229").WithStream(
 		func(response string) {
-			if response != antropic.EOS {
+			if response != anthropic.EOS {
 				fmt.Print(response)
 			} else {
 				fmt.Println()
