@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
+	summarizepipeline "github.com/henomis/lingoose/legacy/pipeline/summarize"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
-	summarizepipeline "github.com/henomis/lingoose/pipeline/summarize"
 	"github.com/henomis/lingoose/textsplitter"
 )
 

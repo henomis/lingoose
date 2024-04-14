@@ -1,9 +1,10 @@
 package thread
 
 import (
+	"bytes"
 	"strings"
+	"text/template"
 
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/types"
 )
 
@@ -205,12 +206,19 @@ func (c *Content) Format(input types.M) *Content {
 		return c
 	}
 
-	prompt := prompt.NewPromptTemplate(c.Data.(string))
-	err := prompt.Format(input)
+	templateEngine, err := template.New("prompt").
+		Option("missingkey=zero").Parse(c.Data.(string))
 	if err != nil {
 		panic(c)
 	}
-	c.Data = prompt.String()
+
+	var buffer bytes.Buffer
+	err = templateEngine.Execute(&buffer, input)
+	if err != nil {
+		return c
+	}
+
+	c.Data = buffer.String()
 
 	return c
 }

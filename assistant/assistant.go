@@ -8,10 +8,19 @@ import (
 	"github.com/henomis/lingoose/types"
 )
 
+type Parameters struct {
+	AssistantName      string
+	AssistantIdentity  string
+	AssistantScope     string
+	CompanyName        string
+	CompanyDescription string
+}
+
 type Assistant struct {
-	llm    LLM
-	rag    RAG
-	thread *thread.Thread
+	llm        LLM
+	rag        RAG
+	thread     *thread.Thread
+	parameters Parameters
 }
 
 type LLM interface {
@@ -26,6 +35,13 @@ func New(llm LLM) *Assistant {
 	assistant := &Assistant{
 		llm:    llm,
 		thread: thread.New(),
+		parameters: Parameters{
+			AssistantName:      defaultAssistantName,
+			AssistantIdentity:  defaultAssistantIdentity,
+			AssistantScope:     defaultAssistantScope,
+			CompanyName:        defaultCompanyName,
+			CompanyDescription: defaultCompanyDescription,
+		},
 	}
 
 	return assistant
@@ -38,6 +54,11 @@ func (a *Assistant) WithThread(thread *thread.Thread) *Assistant {
 
 func (a *Assistant) WithRAG(rag RAG) *Assistant {
 	a.rag = rag
+	return a
+}
+
+func (a *Assistant) WithParameters(parameters Parameters) *Assistant {
+	a.parameters = parameters
 	return a
 }
 
@@ -71,29 +92,33 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 		return nil
 	}
 
-	query := ""
-	for _, content := range lastMessage.Contents {
-		if content.Type == thread.ContentTypeText {
-			query += content.Data.(string) + "\n"
-		} else {
-			continue
-		}
-	}
+	query := strings.Join(a.thread.UserQuery(), "\n")
+	a.thread.Messages = a.thread.Messages[:len(a.thread.Messages)-1]
 
 	searchResults, err := a.rag.Retrieve(ctx, query)
 	if err != nil {
 		return err
 	}
 
-	context := strings.Join(searchResults, "\n\n")
-
-	a.thread.AddMessage(thread.NewUserMessage().AddContent(
+	a.thread.AddMessage(thread.NewSystemMessage().AddContent(
+		thread.NewTextContent(
+			systemRAGPrompt,
+		).Format(
+			types.M{
+				"assistantName":      a.parameters.AssistantName,
+				"assistantIdentity":  a.parameters.AssistantIdentity,
+				"assistantScope":     a.parameters.AssistantScope,
+				"companyName":        a.parameters.CompanyName,
+				"companyDescription": a.parameters.CompanyDescription,
+			},
+		),
+	)).AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent(
 			baseRAGPrompt,
 		).Format(
 			types.M{
 				"question": query,
-				"context":  context,
+				"results":  searchResults,
 			},
 		),
 	))

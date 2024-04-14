@@ -3,7 +3,7 @@ package pipeline
 import (
 	"context"
 
-	"github.com/henomis/lingoose/chat"
+	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/types"
 )
 

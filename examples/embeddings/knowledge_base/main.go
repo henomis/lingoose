@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/henomis/lingoose/chat"
 	openaiembedder "github.com/henomis/lingoose/embedder/openai"
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
+	"github.com/henomis/lingoose/legacy/chat"
 
 	"github.com/henomis/lingoose/index/vectordb/jsondb"
+	"github.com/henomis/lingoose/legacy/prompt"
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/loader"
-	"github.com/henomis/lingoose/prompt"
 	"github.com/henomis/lingoose/textsplitter"
 	"github.com/henomis/lingoose/types"
 )

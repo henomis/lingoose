@@ -16,6 +16,8 @@ LinGoose supports the following LLM providers API:
 - [Huggingface](https://huggingface.co)
 - [Ollama](https://ollama.ai)
 - [LocalAI](https://localai.io/) (_via OpenAI API compatibility_)
+- [Groq](https://groq.com/)
+- [Anthropic](https://anthropic.com/)
 
 ## Using LLMs
 
