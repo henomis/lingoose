@@ -82,7 +82,7 @@ type content struct {
 	Name      string          `json:"name,omitempty"`
 	Input     json.RawMessage `json:"input,omitempty"`
 	ToolUseId string          `json:"tool_use_id,omitempty"`
-	Content   json.RawMessage `json:"content,omitempty"`
+	Content   string          `json:"content,omitempty"`
 	IsError   bool            `json:"is_error,omitempty"`
 }
 

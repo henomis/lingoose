@@ -106,7 +106,7 @@ func threadToChatMessages(t *thread.Thread) ([]message, string) {
 							content{
 								Type:      messageTypeToolResult,
 								ToolUseId: data.ID,
-								Content:   []byte(data.Result),
+								Content:   data.Result,
 								IsError:   isError,
 							},
 						)

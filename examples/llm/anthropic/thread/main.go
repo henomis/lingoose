@@ -21,8 +21,8 @@ func newStr(str string) *string {
 }
 
 func main() {
-	anthropicllm := anthropic.New().WithModel(anthropic.Claude3Sonnet)
-	err := anthropicllm.BindFunction(
+	anthropicLLM := anthropic.New().WithModel(anthropic.Claude3Sonnet)
+	err := anthropicLLM.BindFunction(
 		getAnswer,
 		"getPirateAnswer",
 		"use this function to get the pirate answer",
@@ -30,13 +30,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//anthropicllm.WithStream(func(a string) {
-	//	if a == openai.EOS {
-	//		fmt.Printf("\n")
-	//		return
-	//	}
-	//	fmt.Printf("%s", a)
-	//})
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
@@ -50,7 +43,7 @@ func main() {
 
 	fmt.Println(t)
 
-	err = anthropicllm.Generate(context.Background(), t)
+	err = anthropicLLM.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +54,7 @@ func main() {
 
 	fmt.Println(t)
 	// disable functions
-	err = anthropicllm.Generate(context.Background(), t)
+	err = anthropicLLM.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
