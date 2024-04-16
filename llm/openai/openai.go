@@ -224,6 +224,22 @@ func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
 	return
 }
 
+func (o *OpenAI) processErrorResponse(messages []*thread.Message, content string,
+	currentToolCall *openai.ToolCall, allToolCalls []openai.ToolCall) []*thread.Message {
+	o.streamCallbackFn(EOS)
+	if len(content) > 0 {
+		messages = append(messages, thread.NewAssistantMessage().AddContent(
+			thread.NewTextContent(content),
+		))
+	}
+	if currentToolCall.ID != "" {
+		allToolCalls = append(allToolCalls, *currentToolCall)
+		messages = append(messages, toolCallsToToolCallMessage(allToolCalls))
+		messages = append(messages, o.callTools(allToolCalls)...)
+	}
+	return messages
+}
+
 func (o *OpenAI) stream(
 	ctx context.Context,
 	t *thread.Thread,
@@ -237,24 +253,14 @@ func (o *OpenAI) stream(
 		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
-	var messages []*thread.Message
 	var content string
+	var messages []*thread.Message
 	var allToolCalls []openai.ToolCall
 	var currentToolCall openai.ToolCall
 	for {
 		response, errRecv := stream.Recv()
 		if errors.Is(errRecv, io.EOF) {
-			o.streamCallbackFn(EOS)
-			if len(content) > 0 {
-				messages = append(messages, thread.NewAssistantMessage().AddContent(
-					thread.NewTextContent(content),
-				))
-			}
-			if currentToolCall.ID != "" {
-				allToolCalls = append(allToolCalls, currentToolCall)
-				messages = append(messages, toolCallsToToolCallMessage(allToolCalls))
-				messages = append(messages, o.callTools(allToolCalls)...)
-			}
+			messages = o.processErrorResponse(messages, content, &currentToolCall, allToolCalls)
 			break
 		}
 
