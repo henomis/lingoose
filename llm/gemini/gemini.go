@@ -54,9 +54,8 @@ func (g *Gemini) WithStream(enable bool, callbackFn StreamCallback) *Gemini {
 	return g
 }
 
-func (g *Gemini) ClearTools() *Gemini {
+func (g *Gemini) ClearTools() {
 	g.genModel.Tools = []*genai.Tool{}
-	return g
 }
 
 func (g *Gemini) WithTools(tools []*genai.Tool) *Gemini {
