@@ -39,6 +39,13 @@ type Gemini struct {
 	currentParts     []genai.Part
 }
 
+func DefaultSafetySettings() []*genai.SafetySetting {
+	return []*genai.SafetySetting{{
+		Category:  genai.HarmCategoryDangerousContent,
+		Threshold: genai.HarmBlockNone,
+	}}
+}
+
 // WithTemperature sets the temperature to use for the Gemini instance.
 func (g *Gemini) WithTemperature(temperature float32) *Gemini {
 	g.temperature = temperature
@@ -82,6 +89,11 @@ func New(ctx context.Context, client *genai.Client, model Model) *Gemini {
 	gemini.functions = make(map[string]Function)
 	gemini.genModel = gemini.client.GenerativeModel(model.String())
 	return gemini
+}
+
+func (g *Gemini) WithSafety(s []*genai.SafetySetting) *Gemini {
+	g.genModel.SafetySettings = s
+	return g
 }
 
 func (g *Gemini) GetChatHistory() []*genai.Content {
