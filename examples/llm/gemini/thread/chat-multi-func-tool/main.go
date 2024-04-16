@@ -28,6 +28,33 @@ func getAnswer(a Answer) string {
 	return "🦜 ☠️ " + a.Answer
 }
 
+func doNothing(a Answer) string {
+	return ""
+}
+
+func answerTool() *genai.Tool {
+	schema := &genai.Schema{
+		Type: genai.TypeObject,
+
+		Properties: map[string]*genai.Schema{
+			"answer": {
+				Type:        genai.TypeString,
+				Description: "the pirate answer",
+			},
+		},
+		Required: []string{"answer"},
+	}
+	answerT := &genai.Tool{
+		FunctionDeclarations: []*genai.FunctionDeclaration{{
+			Name:        "getAnswer",
+			Description: "run this function to get pirate answer",
+			Parameters:  schema,
+		}},
+	}
+
+	return answerT
+}
+
 func buildFuncTool() []*genai.Tool {
 	var tools []*genai.Tool
 
@@ -43,15 +70,35 @@ func buildFuncTool() []*genai.Tool {
 		Required: []string{"answer"},
 	}
 
+	doNothingschema := &genai.Schema{
+		Type: genai.TypeObject,
+
+		Properties: map[string]*genai.Schema{},
+		Required:   []string{""},
+	}
+	//
+	//doNothingTool := &genai.Tool{
+	//	FunctionDeclarations: []*genai.FunctionDeclaration{{
+	//		Name:        "doNothing",
+	//		Description: "",
+	//		Parameters:  doNothingschema,
+	//	}},
+	//}
+
 	answerTool := &genai.Tool{
 		FunctionDeclarations: []*genai.FunctionDeclaration{{
 			Name:        "getAnswer",
 			Description: "run this function to get pirate answer",
 			Parameters:  schema,
+		}, {Name: "doNothing",
+			//Description: "never call this function anywhere",
+			Description: "call this function before pirate answer",
+			Parameters:  doNothingschema,
 		}},
 	}
 
 	tools = append(tools, answerTool)
+	//tools = append(tools, doNothingTool)
 	return tools
 }
 
@@ -79,13 +126,18 @@ func main() {
 	}
 	defer client.Close()
 
-	geminiLLM := gemini.New(ctx, client, gemini.GeminiPro15Latest).WithStream(true,
-		streamCallBack).WithTools(buildFuncTool()).WithChatMode()
+	geminiLLM := gemini.New(ctx, client, gemini.Gemini1Pro001).WithStream(true,
+		streamCallBack).WithChatMode()
 
 	err = geminiLLM.BindFunction(
 		getAnswer,
 		"getAnswer",
 		"use this function when pirate finishes his answer")
+
+	err = geminiLLM.BindFunction(
+		doNothing,
+		"doNothing",
+		"never call this function")
 
 	if err != nil {
 		panic(err)
@@ -105,6 +157,7 @@ func main() {
 		),
 	)
 
+	geminiLLM.WithTools(buildFuncTool())
 	err = geminiLLM.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
@@ -116,15 +169,32 @@ func main() {
 	fmt.Println("SESSION HISTORY :: ")
 	PrintHistory(geminiLLM.GetChatHistory())
 
+	if t.LastMessage().Role == thread.RoleTool {
+		err = geminiLLM.Generate(context.Background(), t)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	//Clear thread
 	//t.ClearMessages()
 	t.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent("Have you ever looted any ship?"),
 	))
 
+	geminiLLM.ClearTools()
+	geminiLLM.WithTools([]*genai.Tool{answerTool()})
+
 	err = geminiLLM.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
+	}
+
+	if t.LastMessage().Role == thread.RoleTool {
+		err = geminiLLM.Generate(context.Background(), t)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	fmt.Println("PREDICTION THREAD ::")
@@ -139,6 +209,13 @@ func main() {
 	err = geminiLLM.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
+	}
+
+	if t.LastMessage().Role == thread.RoleTool {
+		err = geminiLLM.Generate(context.Background(), t)
+		if err != nil {
+			panic(err)
+		}
 	}
 	fmt.Println("PREDICTION THREAD ::")
 	fmt.Println(t.String())

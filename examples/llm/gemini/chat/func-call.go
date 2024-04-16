@@ -78,7 +78,7 @@ func main() {
 	}
 	defer client.Close()
 
-	geminiLLM := gemini.New(client, gemini.Gemini1Pro001).WithStream(true,
+	geminiLLM := gemini.New(ctx, client, gemini.Gemini1Pro001).WithStream(true,
 		streamCallBack).WithTools(buildFuncTool())
 
 	err = geminiLLM.BindFunction(
