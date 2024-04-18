@@ -26,3 +26,6 @@ You need to set the `ANTHROPIC_API_KEY` environment variable to your Anthropic A
 
 ## Voyage AI
 You need to set the `VOYAGE_API_KEY` environment variable to your Voyage AI API key. To get your API key refer to the [Voyage AI website](https://www.voyageai.com/).
+
+## Groq
+You need to set the `GROQ_API_KEY` environment variable to your Groq API key. To get your API key refer to the [Groq website](https://groq.com/).

@@ -75,7 +75,7 @@ If you think you've found a bug, or something isn't behaving the way you think i
 
 ## Contributing
 
-We welcome contributions, Read our [Contribution Guidelines](https://github.com/henomis/lingoose/blob/master/CONTRIBUTING.md) to learn more about contributing to **LinGoose**
+We welcome contributions, Read our [Contribution Guidelines](https://github.com/henomis/lingoose/blob/main/CONTRIBUTING.md) to learn more about contributing to **LinGoose**
 
 ## Connect with the author
 
