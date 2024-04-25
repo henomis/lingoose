@@ -210,8 +210,10 @@ func isStreamToolCallResponse(response *openai.ChatCompletionStreamResponse) boo
 	return response.Choices[0].FinishReason == openai.FinishReasonToolCalls || len(response.Choices[0].Delta.ToolCalls) > 0
 }
 
-func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
-	currentToolCall *openai.ToolCall) (updatedToolCall openai.ToolCall, isNewTool bool) {
+func handleStreamToolCallResponse(
+	response *openai.ChatCompletionStreamResponse,
+	currentToolCall *openai.ToolCall,
+) (updatedToolCall openai.ToolCall, isNewTool bool) {
 	if len(response.Choices[0].Delta.ToolCalls) == 0 {
 		return
 	}
@@ -222,6 +224,26 @@ func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
 		currentToolCall.Function.Arguments += response.Choices[0].Delta.ToolCalls[0].Function.Arguments
 	}
 	return
+}
+
+func (o *OpenAI) handleEndOfStream(
+	messages []*thread.Message,
+	content string,
+	currentToolCall *openai.ToolCall,
+	allToolCalls []openai.ToolCall,
+) []*thread.Message {
+	o.streamCallbackFn(EOS)
+	if len(content) > 0 {
+		messages = append(messages, thread.NewAssistantMessage().AddContent(
+			thread.NewTextContent(content),
+		))
+	}
+	if currentToolCall.ID != "" {
+		allToolCalls = append(allToolCalls, *currentToolCall)
+		messages = append(messages, toolCallsToToolCallMessage(allToolCalls))
+		messages = append(messages, o.callTools(allToolCalls)...)
+	}
+	return messages
 }
 
 func (o *OpenAI) stream(
@@ -237,24 +259,14 @@ func (o *OpenAI) stream(
 		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
-	var messages []*thread.Message
 	var content string
+	var messages []*thread.Message
 	var allToolCalls []openai.ToolCall
 	var currentToolCall openai.ToolCall
 	for {
 		response, errRecv := stream.Recv()
 		if errors.Is(errRecv, io.EOF) {
-			o.streamCallbackFn(EOS)
-			if len(content) > 0 {
-				messages = append(messages, thread.NewAssistantMessage().AddContent(
-					thread.NewTextContent(content),
-				))
-			}
-			if currentToolCall.ID != "" {
-				allToolCalls = append(allToolCalls, currentToolCall)
-				messages = append(messages, toolCallsToToolCallMessage(allToolCalls))
-				messages = append(messages, o.callTools(allToolCalls)...)
-			}
+			messages = o.handleEndOfStream(messages, content, &currentToolCall, allToolCalls)
 			break
 		}
 
@@ -263,7 +275,7 @@ func (o *OpenAI) stream(
 		}
 
 		if isStreamToolCallResponse(&response) {
-			updatedToolCall, isNewTool := consumeToolCallResponse(&response, &currentToolCall)
+			updatedToolCall, isNewTool := handleStreamToolCallResponse(&response, &currentToolCall)
 			if isNewTool {
 				if currentToolCall.ID != "" {
 					allToolCalls = append(allToolCalls, currentToolCall)
