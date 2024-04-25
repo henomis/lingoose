@@ -27,7 +27,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	geminiLLM := gemini.New(client, gemini.Gemini1Pro001).WithStream(true, func(string) {})
+	geminiLLM := gemini.New(ctx, client, gemini.Gemini1Pro001).WithStream(true, func(string) {})
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(

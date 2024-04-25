@@ -24,6 +24,7 @@ var threadRoleToGeminiRole = map[thread.Role]string{
 }
 
 type Gemini struct {
+	ctx              context.Context
 	client           *genai.Client
 	model            Model
 	genModel         *genai.GenerativeModel
@@ -35,6 +36,14 @@ type Gemini struct {
 	streamCallbackFn StreamCallback
 	tools            []*genai.Tool
 	cache            *cache.Cache
+	currentParts     []genai.Part
+}
+
+func DefaultSafetySettings() []*genai.SafetySetting {
+	return []*genai.SafetySetting{{
+		Category:  genai.HarmCategoryDangerousContent,
+		Threshold: genai.HarmBlockNone,
+	}}
 }
 
 // WithTemperature sets the temperature to use for the Gemini instance.
@@ -52,9 +61,13 @@ func (g *Gemini) WithStream(enable bool, callbackFn StreamCallback) *Gemini {
 	return g
 }
 
+func (g *Gemini) ClearTools() {
+	g.genModel.Tools = []*genai.Tool{}
+}
+
 func (g *Gemini) WithTools(tools []*genai.Tool) *Gemini {
 	// TODO: Handle genai.Schema from caller function
-	g.genModel.Tools = append(g.genModel.Tools, tools...)
+	g.genModel.Tools = tools
 	return g
 }
 
@@ -68,8 +81,9 @@ func (g *Gemini) WithChatMode() *Gemini {
 	return g
 }
 
-func New(client *genai.Client, model Model) *Gemini {
+func New(ctx context.Context, client *genai.Client, model Model) *Gemini {
 	gemini := &Gemini{}
+	gemini.ctx = ctx
 	gemini.model = model
 	gemini.client = client
 	gemini.functions = make(map[string]Function)
@@ -77,11 +91,24 @@ func New(client *genai.Client, model Model) *Gemini {
 	return gemini
 }
 
+func (g *Gemini) WithSafety(s []*genai.SafetySetting) *Gemini {
+	g.genModel.SafetySettings = s
+	return g
+}
+
 func (g *Gemini) GetChatHistory() []*genai.Content {
 	if g.session != nil {
 		return g.session.History
 	}
 	return nil
+}
+
+func (g *Gemini) GetTools() []*genai.Tool {
+	return g.genModel.Tools
+}
+
+func (g *Gemini) GetTokenCount() (*genai.CountTokensResponse, error) {
+	return g.genModel.CountTokens(g.ctx, g.currentParts...)
 }
 
 func (g *Gemini) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
@@ -143,6 +170,12 @@ func (g *Gemini) Generate(ctx context.Context, t *thread.Thread) error {
 		errGen  error
 		parts   []genai.Part
 	)
+	defer func() {
+		if len(parts) != 0 {
+			g.currentParts = parts
+		}
+	}()
+
 	if g.session != nil {
 		parts, errChat = g.buildChatRequest(t)
 		if errChat != nil {

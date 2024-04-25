@@ -21,11 +21,17 @@ func threadToPartMessage(t *thread.Thread) []genai.Part {
 				}
 				chatMessages = append(chatMessages, genai.Text(contentData))
 			}
-
 		case thread.RoleAssistant:
 			continue
 		case thread.RoleTool:
-			continue
+			if data, isTollResponseData := m.Contents[0].Data.(thread.ToolResponseData); isTollResponseData && !m.Contents[0].Processed {
+				var funcResponses genai.FunctionResponse
+				funcResponses.Name = data.Name
+				funcResponses.Response = map[string]any{
+					"result": data.Result,
+				}
+				chatMessages = append(chatMessages, funcResponses)
+			}
 		}
 	}
 	return chatMessages
@@ -52,7 +58,15 @@ func threadToChatPartMessage(t *thread.Thread) ([]genai.Part, error) {
 		case thread.RoleAssistant:
 			continue
 		case thread.RoleTool:
-			continue
+			if data, isTollResponseData := m.Contents[0].Data.(thread.ToolResponseData); isTollResponseData && !m.Contents[0].Processed {
+				var funcResponses genai.FunctionResponse
+				funcResponses.Name = data.Name
+				funcResponses.Response = map[string]any{
+					"result": data.Result,
+				}
+				chatMessages = append(chatMessages, funcResponses)
+				m.Contents[0].Processed = true
+			}
 		}
 	}
 
@@ -107,11 +121,11 @@ func PartsTostring(parts []genai.Part) string {
 			}
 		case genai.FunctionCall:
 			fp := parts[i].(genai.FunctionCall)
-			msg.WriteString(fmt.Sprintf("FunctionCall: %+v", fp))
+			msg.WriteString(fmt.Sprintf("FunctionCall: %+v ", fp))
 
 		case genai.FunctionResponse:
 			fp := parts[i].(genai.FunctionResponse)
-			msg.WriteString(fmt.Sprintf("FunctionResponse: %+v", fp))
+			msg.WriteString(fmt.Sprintf("FunctionResponse: %+v ", fp))
 		}
 	}
 	return msg.String()
