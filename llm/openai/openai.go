@@ -210,8 +210,10 @@ func isStreamToolCallResponse(response *openai.ChatCompletionStreamResponse) boo
 	return response.Choices[0].FinishReason == openai.FinishReasonToolCalls || len(response.Choices[0].Delta.ToolCalls) > 0
 }
 
-func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
-	currentToolCall *openai.ToolCall) (updatedToolCall openai.ToolCall, isNewTool bool) {
+func handleStreamToolCallResponse(
+	response *openai.ChatCompletionStreamResponse,
+	currentToolCall *openai.ToolCall,
+) (updatedToolCall openai.ToolCall, isNewTool bool) {
 	if len(response.Choices[0].Delta.ToolCalls) == 0 {
 		return
 	}
@@ -224,8 +226,12 @@ func consumeToolCallResponse(response *openai.ChatCompletionStreamResponse,
 	return
 }
 
-func (o *OpenAI) processErrorResponse(messages []*thread.Message, content string,
-	currentToolCall *openai.ToolCall, allToolCalls []openai.ToolCall) []*thread.Message {
+func (o *OpenAI) handleEndOfStream(
+	messages []*thread.Message,
+	content string,
+	currentToolCall *openai.ToolCall,
+	allToolCalls []openai.ToolCall,
+) []*thread.Message {
 	o.streamCallbackFn(EOS)
 	if len(content) > 0 {
 		messages = append(messages, thread.NewAssistantMessage().AddContent(
@@ -260,7 +266,7 @@ func (o *OpenAI) stream(
 	for {
 		response, errRecv := stream.Recv()
 		if errors.Is(errRecv, io.EOF) {
-			messages = o.processErrorResponse(messages, content, &currentToolCall, allToolCalls)
+			messages = o.handleEndOfStream(messages, content, &currentToolCall, allToolCalls)
 			break
 		}
 
@@ -269,7 +275,7 @@ func (o *OpenAI) stream(
 		}
 
 		if isStreamToolCallResponse(&response) {
-			updatedToolCall, isNewTool := consumeToolCallResponse(&response, &currentToolCall)
+			updatedToolCall, isNewTool := handleStreamToolCallResponse(&response, &currentToolCall)
 			if isNewTool {
 				if currentToolCall.ID != "" {
 					allToolCalls = append(allToolCalls, currentToolCall)
