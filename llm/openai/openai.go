@@ -202,6 +202,16 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
+	var span *observer.Span
+	var generation *observer.Generation
+
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatCompletionRequest)
 	} else {
@@ -209,6 +219,13 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
 	}
 
 	if o.cache != nil {
@@ -314,17 +331,6 @@ func (o *OpenAI) generate(
 	t *thread.Thread,
 	chatCompletionRequest openai.ChatCompletionRequest,
 ) error {
-	var err error
-	var span *observer.Span
-	var generation *observer.Generation
-
-	if o.observer != nil {
-		span, generation, err = o.startObserveGeneration(t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-		}
-	}
-
 	response, err := o.openAIClient.CreateChatCompletion(
 		ctx,
 		chatCompletionRequest,
@@ -354,13 +360,6 @@ func (o *OpenAI) generate(
 	}
 
 	t.Messages = append(t.Messages, messages...)
-
-	if o.observer != nil {
-		err = o.stopObserveGeneration(span, generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-		}
-	}
 
 	return nil
 }
