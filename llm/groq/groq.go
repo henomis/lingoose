@@ -21,6 +21,7 @@ func New() *Groq {
 	customClient := goopenai.NewClientWithConfig(customConfig)
 
 	openaillm := openai.New().WithClient(customClient)
+	openaillm.Name = "groq"
 	return &Groq{
 		OpenAI: openaillm,
 	}

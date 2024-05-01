@@ -8,9 +8,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 const (
@@ -38,12 +42,16 @@ type Ollama struct {
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
+	name             string
+	observer         llmobserver.LLMObserver
+	observerTraceID  string
 }
 
 func New() *Ollama {
 	return &Ollama{
 		restClient: restclientgo.New(defaultEndpoint),
 		model:      defaultModel,
+		name:       "ollama",
 	}
 }
 
@@ -69,6 +77,12 @@ func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 
 func (o *Ollama) WithTemperature(temperature float64) *Ollama {
 	o.temperature = temperature
+	return o
+}
+
+func (o *Ollama) WithObserver(observer llmobserver.LLMObserver, traceID string) *Ollama {
+	o.observer = observer
+	o.observerTraceID = traceID
 	return o
 }
 
@@ -130,14 +144,29 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
 	} else {
 		err = o.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+		}
 	}
 
 	if o.cache != nil {
@@ -160,6 +189,10 @@ func (o *Ollama) generate(ctx context.Context, t *thread.Thread, chatRequest *re
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
+	}
+
+	if resp.HTTPStatusCode >= http.StatusBadRequest {
+		return fmt.Errorf("%w: %s", ErrOllamaChat, resp.RawBody)
 	}
 
 	t.AddMessage(thread.NewAssistantMessage().AddContent(
@@ -210,4 +243,32 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	))
 
 	return nil
+}
+
+func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.name,
+		o.model,
+		types.M{
+			// TODO: Add maxTokens parameter
+			// "maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
+		},
+		o.observerTraceID,
+		t,
+	)
+}
+
+func (o *Ollama) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

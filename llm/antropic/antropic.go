@@ -9,9 +9,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 const (
@@ -48,6 +52,9 @@ type Antropic struct {
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
+	name             string
+	observer         llmobserver.LLMObserver
+	observerTraceID  string
 }
 
 func New() *Antropic {
@@ -65,6 +72,7 @@ func New() *Antropic {
 		apiVersion: defaultAPIVersion,
 		apiKey:     apiKey,
 		maxTokens:  defaultMaxTokens,
+		name:       "anthropic",
 	}
 }
 
@@ -90,6 +98,12 @@ func (o *Antropic) WithTemperature(temperature float64) *Antropic {
 
 func (o *Antropic) WithMaxTokens(maxTokens int) *Antropic {
 	o.maxTokens = maxTokens
+	return o
+}
+
+func (o *Antropic) WithObserver(observer llmobserver.LLMObserver, traceID string) *Antropic {
+	o.observer = observer
+	o.observerTraceID = traceID
 	return o
 }
 
@@ -151,14 +165,29 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
 	} else {
 		err = o.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
 	}
 
 	if o.cache != nil {
@@ -248,4 +277,31 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 	))
 
 	return nil
+}
+
+func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.name,
+		o.model,
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
+		},
+		o.observerTraceID,
+		t,
+	)
+}
+
+func (o *Antropic) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

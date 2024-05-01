@@ -8,12 +8,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
+	openai "github.com/sashabaranov/go-openai"
+
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
-	"github.com/mitchellh/mapstructure"
-	openai "github.com/sashabaranov/go-openai"
 )
 
 const (
@@ -27,13 +29,6 @@ var threadRoleToOpenAIRole = map[thread.Role]string{
 	thread.RoleTool:      "tool",
 }
 
-type Observer interface {
-	Span(*observer.Span) (*observer.Span, error)
-	SpanEnd(*observer.Span) (*observer.Span, error)
-	Generation(*observer.Generation) (*observer.Generation, error)
-	GenerationEnd(*observer.Generation) (*observer.Generation, error)
-}
-
 type OpenAI struct {
 	openAIClient     *openai.Client
 	model            Model
@@ -45,7 +40,8 @@ type OpenAI struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
-	observer         Observer
+	Name             string
+	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
 
@@ -105,7 +101,7 @@ func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	return o
 }
 
-func (o *OpenAI) WithObserver(observer Observer, traceID string) *OpenAI {
+func (o *OpenAI) WithObserver(observer llmobserver.LLMObserver, traceID string) *OpenAI {
 	o.observer = observer
 	o.observerTraceID = traceID
 	return o
@@ -136,6 +132,7 @@ func New() *OpenAI {
 		temperature:  DefaultOpenAITemperature,
 		maxTokens:    DefaultOpenAIMaxTokens,
 		functions:    make(map[string]Function),
+		Name:         "openai",
 	}
 }
 
@@ -443,33 +440,17 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 }
 
 func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	span, err := o.observer.Span(
-		&observer.Span{
-			TraceID: o.observerTraceID,
-			Name:    "openai",
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.Name,
+		string(o.model),
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
 		},
+		o.observerTraceID,
+		t,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	generation, err := o.observer.Generation(
-		&observer.Generation{
-			TraceID:  o.observerTraceID,
-			ParentID: span.ID,
-			Name:     fmt.Sprintf("openai-%s", o.model),
-			Model:    string(o.model),
-			ModelParameters: types.M{
-				"maxTokens":   o.maxTokens,
-				"temperature": o.temperature,
-			},
-			Input: t.Messages,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return span, generation, nil
 }
 
 func (o *OpenAI) stopObserveGeneration(
@@ -477,12 +458,10 @@ func (o *OpenAI) stopObserveGeneration(
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
-	_, err := o.observer.SpanEnd(span)
-	if err != nil {
-		return err
-	}
-
-	generation.Output = t.LastMessage()
-	_, err = o.observer.GenerationEnd(generation)
-	return err
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

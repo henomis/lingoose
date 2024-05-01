@@ -11,9 +11,13 @@ import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
+
 	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
+	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 var (
@@ -46,6 +50,9 @@ type Cohere struct {
 	stop             []string
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
+	name             string
+	observer         llmobserver.LLMObserver
+	observerTraceID  string
 }
 
 func (c *Cohere) WithCache(cache *cache.Cache) *Cohere {
@@ -64,6 +71,7 @@ func New() *Cohere {
 		model:       DefaultModel,
 		temperature: DefaultTemperature,
 		maxTokens:   DefaultMaxTokens,
+		name:        "cohere",
 	}
 }
 
@@ -105,6 +113,12 @@ func (c *Cohere) WithStop(stop []string) *Cohere {
 
 func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 	c.streamCallbackFn = callbackFn
+	return c
+}
+
+func (c *Cohere) WithObserver(observer llmobserver.LLMObserver, traceID string) *Cohere {
+	c.observer = observer
+	c.observerTraceID = traceID
 	return c
 }
 
@@ -205,14 +219,29 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := c.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if c.observer != nil {
+		span, generation, err = c.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
+		}
+	}
+
 	if c.streamCallbackFn != nil {
 		err = c.stream(ctx, t, chatRequest)
 	} else {
 		err = c.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if c.observer != nil {
+		err = c.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
+		}
 	}
 
 	if c.cache != nil {
@@ -268,4 +297,31 @@ func (c *Cohere) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	))
 
 	return nil
+}
+
+func (c *Cohere) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	return llmobserver.SartObserveGeneration(
+		c.observer,
+		c.name,
+		string(c.model),
+		types.M{
+			"maxTokens":   c.maxTokens,
+			"temperature": c.temperature,
+		},
+		c.observerTraceID,
+		t,
+	)
+}
+
+func (c *Cohere) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	return llmobserver.StopObserveGeneration(
+		c.observer,
+		span,
+		generation,
+		t,
+	)
 }
