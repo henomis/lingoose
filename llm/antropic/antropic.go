@@ -299,7 +299,7 @@ func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *ob
 			TraceID:  o.observerTraceID,
 			ParentID: span.ID,
 			Name:     fmt.Sprintf("antropic-%s", o.model),
-			Model:    string(o.model),
+			Model:    o.model,
 			ModelParameters: types.M{
 				"maxTokens":   o.maxTokens,
 				"temperature": o.temperature,

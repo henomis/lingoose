@@ -85,10 +85,10 @@ func (o *Ollama) WithTemperature(temperature float64) *Ollama {
 	return o
 }
 
-func (c *Ollama) WithObserver(observer Observer, traceID string) *Ollama {
-	c.observer = observer
-	c.observerTraceID = traceID
-	return c
+func (o *Ollama) WithObserver(observer Observer, traceID string) *Ollama {
+	o.observer = observer
+	o.observerTraceID = traceID
+	return o
 }
 
 func (o *Ollama) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
@@ -266,7 +266,7 @@ func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 			TraceID:  o.observerTraceID,
 			ParentID: span.ID,
 			Name:     fmt.Sprintf("%s-%s", o.name, o.model),
-			Model:    string(o.model),
+			Model:    o.model,
 			ModelParameters: types.M{
 				// TODO: Add maxTokens support
 				// "maxTokens":   o.maxTokens,
