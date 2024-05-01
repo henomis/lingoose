@@ -56,6 +56,7 @@ type Cohere struct {
 	stop             []string
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
+	name             string
 	observer         Observer
 	observerTraceID  string
 }
@@ -76,6 +77,7 @@ func New() *Cohere {
 		model:       DefaultModel,
 		temperature: DefaultTemperature,
 		maxTokens:   DefaultMaxTokens,
+		name:        "cohere",
 	}
 }
 
@@ -307,7 +309,7 @@ func (c *Cohere) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 	span, err := c.observer.Span(
 		&observer.Span{
 			TraceID: c.observerTraceID,
-			Name:    "cohere",
+			Name:    c.name,
 		},
 	)
 	if err != nil {
@@ -318,7 +320,7 @@ func (c *Cohere) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 		&observer.Generation{
 			TraceID:  c.observerTraceID,
 			ParentID: span.ID,
-			Name:     fmt.Sprintf("cohere-%s", c.model),
+			Name:     fmt.Sprintf("%s-%s", c.name, c.model),
 			Model:    string(c.model),
 			ModelParameters: types.M{
 				"maxTokens":   c.maxTokens,
