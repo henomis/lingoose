@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/henomis/restclientgo"
+
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
-	"github.com/henomis/restclientgo"
 )
 
 const (
@@ -34,13 +36,6 @@ var threadRoleToOllamaRole = map[thread.Role]string{
 
 type StreamCallbackFn func(string)
 
-type Observer interface {
-	Span(*observer.Span) (*observer.Span, error)
-	SpanEnd(*observer.Span) (*observer.Span, error)
-	Generation(*observer.Generation) (*observer.Generation, error)
-	GenerationEnd(*observer.Generation) (*observer.Generation, error)
-}
-
 type Ollama struct {
 	model            string
 	temperature      float64
@@ -48,7 +43,7 @@ type Ollama struct {
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
 	name             string
-	observer         Observer
+	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
 
@@ -85,7 +80,7 @@ func (o *Ollama) WithTemperature(temperature float64) *Ollama {
 	return o
 }
 
-func (o *Ollama) WithObserver(observer Observer, traceID string) *Ollama {
+func (o *Ollama) WithObserver(observer llmobserver.LLMObserver, traceID string) *Ollama {
 	o.observer = observer
 	o.observerTraceID = traceID
 	return o

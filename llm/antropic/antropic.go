@@ -12,6 +12,7 @@ import (
 	"github.com/henomis/restclientgo"
 
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -40,13 +41,6 @@ const (
 	EOS               = "\x00"
 )
 
-type Observer interface {
-	Span(*observer.Span) (*observer.Span, error)
-	SpanEnd(*observer.Span) (*observer.Span, error)
-	Generation(*observer.Generation) (*observer.Generation, error)
-	GenerationEnd(*observer.Generation) (*observer.Generation, error)
-}
-
 type StreamCallbackFn func(string)
 
 type Antropic struct {
@@ -58,7 +52,7 @@ type Antropic struct {
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
-	observer         Observer
+	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
 
@@ -105,7 +99,7 @@ func (o *Antropic) WithMaxTokens(maxTokens int) *Antropic {
 	return o
 }
 
-func (o *Antropic) WithObserver(observer Observer, traceID string) *Antropic {
+func (o *Antropic) WithObserver(observer llmobserver.LLMObserver, traceID string) *Antropic {
 	o.observer = observer
 	o.observerTraceID = traceID
 	return o

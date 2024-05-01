@@ -8,12 +8,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
+	openai "github.com/sashabaranov/go-openai"
+
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
-	"github.com/mitchellh/mapstructure"
-	openai "github.com/sashabaranov/go-openai"
 )
 
 const (
@@ -25,13 +27,6 @@ var threadRoleToOpenAIRole = map[thread.Role]string{
 	thread.RoleUser:      "user",
 	thread.RoleAssistant: "assistant",
 	thread.RoleTool:      "tool",
-}
-
-type Observer interface {
-	Span(*observer.Span) (*observer.Span, error)
-	SpanEnd(*observer.Span) (*observer.Span, error)
-	Generation(*observer.Generation) (*observer.Generation, error)
-	GenerationEnd(*observer.Generation) (*observer.Generation, error)
 }
 
 type OpenAI struct {
@@ -46,7 +41,7 @@ type OpenAI struct {
 	toolChoice       *string
 	cache            *cache.Cache
 	Name             string
-	observer         Observer
+	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
 
@@ -106,7 +101,7 @@ func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	return o
 }
 
-func (o *OpenAI) WithObserver(observer Observer, traceID string) *OpenAI {
+func (o *OpenAI) WithObserver(observer llmobserver.LLMObserver, traceID string) *OpenAI {
 	o.observer = observer
 	o.observerTraceID = traceID
 	return o

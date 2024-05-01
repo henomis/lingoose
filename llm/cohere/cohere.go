@@ -14,6 +14,7 @@ import (
 
 	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -38,13 +39,6 @@ const (
 	DefaultModel       = ModelCommand
 )
 
-type Observer interface {
-	Span(*observer.Span) (*observer.Span, error)
-	SpanEnd(*observer.Span) (*observer.Span, error)
-	Generation(*observer.Generation) (*observer.Generation, error)
-	GenerationEnd(*observer.Generation) (*observer.Generation, error)
-}
-
 type StreamCallbackFn func(string)
 
 type Cohere struct {
@@ -57,7 +51,7 @@ type Cohere struct {
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
 	name             string
-	observer         Observer
+	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
 
@@ -122,7 +116,7 @@ func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 	return c
 }
 
-func (c *Cohere) WithObserver(observer Observer, traceID string) *Cohere {
+func (c *Cohere) WithObserver(observer llmobserver.LLMObserver, traceID string) *Cohere {
 	c.observer = observer
 	c.observerTraceID = traceID
 	return c
