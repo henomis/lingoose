@@ -52,6 +52,7 @@ type Antropic struct {
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
+	name             string
 	observer         llmobserver.LLMObserver
 	observerTraceID  string
 }
@@ -71,6 +72,7 @@ func New() *Antropic {
 		apiVersion: defaultAPIVersion,
 		apiKey:     apiKey,
 		maxTokens:  defaultMaxTokens,
+		name:       "anthropic",
 	}
 }
 
@@ -278,33 +280,17 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 }
 
 func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	span, err := o.observer.Span(
-		&observer.Span{
-			TraceID: o.observerTraceID,
-			Name:    "antropic",
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.name,
+		string(o.model),
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
 		},
+		o.observerTraceID,
+		t,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	generation, err := o.observer.Generation(
-		&observer.Generation{
-			TraceID:  o.observerTraceID,
-			ParentID: span.ID,
-			Name:     fmt.Sprintf("antropic-%s", o.model),
-			Model:    o.model,
-			ModelParameters: types.M{
-				"maxTokens":   o.maxTokens,
-				"temperature": o.temperature,
-			},
-			Input: t.Messages,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return span, generation, nil
 }
 
 func (o *Antropic) stopObserveGeneration(
@@ -312,12 +298,10 @@ func (o *Antropic) stopObserveGeneration(
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
-	_, err := o.observer.SpanEnd(span)
-	if err != nil {
-		return err
-	}
-
-	generation.Output = t.LastMessage()
-	_, err = o.observer.GenerationEnd(generation)
-	return err
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

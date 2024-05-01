@@ -440,33 +440,17 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 }
 
 func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	span, err := o.observer.Span(
-		&observer.Span{
-			TraceID: o.observerTraceID,
-			Name:    o.Name,
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.Name,
+		string(o.model),
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
 		},
+		o.observerTraceID,
+		t,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	generation, err := o.observer.Generation(
-		&observer.Generation{
-			TraceID:  o.observerTraceID,
-			ParentID: span.ID,
-			Name:     fmt.Sprintf("%s-%s", o.Name, o.model),
-			Model:    string(o.model),
-			ModelParameters: types.M{
-				"maxTokens":   o.maxTokens,
-				"temperature": o.temperature,
-			},
-			Input: t.Messages,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return span, generation, nil
 }
 
 func (o *OpenAI) stopObserveGeneration(
@@ -474,12 +458,10 @@ func (o *OpenAI) stopObserveGeneration(
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
-	_, err := o.observer.SpanEnd(span)
-	if err != nil {
-		return err
-	}
-
-	generation.Output = t.LastMessage()
-	_, err = o.observer.GenerationEnd(generation)
-	return err
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

@@ -246,34 +246,18 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 }
 
 func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	span, err := o.observer.Span(
-		&observer.Span{
-			TraceID: o.observerTraceID,
-			Name:    o.name,
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.name,
+		string(o.model),
+		types.M{
+			// TODO: Add maxTokens parameter
+			// "maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
 		},
+		o.observerTraceID,
+		t,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	generation, err := o.observer.Generation(
-		&observer.Generation{
-			TraceID:  o.observerTraceID,
-			ParentID: span.ID,
-			Name:     fmt.Sprintf("%s-%s", o.name, o.model),
-			Model:    o.model,
-			ModelParameters: types.M{
-				// TODO: Add maxTokens support
-				// "maxTokens":   o.maxTokens,
-				"temperature": o.temperature,
-			},
-			Input: t.Messages,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return span, generation, nil
 }
 
 func (o *Ollama) stopObserveGeneration(
@@ -281,12 +265,10 @@ func (o *Ollama) stopObserveGeneration(
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
-	_, err := o.observer.SpanEnd(span)
-	if err != nil {
-		return err
-	}
-
-	generation.Output = t.LastMessage()
-	_, err = o.observer.GenerationEnd(generation)
-	return err
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }
