@@ -9,9 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/llm/cache"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 const (
@@ -37,6 +40,13 @@ const (
 	EOS               = "\x00"
 )
 
+type Observer interface {
+	Span(*observer.Span) (*observer.Span, error)
+	SpanEnd(*observer.Span) (*observer.Span, error)
+	Generation(*observer.Generation) (*observer.Generation, error)
+	GenerationEnd(*observer.Generation) (*observer.Generation, error)
+}
+
 type StreamCallbackFn func(string)
 
 type Antropic struct {
@@ -48,6 +58,8 @@ type Antropic struct {
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
+	observer         Observer
+	observerTraceID  string
 }
 
 func New() *Antropic {
@@ -90,6 +102,12 @@ func (o *Antropic) WithTemperature(temperature float64) *Antropic {
 
 func (o *Antropic) WithMaxTokens(maxTokens int) *Antropic {
 	o.maxTokens = maxTokens
+	return o
+}
+
+func (o *Antropic) WithObserver(observer Observer, traceID string) *Antropic {
+	o.observer = observer
+	o.observerTraceID = traceID
 	return o
 }
 
@@ -151,14 +169,29 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
 	} else {
 		err = o.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
 	}
 
 	if o.cache != nil {
@@ -248,4 +281,49 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 	))
 
 	return nil
+}
+
+func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	span, err := o.observer.Span(
+		&observer.Span{
+			TraceID: o.observerTraceID,
+			Name:    "antropic",
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	generation, err := o.observer.Generation(
+		&observer.Generation{
+			TraceID:  o.observerTraceID,
+			ParentID: span.ID,
+			Name:     fmt.Sprintf("antropic-%s", o.model),
+			Model:    string(o.model),
+			ModelParameters: types.M{
+				"maxTokens":   o.maxTokens,
+				"temperature": o.temperature,
+			},
+			Input: t.Messages,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return span, generation, nil
+}
+
+func (o *Antropic) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	_, err := o.observer.SpanEnd(span)
+	if err != nil {
+		return err
+	}
+
+	generation.Output = t.LastMessage()
+	_, err = o.observer.GenerationEnd(generation)
+	return err
 }
