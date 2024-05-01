@@ -2,7 +2,7 @@
 title: "Observer"
 description:
 linkTitle: "Observer"
-menu: { main: { parent: 'reference', weight: -90 } }
+menu: { main: { parent: 'reference', weight: -92 } }
 ---
 
 ## Observer
