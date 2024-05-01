@@ -283,7 +283,7 @@ func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *ob
 	return llmobserver.SartObserveGeneration(
 		o.observer,
 		o.name,
-		string(o.model),
+		o.model,
 		types.M{
 			"maxTokens":   o.maxTokens,
 			"temperature": o.temperature,
