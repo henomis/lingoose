@@ -45,6 +45,7 @@ type OpenAI struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
+	Name             string
 	observer         Observer
 	observerTraceID  string
 }
@@ -136,6 +137,7 @@ func New() *OpenAI {
 		temperature:  DefaultOpenAITemperature,
 		maxTokens:    DefaultOpenAIMaxTokens,
 		functions:    make(map[string]Function),
+		Name:         "openai",
 	}
 }
 
@@ -446,7 +448,7 @@ func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 	span, err := o.observer.Span(
 		&observer.Span{
 			TraceID: o.observerTraceID,
-			Name:    "openai",
+			Name:    o.Name,
 		},
 	)
 	if err != nil {
@@ -457,7 +459,7 @@ func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 		&observer.Generation{
 			TraceID:  o.observerTraceID,
 			ParentID: span.ID,
-			Name:     fmt.Sprintf("openai-%s", o.model),
+			Name:     fmt.Sprintf("%s-%s", o.Name, o.model),
 			Model:    string(o.model),
 			ModelParameters: types.M{
 				"maxTokens":   o.maxTokens,
