@@ -11,9 +11,12 @@ import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
+
 	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/cache"
+	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 var (
@@ -35,6 +38,13 @@ const (
 	DefaultModel       = ModelCommand
 )
 
+type Observer interface {
+	Span(*observer.Span) (*observer.Span, error)
+	SpanEnd(*observer.Span) (*observer.Span, error)
+	Generation(*observer.Generation) (*observer.Generation, error)
+	GenerationEnd(*observer.Generation) (*observer.Generation, error)
+}
+
 type StreamCallbackFn func(string)
 
 type Cohere struct {
@@ -46,6 +56,8 @@ type Cohere struct {
 	stop             []string
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
+	observer         Observer
+	observerTraceID  string
 }
 
 func (c *Cohere) WithCache(cache *cache.Cache) *Cohere {
@@ -105,6 +117,12 @@ func (c *Cohere) WithStop(stop []string) *Cohere {
 
 func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 	c.streamCallbackFn = callbackFn
+	return c
+}
+
+func (c *Cohere) WithObserver(observer Observer, traceID string) *Cohere {
+	c.observer = observer
+	c.observerTraceID = traceID
 	return c
 }
 
@@ -205,14 +223,29 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := c.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if c.observer != nil {
+		span, generation, err = c.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
+		}
+	}
+
 	if c.streamCallbackFn != nil {
 		err = c.stream(ctx, t, chatRequest)
 	} else {
 		err = c.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if c.observer != nil {
+		err = c.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrCohereChat, err)
+		}
 	}
 
 	if c.cache != nil {
@@ -268,4 +301,49 @@ func (c *Cohere) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	))
 
 	return nil
+}
+
+func (c *Cohere) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	span, err := c.observer.Span(
+		&observer.Span{
+			TraceID: c.observerTraceID,
+			Name:    "cohere",
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	generation, err := c.observer.Generation(
+		&observer.Generation{
+			TraceID:  c.observerTraceID,
+			ParentID: span.ID,
+			Name:     fmt.Sprintf("cohere-%s", c.model),
+			Model:    string(c.model),
+			ModelParameters: types.M{
+				"maxTokens":   c.maxTokens,
+				"temperature": c.temperature,
+			},
+			Input: t.Messages,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return span, generation, nil
+}
+
+func (c *Cohere) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	_, err := c.observer.SpanEnd(span)
+	if err != nil {
+		return err
+	}
+
+	generation.Output = t.LastMessage()
+	_, err = c.observer.GenerationEnd(generation)
+	return err
 }
