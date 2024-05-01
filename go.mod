@@ -1,15 +1,14 @@
 module github.com/henomis/lingoose
 
-go 1.21
-
-toolchain go1.21.1
+go 1.21.1
 
 require github.com/mitchellh/mapstructure v1.5.0
 
 require (
 	github.com/RediSearch/redisearch-go/v2 v2.1.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/henomis/cohere-go v1.1.2
+	github.com/henomis/langfuse-go v0.0.3
 	github.com/henomis/milvus-go v0.0.4
 	github.com/henomis/pinecone-go/v2 v2.0.0
 	github.com/henomis/qdrant-go v1.1.0
