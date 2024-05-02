@@ -9,9 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/thread"
 )
 
 const (
@@ -57,10 +60,13 @@ type Anthropic struct {
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
-	functions        map[string]Function
 	apiVersion       string
 	apiKey           string
 	maxTokens        int
+	name             string
+	observer         llmobserver.LLMObserver
+	observerTraceID  string
+	functions        map[string]Function
 }
 
 func New() *Anthropic {
@@ -105,6 +111,12 @@ func (o *Anthropic) WithTemperature(temperature float64) *Anthropic {
 
 func (o *Anthropic) WithMaxTokens(maxTokens int) *Anthropic {
 	o.maxTokens = maxTokens
+	return o
+}
+
+func (o *Anthropic) WithObserver(observer llmobserver.LLMObserver, traceID string) *Anthropic {
+	o.observer = observer
+	o.observerTraceID = traceID
 	return o
 }
 
@@ -166,14 +178,29 @@ func (o *Anthropic) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
+	var span *observer.Span
+	var generation *observer.Generation
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatRequest)
 	} else {
 		err = o.generate(ctx, t, chatRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
 	}
 
 	if o.cache != nil {

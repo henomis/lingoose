@@ -8,11 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
 	openai "github.com/sashabaranov/go-openai"
+
+	"github.com/henomis/lingoose/llm/cache"
+	llmobserver "github.com/henomis/lingoose/llm/observer"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 const (
@@ -37,6 +40,9 @@ type OpenAI struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
+	Name             string
+	observer         llmobserver.LLMObserver
+	observerTraceID  string
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -95,6 +101,12 @@ func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	return o
 }
 
+func (o *OpenAI) WithObserver(observer llmobserver.LLMObserver, traceID string) *OpenAI {
+	o.observer = observer
+	o.observerTraceID = traceID
+	return o
+}
+
 // SetStop sets the stop sequences for the completion.
 func (o *OpenAI) SetStop(stop []string) {
 	o.stop = stop
@@ -120,6 +132,7 @@ func New() *OpenAI {
 		temperature:  DefaultOpenAITemperature,
 		maxTokens:    DefaultOpenAIMaxTokens,
 		functions:    make(map[string]Function),
+		Name:         "openai",
 	}
 }
 
@@ -186,14 +199,30 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
+	var span *observer.Span
+	var generation *observer.Generation
+
+	if o.observer != nil {
+		span, generation, err = o.startObserveGeneration(t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
+	}
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatCompletionRequest)
 	} else {
 		err = o.generate(ctx, t, chatCompletionRequest)
 	}
-
 	if err != nil {
 		return err
+	}
+
+	if o.observer != nil {
+		err = o.stopObserveGeneration(span, generation, t)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
+		}
 	}
 
 	if o.cache != nil {
@@ -408,4 +437,31 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 	}
 
 	return messages
+}
+
+func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	return llmobserver.SartObserveGeneration(
+		o.observer,
+		o.Name,
+		string(o.model),
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
+		},
+		o.observerTraceID,
+		t,
+	)
+}
+
+func (o *OpenAI) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

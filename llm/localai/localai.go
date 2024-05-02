@@ -17,6 +17,7 @@ func New(endpoint string) *LocalAI {
 	customClient := goopenai.NewClientWithConfig(customConfig)
 
 	openaillm := openai.New().WithClient(customClient)
+	openaillm.Name = "localai"
 	return &LocalAI{
 		OpenAI: openaillm,
 	}
