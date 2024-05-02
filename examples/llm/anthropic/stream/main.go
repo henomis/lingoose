@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/henomis/lingoose/llm/anthropic"
 
+	"github.com/henomis/lingoose/llm/anthropic"
 	"github.com/henomis/lingoose/thread"
 )
 
 func main() {
-	antropicllm := anthropic.New().WithModel("claude-3-opus-20240229").WithStream(
+	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229").WithStream(
 		func(response string) {
 			if response != anthropic.EOS {
 				fmt.Print(response)
@@ -25,7 +25,7 @@ func main() {
 		),
 	)
 
-	err := antropicllm.Generate(context.Background(), t)
+	err := anthropicllm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}

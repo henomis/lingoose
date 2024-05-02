@@ -9,12 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/restclientgo"
-
 	"github.com/henomis/lingoose/llm/cache"
 	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
+	"github.com/henomis/restclientgo"
 )
 
 const (
@@ -320,4 +320,31 @@ func (o *Anthropic) callTool(toolCall content) (*thread.Content, error) {
 		toolResponseData.Result = resultAsJSON
 	}
 	return thread.NewToolResponseContent(toolResponseData), nil
+}
+
+func (o *Anthropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+	return llmobserver.StartObserveGeneration(
+		o.observer,
+		o.name,
+		string(o.model),
+		types.M{
+			"maxTokens":   o.maxTokens,
+			"temperature": o.temperature,
+		},
+		o.observerTraceID,
+		t,
+	)
+}
+
+func (o *Anthropic) stopObserveGeneration(
+	span *observer.Span,
+	generation *observer.Generation,
+	t *thread.Thread,
+) error {
+	return llmobserver.StopObserveGeneration(
+		o.observer,
+		span,
+		generation,
+		t,
+	)
 }

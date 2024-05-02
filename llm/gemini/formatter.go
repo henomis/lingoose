@@ -1,10 +1,11 @@
 package gemini
 
 import (
-	"cloud.google.com/go/vertexai/genai"
 	"fmt"
-	"github.com/henomis/lingoose/thread"
 	"strings"
+
+	"cloud.google.com/go/vertexai/genai"
+	"github.com/henomis/lingoose/thread"
 )
 
 func threadToPartMessage(t *thread.Thread) []genai.Part {

@@ -15,7 +15,7 @@ type LLMObserver interface {
 	GenerationEnd(*obs.Generation) (*obs.Generation, error)
 }
 
-func SartObserveGeneration(
+func StartObserveGeneration(
 	o LLMObserver,
 	name string,
 	modelName string,

@@ -1,8 +1,9 @@
 package anthropic
 
 import (
-	"github.com/henomis/lingoose/thread"
 	"strings"
+
+	"github.com/henomis/lingoose/thread"
 )
 
 func (o *Anthropic) buildChatCompletionRequest(t *thread.Thread) *request {

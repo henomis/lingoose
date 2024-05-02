@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/invopop/jsonschema"
 	"reflect"
+
+	"github.com/invopop/jsonschema"
 )
 
 type Function struct {

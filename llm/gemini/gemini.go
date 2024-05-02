@@ -1,15 +1,16 @@
 package gemini
 
 import (
-	"cloud.google.com/go/vertexai/genai"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
+	"cloud.google.com/go/vertexai/genai"
 	"github.com/henomis/lingoose/llm/cache"
 	"github.com/henomis/lingoose/thread"
 	"google.golang.org/api/iterator"
-	"strings"
 )
 
 const (

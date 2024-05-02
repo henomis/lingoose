@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/henomis/lingoose/llm/anthropic"
 
+	"github.com/henomis/lingoose/llm/anthropic"
 	"github.com/henomis/lingoose/thread"
 )
 

@@ -8,13 +8,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/henomis/restclientgo"
-
 	"github.com/henomis/lingoose/llm/cache"
 	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
+	"github.com/henomis/restclientgo"
 )
 
 const (
@@ -246,7 +245,7 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 }
 
 func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+	return llmobserver.StartObserveGeneration(
 		o.observer,
 		o.name,
 		o.model,

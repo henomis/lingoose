@@ -1,12 +1,13 @@
 package main
 
 import (
-	"cloud.google.com/go/vertexai/genai"
 	"context"
 	"fmt"
+	"os"
+
+	"cloud.google.com/go/vertexai/genai"
 	"github.com/henomis/lingoose/llm/gemini"
 	"google.golang.org/api/option"
-	"os"
 )
 
 var (

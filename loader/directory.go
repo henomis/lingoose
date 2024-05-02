@@ -3,12 +3,11 @@ package loader
 import (
 	"context"
 	"fmt"
-
-	"github.com/henomis/lingoose/document"
-
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/henomis/lingoose/document"
 )
 
 type DirectoryLoader struct {

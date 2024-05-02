@@ -3,7 +3,6 @@ package types
 import "encoding/json"
 
 type M map[string]interface{}
-
 type Meta map[string]interface{}
 
 // String returns the metadata as a JSON string

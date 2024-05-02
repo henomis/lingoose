@@ -3,9 +3,10 @@ package openai
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+
 	"github.com/henomis/lingoose/thread"
 	"github.com/sashabaranov/go-openai"
-	"regexp"
 )
 
 //nolint:gocognit

@@ -11,7 +11,6 @@ import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
-
 	"github.com/henomis/lingoose/legacy/chat"
 	"github.com/henomis/lingoose/llm/cache"
 	llmobserver "github.com/henomis/lingoose/llm/observer"
@@ -300,7 +299,7 @@ func (c *Cohere) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 }
 
 func (c *Cohere) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+	return llmobserver.StartObserveGeneration(
 		c.observer,
 		c.name,
 		string(c.model),

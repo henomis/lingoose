@@ -7,11 +7,10 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/RediSearch/redisearch-go/v2/redisearch"
 	"github.com/google/uuid"
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
-
-	"github.com/RediSearch/redisearch-go/v2/redisearch"
 )
 
 var _ index.VectorDB = &DB{}

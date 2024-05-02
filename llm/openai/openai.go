@@ -8,14 +8,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-	openai "github.com/sashabaranov/go-openai"
-
 	"github.com/henomis/lingoose/llm/cache"
 	llmobserver "github.com/henomis/lingoose/llm/observer"
 	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
+	"github.com/mitchellh/mapstructure"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 const (
@@ -440,7 +439,7 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 }
 
 func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+	return llmobserver.StartObserveGeneration(
 		o.observer,
 		o.Name,
 		string(o.model),
