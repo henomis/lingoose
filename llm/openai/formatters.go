@@ -1,8 +1,11 @@
 package openai
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/henomis/lingoose/thread"
 	"github.com/sashabaranov/go-openai"
+	"regexp"
 )
 
 //nolint:gocognit
@@ -119,6 +122,11 @@ func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
 
 	var toolCallData []thread.ToolCallData
 	for _, toolCall := range toolCalls {
+		bts, _ := json.Marshal(toolCall)
+		fmt.Println("Tool invoked: ", string(bts))
+		if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(toolCall.Function.Name) {
+			fmt.Println("Regex failure")
+		}
 		toolCallData = append(toolCallData, thread.ToolCallData{
 			ID:        toolCall.ID,
 			Name:      toolCall.Function.Name,
