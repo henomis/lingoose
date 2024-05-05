@@ -199,11 +199,9 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
-	var span *observer.Span
 	var generation *observer.Generation
-
 	if o.observer != nil {
-		span, generation, err = o.startObserveGeneration(t)
+		generation, err = o.startObserveGeneration(ctx, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 		}
@@ -219,7 +217,7 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if o.observer != nil {
-		err = o.stopObserveGeneration(span, generation, t)
+		err = o.stopObserveGeneration(generation, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 		}
@@ -439,8 +437,8 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 	return messages
 }
 
-func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+func (o *OpenAI) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
+	return llmobserver.StartObserveGeneration(
 		o.observer,
 		o.Name,
 		string(o.model),
@@ -449,18 +447,17 @@ func (o *OpenAI) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 			"temperature": o.temperature,
 		},
 		o.observerTraceID,
+		observer.ExtractParentIDFromContext(ctx),
 		t,
 	)
 }
 
 func (o *OpenAI) stopObserveGeneration(
-	span *observer.Span,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		o.observer,
-		span,
 		generation,
 		t,
 	)

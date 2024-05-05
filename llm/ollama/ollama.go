@@ -144,10 +144,9 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
-	var span *observer.Span
 	var generation *observer.Generation
 	if o.observer != nil {
-		span, generation, err = o.startObserveGeneration(t)
+		generation, err = o.startObserveGeneration(ctx, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 		}
@@ -163,7 +162,7 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if o.observer != nil {
-		err = o.stopObserveGeneration(span, generation, t)
+		err = o.stopObserveGeneration(generation, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 		}
@@ -245,8 +244,8 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	return nil
 }
 
-func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+func (o *Ollama) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
+	return llmobserver.StartObserveGeneration(
 		o.observer,
 		o.name,
 		o.model,
@@ -256,18 +255,17 @@ func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 			"temperature": o.temperature,
 		},
 		o.observerTraceID,
+		observer.ExtractParentIDFromContext(ctx),
 		t,
 	)
 }
 
 func (o *Ollama) stopObserveGeneration(
-	span *observer.Span,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		o.observer,
-		span,
 		generation,
 		t,
 	)
