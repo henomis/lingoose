@@ -1,10 +1,6 @@
 package openai
 
 import (
-	"encoding/json"
-	"fmt"
-	"regexp"
-
 	"github.com/henomis/lingoose/thread"
 	"github.com/sashabaranov/go-openai"
 )
@@ -116,6 +112,21 @@ func toolCallResultToThreadMessage(toolCall openai.ToolCall, result string) *thr
 	)
 }
 
+type T struct {
+	ToolUses []struct {
+		RecipientName string `json:"recipient_name"`
+		Parameters    struct {
+			Coupons []interface{} `json:"coupons"`
+			Items   []struct {
+				Category  string        `json:"category"`
+				Modifiers []interface{} `json:"modifiers"`
+				Name      string        `json:"name"`
+				Product   string        `json:"product"`
+			} `json:"items"`
+		} `json:"parameters"`
+	} `json:"tool_uses"`
+}
+
 func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
 	if len(toolCalls) == 0 {
 		return nil
@@ -123,11 +134,6 @@ func toolCallsToToolCallMessage(toolCalls []openai.ToolCall) *thread.Message {
 
 	var toolCallData []thread.ToolCallData
 	for _, toolCall := range toolCalls {
-		bts, _ := json.Marshal(toolCall)
-		fmt.Println("Tool invoked: ", string(bts))
-		if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(toolCall.Function.Name) {
-			fmt.Println("Regex failure")
-		}
 		toolCallData = append(toolCallData, thread.ToolCallData{
 			ID:        toolCall.ID,
 			Name:      toolCall.Function.Name,

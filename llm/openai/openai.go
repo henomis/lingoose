@@ -2,6 +2,7 @@ package openai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -209,6 +210,7 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if o.streamCallbackFn != nil {
+		chatCompletionRequest.StreamOptions = &openai.StreamOptions{IncludeUsage: true}
 		err = o.stream(ctx, t, chatCompletionRequest)
 	} else {
 		err = o.generate(ctx, t, chatCompletionRequest)
@@ -267,7 +269,7 @@ func (o *OpenAI) handleEndOfStream(
 		))
 	}
 	if currentToolCall.ID != "" {
-		allToolCalls = append(allToolCalls, *currentToolCall)
+		allToolCalls = o.convertParallelToolCallsToIndividualCalls(append(allToolCalls, *currentToolCall))
 		messages = append(messages, toolCallsToToolCallMessage(allToolCalls))
 		messages = append(messages, o.callTools(allToolCalls)...)
 	}
@@ -299,7 +301,14 @@ func (o *OpenAI) stream(
 		}
 
 		if len(response.Choices) == 0 {
-			return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
+			if response.Usage != nil {
+				if o.usageCallback != nil {
+					o.setUsageMetadata(*response.Usage)
+				}
+			} else {
+				return fmt.Errorf("%w: no choices returned", ErrOpenAIChat)
+			}
+			continue
 		}
 
 		if isStreamToolCallResponse(&response) {
@@ -320,6 +329,40 @@ func (o *OpenAI) stream(
 	t.AddMessages(messages...)
 
 	return nil
+}
+
+func (o *OpenAI) convertParallelToolCallsToIndividualCalls(toolCalls []openai.ToolCall) []openai.ToolCall {
+	if len(toolCalls) == 0 {
+		return nil
+	}
+
+	var toolCallData []openai.ToolCall
+	for _, toolCall := range toolCalls {
+		if toolCall.Function.Name == "multi_tool_use.parallel" {
+			fmt.Println("Got parallel tool use", toolCall)
+			var parallelToolCall struct {
+				ToolUses []struct {
+					RecipientName string `json:"recipient_name"`
+					Parameters    string `json:"parameters"`
+				} `json:"tool_uses"`
+			}
+			_ = json.Unmarshal([]byte(toolCall.Function.Arguments), &parallelToolCall)
+			for index, toolUse := range parallelToolCall.ToolUses {
+				toolCallData = append(toolCallData, openai.ToolCall{
+					Index: &index,
+					ID:    toolCall.ID,
+					Type:  openai.ToolTypeFunction,
+					Function: openai.FunctionCall{
+						Name:      strings.TrimPrefix("function.", toolUse.RecipientName),
+						Arguments: toolUse.Parameters,
+					},
+				})
+			}
+		} else {
+			toolCallData = append(toolCallData, toolCall)
+		}
+	}
+	return toolCallData
 }
 
 func (o *OpenAI) generate(
@@ -345,8 +388,9 @@ func (o *OpenAI) generate(
 
 	var messages []*thread.Message
 	if response.Choices[0].FinishReason == "tool_calls" || len(response.Choices[0].Message.ToolCalls) > 0 {
-		messages = append(messages, toolCallsToToolCallMessage(response.Choices[0].Message.ToolCalls))
-		messages = append(messages, o.callTools(response.Choices[0].Message.ToolCalls)...)
+		toolCalls := o.convertParallelToolCallsToIndividualCalls(response.Choices[0].Message.ToolCalls)
+		messages = append(messages, toolCallsToToolCallMessage(toolCalls))
+		messages = append(messages, o.callTools(toolCalls)...)
 	} else {
 		messages = []*thread.Message{
 			thread.NewAssistantMessage().AddContent(

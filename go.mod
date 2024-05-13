@@ -15,7 +15,7 @@ require (
 	github.com/henomis/qdrant-go v1.1.0
 	github.com/henomis/restclientgo v1.2.0
 	github.com/invopop/jsonschema v0.12.0
-	github.com/sashabaranov/go-openai v1.21.0
+	github.com/sashabaranov/go-openai v1.23.1
 	google.golang.org/api v0.172.0
 )
 
