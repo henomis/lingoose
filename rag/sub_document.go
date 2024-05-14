@@ -64,7 +64,7 @@ func (r *SubDocumentRAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) 
 func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) error {
 	ctx, span, err := r.startObserveSpan(
 		ctx,
-		"SubDocumentRAG AddSources",
+		"rag-subdocument-add-sources",
 		types.M{
 			"chunkSize":      r.chunkSize,
 			"childChunkSize": r.childChunkSize,

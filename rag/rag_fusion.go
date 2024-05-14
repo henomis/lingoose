@@ -34,7 +34,7 @@ func NewFusion(index *index.Index, llm LLM) *Fusion {
 func (r *Fusion) Retrieve(ctx context.Context, query string) ([]string, error) {
 	ctx, span, err := r.startObserveSpan(
 		ctx,
-		"RAGFusion Retrieve",
+		"rag-fusion-retrieve",
 		types.M{
 			"query": query,
 			"topK":  r.topK,

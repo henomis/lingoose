@@ -85,7 +85,7 @@ func (r *RAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) *RAG {
 func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
 	ctx, span, err := r.startObserveSpan(
 		ctx,
-		"RAG AddSources",
+		"rag-add-source",
 		types.M{
 			"chunkSize":    r.chunkSize,
 			"chunkOverlap": r.chunkOverlap,
@@ -118,7 +118,7 @@ func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
 func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) error {
 	ctx, span, err := r.startObserveSpan(
 		ctx,
-		"RAG AddDocument",
+		"rag-add-document",
 		types.M{
 			"chunkSize":    r.chunkSize,
 			"chunkOverlap": r.chunkOverlap,
@@ -144,7 +144,7 @@ func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) 
 func (r *RAG) Retrieve(ctx context.Context, query string) ([]string, error) {
 	ctx, span, err := r.startObserveSpan(
 		ctx,
-		"RAG Retrieve",
+		"rag-retrieve",
 		types.M{
 			"query": query,
 			"topK":  r.topK,
