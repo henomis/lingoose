@@ -53,7 +53,7 @@ type Score struct {
 	Value   float64
 }
 
-func ExtractParentIDFromContext(ctx context.Context) string {
+func ContextValueParentID(ctx context.Context) string {
 	parentID, ok := ctx.Value(ContextKeyParentID).(string)
 	if !ok {
 		return ""
@@ -61,18 +61,10 @@ func ExtractParentIDFromContext(ctx context.Context) string {
 	return parentID
 }
 
-func StoreParentIDInContext(ctx context.Context, parentID string) context.Context {
+func ContextWithParentID(ctx context.Context, parentID string) context.Context {
 	return context.WithValue(ctx, ContextKeyParentID, parentID)
 }
 
-func ExtractGenerationFromContext(ctx context.Context) Generation {
-	generation, ok := ctx.Value(ContextKeyGeneration).(Generation)
-	if !ok {
-		return Generation{}
-	}
-	return generation
-}
-
-func StoreGenerationInContext(ctx context.Context, generation Generation) context.Context {
-	return context.WithValue(ctx, ContextKeyGeneration, generation)
+func ContextWithouthParentID(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ContextKeyParentID, "")
 }

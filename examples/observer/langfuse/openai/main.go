@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	ctx = observer.StoreParentIDInContext(ctx, span.ID)
+	ctx = observer.ContextWithParentID(ctx, span.ID)
 
 	openaillm := openai.New().WithObserver(o, trace.ID)
 

@@ -288,7 +288,7 @@ func (o *Antropic) startObserveGeneration(ctx context.Context, t *thread.Thread)
 			"temperature": o.temperature,
 		},
 		o.observerTraceID,
-		observer.ExtractParentIDFromContext(ctx),
+		observer.ContextValueParentID(ctx),
 		t,
 	)
 }

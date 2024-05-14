@@ -308,7 +308,7 @@ func (c *Cohere) startObserveGeneration(ctx context.Context, t *thread.Thread) (
 			"temperature": c.temperature,
 		},
 		c.observerTraceID,
-		observer.ExtractParentIDFromContext(ctx),
+		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
