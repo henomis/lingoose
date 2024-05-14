@@ -165,10 +165,9 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
-	var span *observer.Span
 	var generation *observer.Generation
 	if o.observer != nil {
-		span, generation, err = o.startObserveGeneration(t)
+		generation, err = o.startObserveGeneration(ctx, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 		}
@@ -184,7 +183,7 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if o.observer != nil {
-		err = o.stopObserveGeneration(span, generation, t)
+		err = o.stopObserveGeneration(generation, t)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 		}
@@ -279,8 +278,8 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 	return nil
 }
 
-func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
-	return llmobserver.SartObserveGeneration(
+func (o *Antropic) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
+	return llmobserver.StartObserveGeneration(
 		o.observer,
 		o.name,
 		o.model,
@@ -289,18 +288,17 @@ func (o *Antropic) startObserveGeneration(t *thread.Thread) (*observer.Span, *ob
 			"temperature": o.temperature,
 		},
 		o.observerTraceID,
+		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
 
 func (o *Antropic) stopObserveGeneration(
-	span *observer.Span,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		o.observer,
-		span,
 		generation,
 		t,
 	)

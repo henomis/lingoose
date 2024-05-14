@@ -1,8 +1,17 @@
 package observer
 
 import (
+	"context"
+
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
+)
+
+type ContextKey string
+
+const (
+	ContextKeyParentID   ContextKey = "observerParentID"
+	ContextKeyGeneration ContextKey = "observerGeneration"
 )
 
 type Trace struct {
@@ -42,4 +51,20 @@ type Score struct {
 	TraceID string
 	Name    string
 	Value   float64
+}
+
+func ContextValueParentID(ctx context.Context) string {
+	parentID, ok := ctx.Value(ContextKeyParentID).(string)
+	if !ok {
+		return ""
+	}
+	return parentID
+}
+
+func ContextWithParentID(ctx context.Context, parentID string) context.Context {
+	return context.WithValue(ctx, ContextKeyParentID, parentID)
+}
+
+func ContextWithouthParentID(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ContextKeyParentID, "")
 }

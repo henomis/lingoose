@@ -10,11 +10,25 @@ import (
 )
 
 func main() {
-	o := langfuse.New(context.Background())
+	ctx := context.Background()
+
+	o := langfuse.New(ctx)
 	trace, err := o.Trace(&observer.Trace{Name: "Who are you"})
 	if err != nil {
 		panic(err)
 	}
+
+	span, err := o.Span(
+		&observer.Span{
+			TraceID: trace.ID,
+			Name:    "SPAN",
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx = observer.ContextWithParentID(ctx, span.ID)
 
 	openaillm := openai.New().WithObserver(o, trace.ID)
 
@@ -24,10 +38,10 @@ func main() {
 		),
 	)
 
-	err = openaillm.Generate(context.Background(), t)
+	err = openaillm.Generate(ctx, t)
 	if err != nil {
 		panic(err)
 	}
 
-	o.Flush(context.Background())
+	o.Flush(ctx)
 }
