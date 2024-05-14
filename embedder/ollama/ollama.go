@@ -3,8 +3,11 @@ package ollamaembedder
 import (
 	"context"
 
-	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
+	"github.com/henomis/lingoose/observer"
 )
 
 const (
@@ -13,14 +16,18 @@ const (
 )
 
 type Embedder struct {
-	model      string
-	restClient *restclientgo.RestClient
+	model           string
+	restClient      *restclientgo.RestClient
+	name            string
+	observer        embobserver.EmbeddingObserver
+	observerTraceID string
 }
 
 func New() *Embedder {
 	return &Embedder{
 		restClient: restclientgo.New(defaultEndpoint),
 		model:      defaultModel,
+		name:       "ollama",
 	}
 }
 
@@ -34,15 +41,50 @@ func (e *Embedder) WithModel(model string) *Embedder {
 	return e
 }
 
+func (e *Embedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *Embedder {
+	e.observer = observer
+	e.observerTraceID = traceID
+	return e
+}
+
 // Embed returns the embeddings for the given texts
 func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	embeddings := make([]embedder.Embedding, len(texts))
-	for i, text := range texts {
-		embedding, err := e.embed(ctx, text)
+	var observerEmbedding *observer.Embedding
+	var err error
+
+	if e.observer != nil {
+		observerEmbedding, err = embobserver.StartObserveEmbedding(
+			e.observer,
+			e.name,
+			e.model,
+			nil,
+			e.observerTraceID,
+			observer.ContextValueParentID(ctx),
+			texts,
+		)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	embeddings := make([]embedder.Embedding, len(texts))
+	for i, text := range texts {
+		embedding, errEmbedd := e.embed(ctx, text)
+		if errEmbedd != nil {
+			return nil, errEmbedd
+		}
 		embeddings[i] = embedding
+	}
+
+	if e.observer != nil {
+		err = embobserver.StopObserveEmbedding(
+			e.observer,
+			observerEmbedding,
+			embeddings,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return embeddings, nil

@@ -82,6 +82,20 @@ func observerGenerationToLangfuseGeneration(g *observer.Generation) *model.Gener
 	}
 }
 
+func observerEmbeddingToLangfuseGeneration(e *observer.Embedding) *model.Generation {
+	return &model.Generation{
+		ID:                  e.ID,
+		TraceID:             e.TraceID,
+		Name:                e.Name,
+		ParentObservationID: e.ParentID,
+		Model:               e.Model,
+		ModelParameters:     e.ModelParameters,
+		Input:               e.Input,
+		Output:              e.Output,
+		Metadata:            e.Metadata,
+	}
+}
+
 func observerEventToLangfuseEvent(e *observer.Event) *model.Event {
 	return &model.Event{
 		ID:                  e.ID,

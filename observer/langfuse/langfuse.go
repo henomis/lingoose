@@ -69,6 +69,25 @@ func (l *Langfuse) GenerationEnd(g *observer.Generation) (*observer.Generation, 
 	return g, nil
 }
 
+func (l *Langfuse) Embedding(e *observer.Embedding) (*observer.Embedding, error) {
+	langfuseGeneration := observerEmbeddingToLangfuseGeneration(e)
+	langfuseGeneration, err := l.client.Generation(langfuseGeneration, nil)
+	if err != nil {
+		return nil, err
+	}
+	e.ID = langfuseGeneration.ID
+	return e, nil
+}
+
+func (l *Langfuse) EmbeddingEnd(e *observer.Embedding) (*observer.Embedding, error) {
+	langfuseGeneration := observerEmbeddingToLangfuseGeneration(e)
+	_, err := l.client.Generation(langfuseGeneration, nil)
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
 func (l *Langfuse) Event(e *observer.Event) (*observer.Event, error) {
 	langfuseEvent := observerEventToLangfuseEvent(e)
 	langfuseEvent, err := l.client.Event(langfuseEvent, nil)
