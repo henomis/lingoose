@@ -25,6 +25,8 @@ type Span struct {
 	ParentID string
 	TraceID  string
 	Name     string
+	Input    any
+	Output   any
 }
 
 type Generation struct {
