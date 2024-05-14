@@ -27,6 +27,7 @@ func New() *Embedder {
 	return &Embedder{
 		restClient: restclientgo.New(defaultEndpoint),
 		model:      defaultModel,
+		name:       "ollama",
 	}
 }
 
