@@ -82,19 +82,19 @@ func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) erro
 	}
 
 	for _, source := range sources {
-		documents, err := r.addSource(ctx, source)
-		if err != nil {
-			return err
+		documents, errAddSource := r.addSource(ctx, source)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		subDocuments, err := r.generateSubDocuments(ctx, documents)
-		if err != nil {
-			return err
+		subDocuments, errAddSource := r.generateSubDocuments(ctx, documents)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		err = r.index.LoadFromDocuments(ctx, subDocuments)
-		if err != nil {
-			return err
+		errAddSource = r.index.LoadFromDocuments(ctx, subDocuments)
+		if errAddSource != nil {
+			return errAddSource
 		}
 	}
 

@@ -109,14 +109,14 @@ func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
 	}
 
 	for _, source := range sources {
-		documents, err := r.addSource(ctx, source)
-		if err != nil {
-			return err
+		documents, errAddSource := r.addSource(ctx, source)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		err = r.index.LoadFromDocuments(ctx, documents)
-		if err != nil {
-			return err
+		errAddSource = r.index.LoadFromDocuments(ctx, documents)
+		if errAddSource != nil {
+			return errAddSource
 		}
 	}
 

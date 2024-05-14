@@ -92,9 +92,9 @@ func (a *Assistant) Run(ctx context.Context) error {
 	}
 
 	if a.rag != nil {
-		err := a.generateRAGMessage(ctx)
-		if err != nil {
-			return err
+		errGenerate := a.generateRAGMessage(ctx)
+		if errGenerate != nil {
+			return errGenerate
 		}
 	}
 
