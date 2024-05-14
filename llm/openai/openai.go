@@ -41,8 +41,6 @@ type OpenAI struct {
 	toolChoice       *string
 	cache            *cache.Cache
 	Name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -98,12 +96,6 @@ func (o *OpenAI) WithStream(enable bool, callbackFn StreamCallback) *OpenAI {
 
 func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	o.cache = cache
-	return o
-}
-
-func (o *OpenAI) WithObserver(observer llmobserver.LLMObserver, traceID string) *OpenAI {
-	o.observer = observer
-	o.observerTraceID = traceID
 	return o
 }
 
@@ -199,12 +191,9 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
-	var generation *observer.Generation
-	if o.observer != nil {
-		generation, err = o.startObserveGeneration(ctx, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-		}
+	generation, err := o.startObserveGeneration(ctx, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	if o.streamCallbackFn != nil {
@@ -216,11 +205,9 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	if o.observer != nil {
-		err = o.stopObserveGeneration(generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
-		}
+	err = o.stopObserveGeneration(ctx, generation, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
 	if o.cache != nil {
@@ -439,25 +426,24 @@ func (o *OpenAI) callTools(toolCalls []openai.ToolCall) []*thread.Message {
 
 func (o *OpenAI) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
 	return llmobserver.StartObserveGeneration(
-		o.observer,
+		ctx,
 		o.Name,
 		string(o.model),
 		types.M{
 			"maxTokens":   o.maxTokens,
 			"temperature": o.temperature,
 		},
-		o.observerTraceID,
-		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
 
 func (o *OpenAI) stopObserveGeneration(
+	ctx context.Context,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
-		o.observer,
+		ctx,
 		generation,
 		t,
 	)

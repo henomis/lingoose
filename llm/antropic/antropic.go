@@ -53,8 +53,6 @@ type Antropic struct {
 	apiKey           string
 	maxTokens        int
 	name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
 }
 
 func New() *Antropic {
@@ -98,12 +96,6 @@ func (o *Antropic) WithTemperature(temperature float64) *Antropic {
 
 func (o *Antropic) WithMaxTokens(maxTokens int) *Antropic {
 	o.maxTokens = maxTokens
-	return o
-}
-
-func (o *Antropic) WithObserver(observer llmobserver.LLMObserver, traceID string) *Antropic {
-	o.observer = observer
-	o.observerTraceID = traceID
 	return o
 }
 
@@ -165,12 +157,9 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
-	var generation *observer.Generation
-	if o.observer != nil {
-		generation, err = o.startObserveGeneration(ctx, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
-		}
+	generation, err := o.startObserveGeneration(ctx, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
 
 	if o.streamCallbackFn != nil {
@@ -182,11 +171,9 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	if o.observer != nil {
-		err = o.stopObserveGeneration(generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
-		}
+	err = o.stopObserveGeneration(ctx, generation, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
 
 	if o.cache != nil {
@@ -280,25 +267,24 @@ func (o *Antropic) stream(ctx context.Context, t *thread.Thread, chatRequest *re
 
 func (o *Antropic) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
 	return llmobserver.StartObserveGeneration(
-		o.observer,
+		ctx,
 		o.name,
 		o.model,
 		types.M{
 			"maxTokens":   o.maxTokens,
 			"temperature": o.temperature,
 		},
-		o.observerTraceID,
-		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
 
 func (o *Antropic) stopObserveGeneration(
+	ctx context.Context,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
-		o.observer,
+		ctx,
 		generation,
 		t,
 	)

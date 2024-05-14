@@ -144,12 +144,9 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
-	var generation *observer.Generation
-	if o.observer != nil {
-		generation, err = o.startObserveGeneration(ctx, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
-		}
+	generation, err := o.startObserveGeneration(ctx, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
 	if o.streamCallbackFn != nil {
@@ -161,11 +158,9 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	if o.observer != nil {
-		err = o.stopObserveGeneration(generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
-		}
+	err = o.stopObserveGeneration(ctx, generation, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
 	if o.cache != nil {
@@ -246,26 +241,25 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 
 func (o *Ollama) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
 	return llmobserver.StartObserveGeneration(
-		o.observer,
+		ctx,
 		o.name,
-		o.model,
+		string(o.model),
 		types.M{
 			// TODO: Add maxTokens parameter
 			// "maxTokens":   o.maxTokens,
 			"temperature": o.temperature,
 		},
-		o.observerTraceID,
-		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
 
 func (o *Ollama) stopObserveGeneration(
+	ctx context.Context,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
-		o.observer,
+		ctx,
 		generation,
 		t,
 	)

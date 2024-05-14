@@ -1,8 +1,10 @@
 package observer
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/henomis/lingoose/observer"
 	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -14,18 +16,23 @@ type LLMObserver interface {
 }
 
 func StartObserveGeneration(
-	o LLMObserver,
+	// o LLMObserver,
+	ctx context.Context,
 	name string,
 	modelName string,
 	ModelParameters types.M,
-	traceID string,
-	parentID string,
 	t *thread.Thread,
 ) (*obs.Generation, error) {
+	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil, nil
+	}
+
 	generation, err := o.Generation(
 		&obs.Generation{
-			TraceID:         traceID,
-			ParentID:        parentID,
+			TraceID:         observer.ContextValueTraceID(ctx),
+			ParentID:        observer.ContextValueParentID(ctx),
 			Name:            fmt.Sprintf("llm-%s", name),
 			Model:           modelName,
 			ModelParameters: ModelParameters,
@@ -39,10 +46,16 @@ func StartObserveGeneration(
 }
 
 func StopObserveGeneration(
-	o LLMObserver,
+	ctx context.Context,
 	generation *obs.Generation,
 	t *thread.Thread,
 ) error {
+	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
 	generation.Output = t.LastMessage()
 	_, err := o.GenerationEnd(generation)
 	return err

@@ -27,6 +27,9 @@ func main() {
 		panic(err)
 	}
 
+	ctx = observer.ContextWithObserverInstance(ctx, o)
+	ctx = observer.ContextWithTraceID(ctx, trace.ID)
+
 	r := rag.New(
 		index.New(
 			jsondb.New().WithPersist("db.json"),
@@ -43,7 +46,7 @@ func main() {
 	}
 
 	a := assistant.New(
-		openai.New().WithTemperature(0).WithObserver(o, trace.ID),
+		openai.New().WithTemperature(0),
 	).WithParameters(
 		assistant.Parameters{
 			AssistantName:      "AI Pirate Assistant",
