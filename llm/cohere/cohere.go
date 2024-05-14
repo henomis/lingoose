@@ -219,12 +219,9 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := c.buildChatCompletionRequest(t)
 
-	var generation *observer.Generation
-	if c.observer != nil {
-		generation, err = c.startObserveGeneration(ctx, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrCohereChat, err)
-		}
+	generation, err := c.startObserveGeneration(ctx, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
 
 	if c.streamCallbackFn != nil {
@@ -236,11 +233,9 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	if c.observer != nil {
-		err = c.stopObserveGeneration(generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrCohereChat, err)
-		}
+	err = c.stopObserveGeneration(ctx, generation, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
 
 	if c.cache != nil {
@@ -300,25 +295,24 @@ func (c *Cohere) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 
 func (c *Cohere) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
 	return llmobserver.StartObserveGeneration(
-		c.observer,
+		ctx,
 		c.name,
 		string(c.model),
 		types.M{
 			"maxTokens":   c.maxTokens,
 			"temperature": c.temperature,
 		},
-		c.observerTraceID,
-		observer.ContextValueParentID(ctx),
 		t,
 	)
 }
 
 func (c *Cohere) stopObserveGeneration(
+	ctx context.Context,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
-		c.observer,
+		ctx,
 		generation,
 		t,
 	)

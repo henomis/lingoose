@@ -32,33 +32,27 @@ func NewFusion(index *index.Index, llm LLM) *Fusion {
 }
 
 func (r *Fusion) Retrieve(ctx context.Context, query string) ([]string, error) {
-	var err error
-	var span *obs.Span
-	if r.observer != nil {
-		span, err = r.startObserveSpan(
-			ctx,
-			"RAGFusion Retrieve",
-			types.M{
-				"query": query,
-				"topK":  r.topK,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		ctx = obs.ContextWithParentID(ctx, span.ID)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-fusion-retrieve",
+		types.M{
+			"query": query,
+			"topK":  r.topK,
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
+	ctx = obs.ContextWithParentID(ctx, span.ID)
 
 	texts, err := r.retrieve(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	if r.observer != nil {
-		err = r.stopObserveSpan(span)
-		if err != nil {
-			return nil, err
-		}
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return nil, err
 	}
 
 	return texts, nil

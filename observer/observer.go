@@ -11,8 +11,9 @@ import (
 type ContextKey string
 
 const (
-	ContextKeyParentID   ContextKey = "observerParentID"
-	ContextKeyGeneration ContextKey = "observerGeneration"
+	ContextKeyParentID         ContextKey = "observerParentID"
+	ContextKeyTraceID          ContextKey = "observerTraceID"
+	ContextKeyObserverInstance ContextKey = "observerInstance"
 )
 
 type Trace struct {
@@ -76,10 +77,26 @@ func ContextValueParentID(ctx context.Context) string {
 	return parentID
 }
 
+func ContextValueTraceID(ctx context.Context) string {
+	traceID, ok := ctx.Value(ContextKeyTraceID).(string)
+	if !ok {
+		return ""
+	}
+	return traceID
+}
+
+func ContextValueObserverInstance(ctx context.Context) any {
+	return ctx.Value(ContextKeyObserverInstance)
+}
+
 func ContextWithParentID(ctx context.Context, parentID string) context.Context {
 	return context.WithValue(ctx, ContextKeyParentID, parentID)
 }
 
-func ContextWithouthParentID(ctx context.Context) context.Context {
-	return context.WithValue(ctx, ContextKeyParentID, "")
+func ContextWithTraceID(ctx context.Context, traceID string) context.Context {
+	return context.WithValue(ctx, ContextKeyTraceID, traceID)
+}
+
+func ContextWithObserverInstance(ctx context.Context, instance any) context.Context {
+	return context.WithValue(ctx, ContextKeyObserverInstance, instance)
 }

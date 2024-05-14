@@ -6,7 +6,6 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/index"
-	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/textsplitter"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -63,22 +62,17 @@ func (r *SubDocumentRAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) 
 }
 
 func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) error {
-	var err error
-	var span *obs.Span
-	if r.observer != nil {
-		span, err = r.startObserveSpan(
-			ctx,
-			"SubDocumentRAG AddSources",
-			types.M{
-				"chunkSize":      r.chunkSize,
-				"childChunkSize": r.childChunkSize,
-				"chunkOverlap":   r.chunkOverlap,
-			},
-		)
-		if err != nil {
-			return err
-		}
-		ctx = obs.ContextWithParentID(ctx, span.ID)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-subdocument-add-sources",
+		types.M{
+			"chunkSize":      r.chunkSize,
+			"childChunkSize": r.childChunkSize,
+			"chunkOverlap":   r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
 	}
 
 	for _, source := range sources {
@@ -98,11 +92,9 @@ func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) erro
 		}
 	}
 
-	if r.observer != nil {
-		err = r.stopObserveSpan(span)
-		if err != nil {
-			return err
-		}
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -7,7 +7,6 @@ import (
 
 	"github.com/henomis/lingoose/embedder"
 	embobserver "github.com/henomis/lingoose/embedder/observer"
-	"github.com/henomis/lingoose/observer"
 )
 
 const (
@@ -15,12 +14,10 @@ const (
 )
 
 type HuggingFaceEmbedder struct {
-	token           string
-	model           string
-	httpClient      *http.Client
-	name            string
-	observer        embobserver.EmbeddingObserver
-	observerTraceID string
+	token      string
+	model      string
+	httpClient *http.Client
+	name       string
 }
 
 func New() *HuggingFaceEmbedder {
@@ -44,15 +41,6 @@ func (h *HuggingFaceEmbedder) WithModel(model string) *HuggingFaceEmbedder {
 	return h
 }
 
-func (h *HuggingFaceEmbedder) WithObserver(
-	observer embobserver.EmbeddingObserver,
-	traceID string,
-) *HuggingFaceEmbedder {
-	h.observer = observer
-	h.observerTraceID = traceID
-	return h
-}
-
 // WithHTTPClient sets the http client to use for the LLM
 func (h *HuggingFaceEmbedder) WithHTTPClient(httpClient *http.Client) *HuggingFaceEmbedder {
 	h.httpClient = httpClient
@@ -61,22 +49,15 @@ func (h *HuggingFaceEmbedder) WithHTTPClient(httpClient *http.Client) *HuggingFa
 
 // Embed returns the embeddings for the given texts
 func (h *HuggingFaceEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	var observerEmbedding *observer.Embedding
-	var err error
-
-	if h.observer != nil {
-		observerEmbedding, err = embobserver.StartObserveEmbedding(
-			h.observer,
-			h.name,
-			h.model,
-			nil,
-			h.observerTraceID,
-			observer.ContextValueParentID(ctx),
-			texts,
-		)
-		if err != nil {
-			return nil, err
-		}
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		h.name,
+		h.model,
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	embeddings, err := h.featureExtraction(ctx, texts)
@@ -84,15 +65,13 @@ func (h *HuggingFaceEmbedder) Embed(ctx context.Context, texts []string) ([]embe
 		return nil, err
 	}
 
-	if h.observer != nil {
-		err = embobserver.StopObserveEmbedding(
-			h.observer,
-			observerEmbedding,
-			embeddings,
-		)
-		if err != nil {
-			return nil, err
-		}
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return embeddings, nil

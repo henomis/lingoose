@@ -9,7 +9,6 @@ import (
 
 	"github.com/henomis/lingoose/embedder"
 	embobserver "github.com/henomis/lingoose/embedder/observer"
-	"github.com/henomis/lingoose/observer"
 )
 
 const (
@@ -18,11 +17,9 @@ const (
 )
 
 type Embedder struct {
-	model           string
-	restClient      *restclientgo.RestClient
-	name            string
-	observer        embobserver.EmbeddingObserver
-	observerTraceID string
+	model      string
+	restClient *restclientgo.RestClient
+	name       string
 }
 
 func New() *Embedder {
@@ -44,30 +41,17 @@ func (e *Embedder) WithModel(model string) *Embedder {
 	return e
 }
 
-func (e *Embedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *Embedder {
-	e.observer = observer
-	e.observerTraceID = traceID
-	return e
-}
-
 // Embed returns the embeddings for the given texts
 func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	var observerEmbedding *observer.Embedding
-	var err error
-
-	if e.observer != nil {
-		observerEmbedding, err = embobserver.StartObserveEmbedding(
-			e.observer,
-			e.name,
-			e.model,
-			nil,
-			e.observerTraceID,
-			observer.ContextValueParentID(ctx),
-			texts,
-		)
-		if err != nil {
-			return nil, err
-		}
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		e.name,
+		e.model,
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	embeddings, err := e.embed(ctx, texts)
@@ -75,15 +59,13 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 		return nil, err
 	}
 
-	if e.observer != nil {
-		err = embobserver.StopObserveEmbedding(
-			e.observer,
-			observerEmbedding,
-			embeddings,
-		)
-		if err != nil {
-			return nil, err
-		}
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return embeddings, nil

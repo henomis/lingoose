@@ -18,6 +18,9 @@ func main() {
 		panic(err)
 	}
 
+	ctx = observer.ContextWithObserverInstance(ctx, o)
+	ctx = observer.ContextWithTraceID(ctx, trace.ID)
+
 	span, err := o.Span(
 		&observer.Span{
 			TraceID: trace.ID,
@@ -30,7 +33,7 @@ func main() {
 
 	ctx = observer.ContextWithParentID(ctx, span.ID)
 
-	openaillm := openai.New().WithObserver(o, trace.ID)
+	openaillm := openai.New()
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(

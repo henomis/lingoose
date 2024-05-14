@@ -23,12 +23,10 @@ type observer interface {
 }
 
 type Assistant struct {
-	llm             LLM
-	rag             RAG
-	thread          *thread.Thread
-	parameters      Parameters
-	observer        observer
-	observerTraceID string
+	llm        LLM
+	rag        RAG
+	thread     *thread.Thread
+	parameters Parameters
 }
 
 type LLM interface {
@@ -70,25 +68,14 @@ func (a *Assistant) WithParameters(parameters Parameters) *Assistant {
 	return a
 }
 
-func (a *Assistant) WithObserver(observer observer, traceID string) *Assistant {
-	a.observer = observer
-	a.observerTraceID = traceID
-	return a
-}
-
 func (a *Assistant) Run(ctx context.Context) error {
 	if a.thread == nil {
 		return nil
 	}
 
-	var err error
-	var spanAssistant *obs.Span
-	if a.observer != nil {
-		spanAssistant, err = a.startObserveSpan(ctx, "assistant")
-		if err != nil {
-			return err
-		}
-		ctx = obs.ContextWithParentID(ctx, spanAssistant.ID)
+	ctx, spanAssistant, err := a.startObserveSpan(ctx, "assistant")
+	if err != nil {
+		return err
 	}
 
 	if a.rag != nil {
@@ -103,11 +90,9 @@ func (a *Assistant) Run(ctx context.Context) error {
 		return err
 	}
 
-	if a.observer != nil {
-		err = a.stopObserveSpan(spanAssistant)
-		if err != nil {
-			return err
-		}
+	err = a.stopObserveSpan(ctx, spanAssistant)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -162,18 +147,39 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 	return nil
 }
 
-func (a *Assistant) startObserveSpan(ctx context.Context, name string) (*obs.Span, error) {
-	return a.observer.Span(
+func (a *Assistant) startObserveSpan(ctx context.Context, name string) (context.Context, *obs.Span, error) {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return ctx, nil, nil
+	}
+
+	span, err := o.Span(
 		&obs.Span{
-			TraceID:  a.observerTraceID,
+			TraceID:  obs.ContextValueTraceID(ctx),
 			ParentID: obs.ContextValueParentID(ctx),
 			Name:     name,
 			Input:    a.parameters,
 		},
 	)
+	if err != nil {
+		return ctx, nil, err
+	}
+
+	if span != nil {
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
+	return ctx, span, nil
 }
 
-func (a *Assistant) stopObserveSpan(span *obs.Span) error {
-	_, err := a.observer.SpanEnd(span)
+func (a *Assistant) stopObserveSpan(ctx context.Context, span *obs.Span) error {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
+	_, err := o.SpanEnd(span)
 	return err
 }
