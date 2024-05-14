@@ -1,31 +1,36 @@
 package observer
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/henomis/lingoose/embedder"
-	obs "github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/types"
 )
 
 type EmbeddingObserver interface {
-	Embedding(*obs.Embedding) (*obs.Embedding, error)
-	EmbeddingEnd(*obs.Embedding) (*obs.Embedding, error)
+	Embedding(*observer.Embedding) (*observer.Embedding, error)
+	EmbeddingEnd(*observer.Embedding) (*observer.Embedding, error)
 }
 
 func StartObserveEmbedding(
-	o EmbeddingObserver,
+	ctx context.Context,
 	name string,
 	modelName string,
 	ModelParameters types.M,
-	traceID string,
-	parentID string,
 	texts []string,
-) (*obs.Embedding, error) {
+) (*observer.Embedding, error) {
+	o, ok := observer.ContextValueObserverInstance(ctx).(EmbeddingObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil, nil
+	}
+
 	embedding, err := o.Embedding(
-		&obs.Embedding{
-			TraceID:         traceID,
-			ParentID:        parentID,
+		&observer.Embedding{
+			TraceID:         observer.ContextValueTraceID(ctx),
+			ParentID:        observer.ContextValueParentID(ctx),
 			Name:            fmt.Sprintf("embedding-%s", name),
 			Model:           modelName,
 			ModelParameters: ModelParameters,
@@ -39,10 +44,16 @@ func StartObserveEmbedding(
 }
 
 func StopObserveEmbedding(
-	o EmbeddingObserver,
-	embedding *obs.Embedding,
+	ctx context.Context,
+	embedding *observer.Embedding,
 	embeddings []embedder.Embedding,
 ) error {
+	o, ok := observer.ContextValueObserverInstance(ctx).(EmbeddingObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
 	embedding.Output = embeddings
 	_, err := o.EmbeddingEnd(embedding)
 	return err

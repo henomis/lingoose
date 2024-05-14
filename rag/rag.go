@@ -35,13 +35,11 @@ type observer interface {
 }
 
 type RAG struct {
-	index           *index.Index
-	chunkSize       uint
-	chunkOverlap    uint
-	topK            uint
-	loaders         map[*regexp.Regexp]Loader // this map a regexp as string to a loader
-	observer        observer
-	observerTraceID string
+	index        *index.Index
+	chunkSize    uint
+	chunkOverlap uint
+	topK         uint
+	loaders      map[*regexp.Regexp]Loader // this map a regexp as string to a loader
 }
 
 func New(index *index.Index) *RAG {
@@ -84,28 +82,17 @@ func (r *RAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) *RAG {
 	return r
 }
 
-func (r *RAG) WithObserver(observer observer, traceID string) *RAG {
-	r.observer = observer
-	r.observerTraceID = traceID
-	return r
-}
-
 func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
-	var err error
-	var span *obs.Span
-	if r.observer != nil {
-		span, err = r.startObserveSpan(
-			ctx,
-			"RAG AddSources",
-			types.M{
-				"chunkSize":    r.chunkSize,
-				"chunkOverlap": r.chunkOverlap,
-			},
-		)
-		if err != nil {
-			return err
-		}
-		ctx = obs.ContextWithParentID(ctx, span.ID)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"RAG AddSources",
+		types.M{
+			"chunkSize":    r.chunkSize,
+			"chunkOverlap": r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
 	}
 
 	for _, source := range sources {
@@ -120,32 +107,25 @@ func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
 		}
 	}
 
-	if r.observer != nil {
-		err = r.stopObserveSpan(span)
-		if err != nil {
-			return err
-		}
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) error {
-	var err error
-	var span *obs.Span
-	if r.observer != nil {
-		span, err = r.startObserveSpan(
-			ctx,
-			"RAG AddDocument",
-			types.M{
-				"chunkSize":    r.chunkSize,
-				"chunkOverlap": r.chunkOverlap,
-			},
-		)
-		if err != nil {
-			return err
-		}
-		ctx = obs.ContextWithParentID(ctx, span.ID)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"RAG AddDocument",
+		types.M{
+			"chunkSize":    r.chunkSize,
+			"chunkOverlap": r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
 	}
 
 	err = r.index.LoadFromDocuments(ctx, documents)
@@ -153,32 +133,25 @@ func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) 
 		return err
 	}
 
-	if r.observer != nil {
-		err = r.stopObserveSpan(span)
-		if err != nil {
-			return err
-		}
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (r *RAG) Retrieve(ctx context.Context, query string) ([]string, error) {
-	var err error
-	var span *obs.Span
-	if r.observer != nil {
-		span, err = r.startObserveSpan(
-			ctx,
-			"RAG Retrieve",
-			types.M{
-				"query": query,
-				"topK":  r.topK,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		ctx = obs.ContextWithParentID(ctx, span.ID)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"RAG Retrieve",
+		types.M{
+			"query": query,
+			"topK":  r.topK,
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	texts, err := r.retrieve(ctx, query)
@@ -186,11 +159,9 @@ func (r *RAG) Retrieve(ctx context.Context, query string) ([]string, error) {
 		return nil, err
 	}
 
-	if r.observer != nil {
-		err = r.stopObserveSpan(span)
-		if err != nil {
-			return nil, err
-		}
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return nil, err
 	}
 
 	return texts, nil
@@ -229,18 +200,39 @@ func (r *RAG) addSource(ctx context.Context, source string) ([]document.Document
 	).SplitDocuments(documents), nil
 }
 
-func (r *RAG) startObserveSpan(ctx context.Context, name string, input any) (*obs.Span, error) {
-	return r.observer.Span(
+func (r *RAG) startObserveSpan(ctx context.Context, name string, input any) (context.Context, *obs.Span, error) {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return ctx, nil, nil
+	}
+
+	span, err := o.Span(
 		&obs.Span{
-			TraceID:  r.observerTraceID,
+			TraceID:  obs.ContextValueTraceID(ctx),
 			ParentID: obs.ContextValueParentID(ctx),
 			Name:     name,
 			Input:    input,
 		},
 	)
+	if err != nil {
+		return ctx, nil, err
+	}
+
+	if span != nil {
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
+	return ctx, span, nil
 }
 
-func (r *RAG) stopObserveSpan(span *obs.Span) error {
-	_, err := r.observer.SpanEnd(span)
+func (r *RAG) stopObserveSpan(ctx context.Context, span *obs.Span) error {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
+	_, err := o.SpanEnd(span)
 	return err
 }

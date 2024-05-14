@@ -43,8 +43,6 @@ type Ollama struct {
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
 	name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
 }
 
 func New() *Ollama {
@@ -77,12 +75,6 @@ func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 
 func (o *Ollama) WithTemperature(temperature float64) *Ollama {
 	o.temperature = temperature
-	return o
-}
-
-func (o *Ollama) WithObserver(observer llmobserver.LLMObserver, traceID string) *Ollama {
-	o.observer = observer
-	o.observerTraceID = traceID
 	return o
 }
 
