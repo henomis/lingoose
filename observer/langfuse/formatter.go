@@ -26,6 +26,8 @@ func langfuseSpanToObserverSpan(s *model.Span) *observer.Span {
 		TraceID:  s.TraceID,
 		Name:     s.Name,
 		ParentID: s.ParentObservationID,
+		Input:    s.Input,
+		Output:   s.Output,
 	}
 }
 
@@ -35,6 +37,8 @@ func observerSpanToLangfuseSpan(s *observer.Span) *model.Span {
 		TraceID:             s.TraceID,
 		Name:                s.Name,
 		ParentObservationID: s.ParentID,
+		Input:               s.Input,
+		Output:              s.Output,
 	}
 }
 

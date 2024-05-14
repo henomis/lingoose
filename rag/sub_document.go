@@ -6,6 +6,7 @@ import (
 
 	"github.com/henomis/lingoose/document"
 	"github.com/henomis/lingoose/index"
+	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/textsplitter"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
@@ -62,18 +63,43 @@ func (r *SubDocumentRAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) 
 }
 
 func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) error {
+	var err error
+	var span *obs.Span
+	if r.observer != nil {
+		span, err = r.startObserveSpan(
+			ctx,
+			"SubDocumentRAG AddSources",
+			types.M{
+				"chunkSize":      r.chunkSize,
+				"childChunkSize": r.childChunkSize,
+				"chunkOverlap":   r.chunkOverlap,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
 	for _, source := range sources {
-		documents, err := r.addSource(ctx, source)
-		if err != nil {
-			return err
+		documents, errAddSource := r.addSource(ctx, source)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		subDocuments, err := r.generateSubDocuments(ctx, documents)
-		if err != nil {
-			return err
+		subDocuments, errAddSource := r.generateSubDocuments(ctx, documents)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		err = r.index.LoadFromDocuments(ctx, subDocuments)
+		errAddSource = r.index.LoadFromDocuments(ctx, subDocuments)
+		if errAddSource != nil {
+			return errAddSource
+		}
+	}
+
+	if r.observer != nil {
+		err = r.stopObserveSpan(span)
 		if err != nil {
 			return err
 		}

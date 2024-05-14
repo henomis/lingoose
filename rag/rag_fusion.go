@@ -8,7 +8,9 @@ import (
 
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
+	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 var ragFusionPrompts = []string{
@@ -30,6 +32,39 @@ func NewFusion(index *index.Index, llm LLM) *Fusion {
 }
 
 func (r *Fusion) Retrieve(ctx context.Context, query string) ([]string, error) {
+	var err error
+	var span *obs.Span
+	if r.observer != nil {
+		span, err = r.startObserveSpan(
+			ctx,
+			"RAGFusion Retrieve",
+			types.M{
+				"query": query,
+				"topK":  r.topK,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
+	texts, err := r.retrieve(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.observer != nil {
+		err = r.stopObserveSpan(span)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return texts, nil
+}
+
+func (r *Fusion) retrieve(ctx context.Context, query string) ([]string, error) {
 	if r.llm == nil {
 		return nil, fmt.Errorf("llm is not set")
 	}

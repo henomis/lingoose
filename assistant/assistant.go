@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 )
@@ -16,11 +17,18 @@ type Parameters struct {
 	CompanyDescription string
 }
 
+type observer interface {
+	Span(s *obs.Span) (*obs.Span, error)
+	SpanEnd(s *obs.Span) (*obs.Span, error)
+}
+
 type Assistant struct {
-	llm        LLM
-	rag        RAG
-	thread     *thread.Thread
-	parameters Parameters
+	llm             LLM
+	rag             RAG
+	thread          *thread.Thread
+	parameters      Parameters
+	observer        observer
+	observerTraceID string
 }
 
 type LLM interface {
@@ -62,19 +70,47 @@ func (a *Assistant) WithParameters(parameters Parameters) *Assistant {
 	return a
 }
 
+func (a *Assistant) WithObserver(observer observer, traceID string) *Assistant {
+	a.observer = observer
+	a.observerTraceID = traceID
+	return a
+}
+
 func (a *Assistant) Run(ctx context.Context) error {
 	if a.thread == nil {
 		return nil
 	}
 
+	var err error
+	var spanAssistant *obs.Span
+	if a.observer != nil {
+		spanAssistant, err = a.startObserveSpan(ctx, "assistant")
+		if err != nil {
+			return err
+		}
+		ctx = obs.ContextWithParentID(ctx, spanAssistant.ID)
+	}
+
 	if a.rag != nil {
-		err := a.generateRAGMessage(ctx)
+		errGenerate := a.generateRAGMessage(ctx)
+		if errGenerate != nil {
+			return errGenerate
+		}
+	}
+
+	err = a.llm.Generate(ctx, a.thread)
+	if err != nil {
+		return err
+	}
+
+	if a.observer != nil {
+		err = a.stopObserveSpan(spanAssistant)
 		if err != nil {
 			return err
 		}
 	}
 
-	return a.llm.Generate(ctx, a.thread)
+	return nil
 }
 
 func (a *Assistant) RunWithThread(ctx context.Context, thread *thread.Thread) error {
@@ -124,4 +160,20 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 	))
 
 	return nil
+}
+
+func (a *Assistant) startObserveSpan(ctx context.Context, name string) (*obs.Span, error) {
+	return a.observer.Span(
+		&obs.Span{
+			TraceID:  a.observerTraceID,
+			ParentID: obs.ContextValueParentID(ctx),
+			Name:     name,
+			Input:    a.parameters,
+		},
+	)
+}
+
+func (a *Assistant) stopObserveSpan(span *obs.Span) error {
+	_, err := a.observer.SpanEnd(span)
+	return err
 }
