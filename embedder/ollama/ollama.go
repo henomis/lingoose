@@ -56,7 +56,7 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 		observerEmbedding, err = embobserver.StartObserveEmbedding(
 			e.observer,
 			e.name,
-			string(e.model),
+			e.model,
 			nil,
 			e.observerTraceID,
 			observer.ContextValueParentID(ctx),
@@ -69,9 +69,9 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 
 	embeddings := make([]embedder.Embedding, len(texts))
 	for i, text := range texts {
-		embedding, err := e.embed(ctx, text)
-		if err != nil {
-			return nil, err
+		embedding, errEmbedd := e.embed(ctx, text)
+		if errEmbedd != nil {
+			return nil, errEmbedd
 		}
 		embeddings[i] = embedding
 	}

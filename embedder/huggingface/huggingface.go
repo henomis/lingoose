@@ -44,7 +44,10 @@ func (h *HuggingFaceEmbedder) WithModel(model string) *HuggingFaceEmbedder {
 	return h
 }
 
-func (h *HuggingFaceEmbedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *HuggingFaceEmbedder {
+func (h *HuggingFaceEmbedder) WithObserver(
+	observer embobserver.EmbeddingObserver,
+	traceID string,
+) *HuggingFaceEmbedder {
 	h.observer = observer
 	h.observerTraceID = traceID
 	return h
@@ -65,7 +68,7 @@ func (h *HuggingFaceEmbedder) Embed(ctx context.Context, texts []string) ([]embe
 		observerEmbedding, err = embobserver.StartObserveEmbedding(
 			h.observer,
 			h.name,
-			string(h.model),
+			h.model,
 			nil,
 			h.observerTraceID,
 			observer.ContextValueParentID(ctx),

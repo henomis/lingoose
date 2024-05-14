@@ -59,7 +59,7 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 		observerEmbedding, err = embobserver.StartObserveEmbedding(
 			e.observer,
 			e.name,
-			string(e.model),
+			e.model,
 			nil,
 			e.observerTraceID,
 			observer.ContextValueParentID(ctx),
