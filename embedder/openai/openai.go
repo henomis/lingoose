@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
+	"github.com/henomis/lingoose/observer"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -17,8 +19,11 @@ const (
 )
 
 type OpenAIEmbedder struct {
-	openAIClient *openai.Client
-	model        Model
+	openAIClient    *openai.Client
+	model           Model
+	Name            string
+	observer        embobserver.EmbeddingObserver
+	observerTraceID string
 }
 
 func New(model Model) *OpenAIEmbedder {
@@ -27,6 +32,7 @@ func New(model Model) *OpenAIEmbedder {
 	return &OpenAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
+		Name:         "openai",
 	}
 }
 
@@ -36,9 +42,49 @@ func (o *OpenAIEmbedder) WithClient(client *openai.Client) *OpenAIEmbedder {
 	return o
 }
 
+func (o *OpenAIEmbedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *OpenAIEmbedder {
+	o.observer = observer
+	o.observerTraceID = traceID
+	return o
+}
+
 // Embed returns the embeddings for the given texts
 func (o *OpenAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return o.openAICreateEmebeddings(ctx, texts)
+	var observerEmbedding *observer.Embedding
+	var err error
+
+	if o.observer != nil {
+		observerEmbedding, err = embobserver.StartObserveEmbedding(
+			o.observer,
+			o.Name,
+			string(o.model),
+			nil,
+			o.observerTraceID,
+			observer.ContextValueParentID(ctx),
+			texts,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	embeddings, err := o.openAICreateEmebeddings(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	if o.observer != nil {
+		err = embobserver.StopObserveEmbedding(
+			o.observer,
+			observerEmbedding,
+			embeddings,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return embeddings, nil
 }
 
 func (o *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {

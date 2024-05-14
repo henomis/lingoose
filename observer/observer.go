@@ -3,6 +3,7 @@ package observer
 import (
 	"context"
 
+	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 )
@@ -35,6 +36,18 @@ type Generation struct {
 	ModelParameters types.M
 	Input           []*thread.Message
 	Output          *thread.Message
+	Metadata        types.M
+}
+
+type Embedding struct {
+	ID              string
+	ParentID        string
+	TraceID         string
+	Name            string
+	Model           string
+	ModelParameters types.M
+	Input           []string
+	Output          []embedder.Embedding
 	Metadata        types.M
 }
 
