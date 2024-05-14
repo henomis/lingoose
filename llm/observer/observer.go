@@ -24,6 +24,7 @@ func StartObserveGeneration(
 	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
 	if o == nil || !ok {
 		// No observer instance in context
+		//nolint:nilnil
 		return nil, nil
 	}
 

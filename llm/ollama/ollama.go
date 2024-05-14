@@ -235,7 +235,7 @@ func (o *Ollama) startObserveGeneration(ctx context.Context, t *thread.Thread) (
 	return llmobserver.StartObserveGeneration(
 		ctx,
 		o.name,
-		string(o.model),
+		o.model,
 		types.M{
 			// TODO: Add maxTokens parameter
 			// "maxTokens":   o.maxTokens,

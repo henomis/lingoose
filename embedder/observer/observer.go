@@ -24,6 +24,7 @@ func StartObserveEmbedding(
 	o, ok := observer.ContextValueObserverInstance(ctx).(EmbeddingObserver)
 	if o == nil || !ok {
 		// No observer instance in context
+		//nolint:nilnil
 		return nil, nil
 	}
 
