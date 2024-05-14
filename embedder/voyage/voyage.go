@@ -20,7 +20,7 @@ const (
 type Embedder struct {
 	model           string
 	restClient      *restclientgo.RestClient
-	Name            string
+	name            string
 	observer        embobserver.EmbeddingObserver
 	observerTraceID string
 }
@@ -35,7 +35,7 @@ func New() *Embedder {
 				return req
 			}),
 		model: defaultModel,
-		Name:  "voyage",
+		name:  "voyage",
 	}
 }
 
@@ -44,10 +44,10 @@ func (e *Embedder) WithModel(model string) *Embedder {
 	return e
 }
 
-func (o *Embedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *Embedder {
-	o.observer = observer
-	o.observerTraceID = traceID
-	return o
+func (e *Embedder) WithObserver(observer embobserver.EmbeddingObserver, traceID string) *Embedder {
+	e.observer = observer
+	e.observerTraceID = traceID
+	return e
 }
 
 // Embed returns the embeddings for the given texts
@@ -58,7 +58,7 @@ func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedd
 	if e.observer != nil {
 		observerEmbedding, err = embobserver.StartObserveEmbedding(
 			e.observer,
-			e.Name,
+			e.name,
 			string(e.model),
 			nil,
 			e.observerTraceID,
