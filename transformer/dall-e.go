@@ -17,9 +17,11 @@ type DallEImageOutput any
 type DallEImageSize string
 
 const (
-	DallEImageSize256  DallEImageSize = openai.CreateImageSize256x256
-	DallEImageSize512  DallEImageSize = openai.CreateImageSize512x512
-	DallEImageSize1024 DallEImageSize = openai.CreateImageSize1024x1024
+	DallEImageSize256x256   DallEImageSize = openai.CreateImageSize256x256
+	DallEImageSize512x512   DallEImageSize = openai.CreateImageSize512x512
+	DallEImageSize1024x1024 DallEImageSize = openai.CreateImageSize1024x1024
+	DallEImageSize1792x104  DallEImageSize = openai.CreateImageSize1792x1024
+	DallEImageSize1024x1792 DallEImageSize = openai.CreateImageSize1024x1792
 )
 
 type DallEImageFormat string
@@ -30,10 +32,34 @@ const (
 	DallEImageFormatImage DallEImageFormat = "image"
 )
 
+type DallEModel string
+
+const (
+	DallEModel2 DallEModel = openai.CreateImageModelDallE2
+	DallEModel3 DallEModel = openai.CreateImageModelDallE3
+)
+
+type DallEImageQuality string
+
+const (
+	DallEImageQualityHD       DallEImageQuality = openai.CreateImageQualityHD
+	DallEImageQualityStandard DallEImageQuality = openai.CreateImageQualityStandard
+)
+
+type DallEImageStyle string
+
+const (
+	DallEImageStyleVivid   DallEImageStyle = openai.CreateImageStyleVivid
+	DallEImageStyleNatural DallEImageStyle = openai.CreateImageStyleNatural
+)
+
 type DallE struct {
 	openAIClient *openai.Client
+	model        DallEModel
 	imageSize    DallEImageSize
 	imageFormat  DallEImageFormat
+	imageStyle   DallEImageStyle
+	imageQuality DallEImageQuality
 	imageFile    string
 }
 
@@ -41,8 +67,11 @@ func NewDallE() *DallE {
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	return &DallE{
 		openAIClient: openai.NewClient(openAIKey),
-		imageSize:    DallEImageSize256,
+		model:        DallEModel2,
+		imageSize:    DallEImageSize256x256,
 		imageFormat:  DallEImageFormatURL,
+		imageStyle:   DallEImageStyleNatural,
+		imageQuality: DallEImageQualityStandard,
 	}
 }
 
@@ -53,6 +82,21 @@ func (d *DallE) WithClient(client *openai.Client) *DallE {
 
 func (d *DallE) WithImageSize(imageSize DallEImageSize) *DallE {
 	d.imageSize = imageSize
+	return d
+}
+
+func (d *DallE) WithImageStyle(imageStyle DallEImageStyle) *DallE {
+	d.imageStyle = imageStyle
+	return d
+}
+
+func (d *DallE) WithImageQuality(imageQuality DallEImageQuality) *DallE {
+	d.imageQuality = imageQuality
+	return d
+}
+
+func (d *DallE) WithModel(model DallEModel) *DallE {
+	d.model = model
 	return d
 }
 
@@ -88,7 +132,10 @@ func (d *DallE) Transform(ctx context.Context, input string) (any, error) {
 func (d *DallE) transformToURL(ctx context.Context, input string) (any, error) {
 	reqURL := openai.ImageRequest{
 		Prompt:         input,
+		Model:          string(d.model),
 		Size:           string(d.imageSize),
+		Quality:        string(d.imageQuality),
+		Style:          string(d.imageStyle),
 		ResponseFormat: openai.CreateImageResponseFormatURL,
 		N:              1,
 	}

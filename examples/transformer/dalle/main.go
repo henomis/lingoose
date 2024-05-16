@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize1024).AsFile("test.png")
+	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize1024x1024).AsFile("test.png")
 
 	_, err := d.Transform(context.Background(), "a goose working with pipelines")
 	if err != nil {
