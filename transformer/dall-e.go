@@ -60,7 +60,6 @@ type DallE struct {
 	imageFormat  DallEImageFormat
 	imageStyle   DallEImageStyle
 	imageQuality DallEImageQuality
-	imageFile    string
 }
 
 func NewDallE() *DallE {
@@ -100,36 +99,25 @@ func (d *DallE) WithModel(model DallEModel) *DallE {
 	return d
 }
 
-func (d *DallE) AsURL() *DallE {
-	d.imageFormat = DallEImageFormatURL
-	return d
-}
-
-func (d *DallE) AsFile(path string) *DallE {
-	d.imageFormat = DallEImageFormatFile
-	d.imageFile = path
-	return d
-}
-
-func (d *DallE) AsImage() *DallE {
-	d.imageFormat = DallEImageFormatImage
+func (d *DallE) WithImageFormat(imageFormat DallEImageFormat) *DallE {
+	d.imageFormat = imageFormat
 	return d
 }
 
 func (d *DallE) Transform(ctx context.Context, input string) (any, error) {
 	switch d.imageFormat {
 	case DallEImageFormatURL:
-		return d.transformToURL(ctx, input)
+		return d.TransformAsURL(ctx, input)
 	case DallEImageFormatFile:
-		return d.transformToFile(ctx, input)
+		return d.TransformAsFile(ctx, input, nil)
 	case DallEImageFormatImage:
-		return d.transformToImage(ctx, input)
+		return d.TransformToImage(ctx, input)
 	default:
 		return "", fmt.Errorf("unknown image format: %s", d.imageFormat)
 	}
 }
 
-func (d *DallE) transformToURL(ctx context.Context, input string) (any, error) {
+func (d *DallE) TransformAsURL(ctx context.Context, input string) (string, error) {
 	reqURL := openai.ImageRequest{
 		Prompt:         input,
 		Model:          string(d.model),
@@ -142,34 +130,37 @@ func (d *DallE) transformToURL(ctx context.Context, input string) (any, error) {
 
 	respURL, err := d.openAIClient.CreateImage(ctx, reqURL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return respURL.Data[0].URL, nil
 }
 
-func (d *DallE) transformToFile(ctx context.Context, input string) (any, error) {
-	imgData, err := d.transformToImage(ctx, input)
+func (d *DallE) TransformAsFile(ctx context.Context, input string, file *os.File) (string, error) {
+	imgData, err := d.TransformToImage(ctx, input)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	file, err := os.Create(d.imageFile)
-	if err != nil {
-		return nil, err
+	if file == nil {
+		// create a temporary file
+		file, err = os.CreateTemp("", "dall-e-*.png")
+		if err != nil {
+			return "", err
+		}
 	}
+
 	defer file.Close()
 
-	err = png.Encode(file, imgData.(image.Image))
+	err = png.Encode(file, imgData)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	var output interface{}
-	return output, nil
+	return file.Name(), nil
 }
 
-func (d *DallE) transformToImage(ctx context.Context, input string) (any, error) {
+func (d *DallE) TransformToImage(ctx context.Context, input string) (image.Image, error) {
 	reqBase64 := openai.ImageRequest{
 		Prompt:         input,
 		Size:           string(d.imageSize),
