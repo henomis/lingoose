@@ -64,6 +64,7 @@ type Anthropic struct {
 	apiKey           string
 	maxTokens        int
 	name             string
+	functions        map[string]Function
 }
 
 func New() *Anthropic {
