@@ -3,17 +3,27 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/transformer"
 )
 
-type Answer struct {
-	Answer string `json:"answer" jsonschema:"description=the pirate answer"`
+type Image struct {
+	Description string `json:"description" jsonschema:"description=the description of the image that should be created"`
 }
 
-func getAnswer(a Answer) string {
-	return "🦜 ☠️ " + a.Answer
+func crateImage(i Image) string {
+	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize512x512)
+	imageURL, err := d.Transform(context.Background(), i.Description)
+	if err != nil {
+		return fmt.Errorf("error creating image: %w", err).Error()
+	}
+
+	fmt.Println("Image created with url:", imageURL)
+
+	return imageURL.(string)
 }
 
 func newStr(str string) *string {
@@ -21,12 +31,12 @@ func newStr(str string) *string {
 }
 
 func main() {
-	openaillm := openai.New()
-	openaillm.WithToolChoice(newStr("getPirateAnswer"))
+	openaillm := openai.New().WithModel(openai.GPT4o)
+	openaillm.WithToolChoice(newStr("auto"))
 	err := openaillm.BindFunction(
-		getAnswer,
-		"getPirateAnswer",
-		"use this function to get the pirate answer",
+		crateImage,
+		"createImage",
+		"use this function to create an image from a description",
 	)
 	if err != nil {
 		panic(err)
@@ -34,41 +44,28 @@ func main() {
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
-			thread.NewTextContent("Hello, I'm a user"),
-		).AddContent(
-			thread.NewTextContent("Can you greet me?"),
-		),
-	).AddMessage(
-		thread.NewUserMessage().AddContent(
-			thread.NewTextContent("please greet me as a pirate."),
+			thread.NewTextContent("Please, create an image that inspires you"),
 		),
 	)
-
-	fmt.Println(t)
 
 	err = openaillm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
 
-	t.AddMessage(thread.NewUserMessage().AddContent(
-		thread.NewTextContent("now translate to italian as a poem"),
-	))
+	if t.LastMessage().Role == thread.RoleTool {
+		t.AddMessage(thread.NewUserMessage().AddContent(
+			thread.NewImageContentFromURL(
+				strings.ReplaceAll(t.LastMessage().Contents[0].AsToolResponseData().Result, `"`, ""),
+			),
+		).AddContent(
+			thread.NewTextContent("can you describe the image?"),
+		))
 
-	fmt.Println(t)
-	// disable functions
-	openaillm.WithToolChoice(nil)
-	openaillm.WithStream(true, func(a string) {
-		if a == openai.EOS {
-			fmt.Printf("\n")
-			return
+		err = openaillm.Generate(context.Background(), t)
+		if err != nil {
+			panic(err)
 		}
-		fmt.Printf("%s", a)
-	})
-
-	err = openaillm.Generate(context.Background(), t)
-	if err != nil {
-		panic(err)
 	}
 
 	fmt.Println(t)

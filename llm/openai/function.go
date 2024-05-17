@@ -1,10 +1,12 @@
 package openai
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/invopop/jsonschema"
 	"github.com/sashabaranov/go-openai"
@@ -187,11 +189,14 @@ func callFnWithArgumentAsJSON(fn interface{}, argumentAsJSON string) (string, er
 
 	// Marshal the function result to JSON
 	if len(result) > 0 {
-		jsonResultData, errMarshal := json.Marshal(result[0].Interface())
-		if errMarshal != nil {
-			return "", fmt.Errorf("error marshaling result: %w", errMarshal)
+		var resultBytes bytes.Buffer
+		enc := json.NewEncoder(&resultBytes)
+		enc.SetEscapeHTML(false)
+		err = enc.Encode(result[0].Interface())
+		if err != nil {
+			return "", fmt.Errorf("error marshaling result: %w", err)
 		}
-		return string(jsonResultData), nil
+		return strings.TrimSpace(resultBytes.String()), nil
 	}
 
 	return "", nil

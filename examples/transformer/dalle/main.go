@@ -2,16 +2,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/henomis/lingoose/transformer"
 )
 
 func main() {
 
-	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize1024).AsFile("test.png")
+	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize1024x1024)
 
-	_, err := d.Transform(context.Background(), "a goose working with pipelines")
+	imageURL, err := d.Transform(context.Background(), "a goose working with pipelines")
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Image created:", imageURL)
 }
