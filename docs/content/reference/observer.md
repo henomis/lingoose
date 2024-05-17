@@ -7,7 +7,7 @@ menu: { main: { parent: 'reference', weight: -92 } }
 
 ## Observer
 
-The `Observer` interface helps to observe, debug, and analyze LLM applications. This component tracks metrics (e.g. LLM cost, latency, quality) and gains insights from external dashboards and data exports. To enable tracing an LLM application, create an observer and pass it to the LLM instance.
+The `Observer` interface helps to observe, debug, and analyze LLM applications. This component tracks metrics (e.g. LLM cost, latency, quality) and gains insights from external dashboards and data exports. To enable tracing an LLM application, create an observer and attach it to the context. The observer will then track the application's execution and provide insights.
 
 ### Supported platform
 
@@ -16,14 +16,18 @@ The `Observer` interface helps to observe, debug, and analyze LLM applications. 
 ### Usage
 
 ```go
+ctx := context.Background()
 
-o := langfuse.New(context.Background())
+o := langfuse.New(ctx)
 trace, err := o.Trace(&observer.Trace{Name: "Who are you"})
 if err != nil {
     panic(err)
 }
 
-openaillm := openai.New().WithObserver(o, trace.ID)
+ctx = observer.ContextWithObserverInstance(ctx, o)
+ctx = observer.ContextWithTraceID(ctx, trace.ID)
+
+openaillm := openai.New()
 
 t := thread.New().AddMessage(
     thread.NewUserMessage().AddContent(
@@ -31,10 +35,10 @@ t := thread.New().AddMessage(
     ),
 )
 
-err = openaillm.Generate(context.Background(), t)
+err = openaillm.Generate(ctx, t)
 if err != nil {
     panic(err)
 }
 
-o.Flush(context.Background())
+o.Flush(ctx)
 ```

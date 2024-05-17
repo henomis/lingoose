@@ -26,6 +26,8 @@ func langfuseSpanToObserverSpan(s *model.Span) *observer.Span {
 		TraceID:  s.TraceID,
 		Name:     s.Name,
 		ParentID: s.ParentObservationID,
+		Input:    s.Input,
+		Output:   s.Output,
 	}
 }
 
@@ -35,6 +37,8 @@ func observerSpanToLangfuseSpan(s *observer.Span) *model.Span {
 		TraceID:             s.TraceID,
 		Name:                s.Name,
 		ParentObservationID: s.ParentID,
+		Input:               s.Input,
+		Output:              s.Output,
 	}
 }
 
@@ -79,6 +83,20 @@ func observerGenerationToLangfuseGeneration(g *observer.Generation) *model.Gener
 		Input:               threadMessagesToLangfuseMSlice(g.Input),
 		Output:              threadMessageToLangfuseM(g.Output),
 		Metadata:            g.Metadata,
+	}
+}
+
+func observerEmbeddingToLangfuseGeneration(e *observer.Embedding) *model.Generation {
+	return &model.Generation{
+		ID:                  e.ID,
+		TraceID:             e.TraceID,
+		Name:                e.Name,
+		ParentObservationID: e.ParentID,
+		Model:               e.Model,
+		ModelParameters:     e.ModelParameters,
+		Input:               e.Input,
+		Output:              e.Output,
+		Metadata:            e.Metadata,
 	}
 }
 

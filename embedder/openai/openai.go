@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -19,6 +20,7 @@ const (
 type OpenAIEmbedder struct {
 	openAIClient *openai.Client
 	model        Model
+	Name         string
 }
 
 func New(model Model) *OpenAIEmbedder {
@@ -27,6 +29,7 @@ func New(model Model) *OpenAIEmbedder {
 	return &OpenAIEmbedder{
 		openAIClient: openai.NewClient(openAIKey),
 		model:        model,
+		Name:         "openai",
 	}
 }
 
@@ -38,7 +41,32 @@ func (o *OpenAIEmbedder) WithClient(client *openai.Client) *OpenAIEmbedder {
 
 // Embed returns the embeddings for the given texts
 func (o *OpenAIEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return o.openAICreateEmebeddings(ctx, texts)
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		o.Name,
+		string(o.model),
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	embeddings, err := o.openAICreateEmebeddings(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return embeddings, nil
 }
 
 func (o *OpenAIEmbedder) openAICreateEmebeddings(ctx context.Context, texts []string) ([]embedder.Embedding, error) {

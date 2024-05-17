@@ -3,8 +3,10 @@ package ollamaembedder
 import (
 	"context"
 
-	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
 )
 
 const (
@@ -15,12 +17,14 @@ const (
 type Embedder struct {
 	model      string
 	restClient *restclientgo.RestClient
+	name       string
 }
 
 func New() *Embedder {
 	return &Embedder{
 		restClient: restclientgo.New(defaultEndpoint),
 		model:      defaultModel,
+		name:       "ollama",
 	}
 }
 
@@ -36,13 +40,34 @@ func (e *Embedder) WithModel(model string) *Embedder {
 
 // Embed returns the embeddings for the given texts
 func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		e.name,
+		e.model,
+		nil,
+
+		texts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	embeddings := make([]embedder.Embedding, len(texts))
 	for i, text := range texts {
-		embedding, err := e.embed(ctx, text)
-		if err != nil {
-			return nil, err
+		embedding, errEmbedd := e.embed(ctx, text)
+		if errEmbedd != nil {
+			return nil, errEmbedd
 		}
 		embeddings[i] = embedding
+	}
+
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return embeddings, nil

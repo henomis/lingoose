@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 )
@@ -14,6 +15,11 @@ type Parameters struct {
 	AssistantScope     string
 	CompanyName        string
 	CompanyDescription string
+}
+
+type observer interface {
+	Span(s *obs.Span) (*obs.Span, error)
+	SpanEnd(s *obs.Span) (*obs.Span, error)
 }
 
 type Assistant struct {
@@ -67,14 +73,29 @@ func (a *Assistant) Run(ctx context.Context) error {
 		return nil
 	}
 
+	ctx, spanAssistant, err := a.startObserveSpan(ctx, "assistant")
+	if err != nil {
+		return err
+	}
+
 	if a.rag != nil {
-		err := a.generateRAGMessage(ctx)
-		if err != nil {
-			return err
+		errGenerate := a.generateRAGMessage(ctx)
+		if errGenerate != nil {
+			return errGenerate
 		}
 	}
 
-	return a.llm.Generate(ctx, a.thread)
+	err = a.llm.Generate(ctx, a.thread)
+	if err != nil {
+		return err
+	}
+
+	err = a.stopObserveSpan(ctx, spanAssistant)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (a *Assistant) RunWithThread(ctx context.Context, thread *thread.Thread) error {
@@ -124,4 +145,41 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 	))
 
 	return nil
+}
+
+func (a *Assistant) startObserveSpan(ctx context.Context, name string) (context.Context, *obs.Span, error) {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return ctx, nil, nil
+	}
+
+	span, err := o.Span(
+		&obs.Span{
+			TraceID:  obs.ContextValueTraceID(ctx),
+			ParentID: obs.ContextValueParentID(ctx),
+			Name:     name,
+			Input:    a.parameters,
+		},
+	)
+	if err != nil {
+		return ctx, nil, err
+	}
+
+	if span != nil {
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
+	return ctx, span, nil
+}
+
+func (a *Assistant) stopObserveSpan(ctx context.Context, span *obs.Span) error {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
+	_, err := o.SpanEnd(span)
+	return err
 }

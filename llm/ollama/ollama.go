@@ -42,8 +42,6 @@ type Ollama struct {
 	streamCallbackFn StreamCallbackFn
 	cache            *cache.Cache
 	name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
 }
 
 func New() *Ollama {
@@ -76,12 +74,6 @@ func (o *Ollama) WithCache(cache *cache.Cache) *Ollama {
 
 func (o *Ollama) WithTemperature(temperature float64) *Ollama {
 	o.temperature = temperature
-	return o
-}
-
-func (o *Ollama) WithObserver(observer llmobserver.LLMObserver, traceID string) *Ollama {
-	o.observer = observer
-	o.observerTraceID = traceID
 	return o
 }
 
@@ -143,13 +135,9 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := o.buildChatCompletionRequest(t)
 
-	var span *observer.Span
-	var generation *observer.Generation
-	if o.observer != nil {
-		span, generation, err = o.startObserveGeneration(t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
-		}
+	generation, err := o.startObserveGeneration(ctx, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
 	if o.streamCallbackFn != nil {
@@ -161,11 +149,9 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	if o.observer != nil {
-		err = o.stopObserveGeneration(span, generation, t)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrOllamaChat, err)
-		}
+	err = o.stopObserveGeneration(ctx, generation, t)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
 
 	if o.cache != nil {
@@ -244,9 +230,9 @@ func (o *Ollama) stream(ctx context.Context, t *thread.Thread, chatRequest *requ
 	return nil
 }
 
-func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *observer.Generation, error) {
+func (o *Ollama) startObserveGeneration(ctx context.Context, t *thread.Thread) (*observer.Generation, error) {
 	return llmobserver.StartObserveGeneration(
-		o.observer,
+		ctx,
 		o.name,
 		o.model,
 		types.M{
@@ -254,19 +240,17 @@ func (o *Ollama) startObserveGeneration(t *thread.Thread) (*observer.Span, *obse
 			// "maxTokens":   o.maxTokens,
 			"temperature": o.temperature,
 		},
-		o.observerTraceID,
 		t,
 	)
 }
 
 func (o *Ollama) stopObserveGeneration(
-	span *observer.Span,
+	ctx context.Context,
 	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
 	return llmobserver.StopObserveGeneration(
-		o.observer,
-		span,
+		ctx,
 		generation,
 		t,
 	)

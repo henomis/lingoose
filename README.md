@@ -73,9 +73,15 @@ A goose fills its car with goose-line!
 
 If you think you've found a bug, or something isn't behaving the way you think it should, please raise an [issue](https://github.com/henomis/lingoose/issues) on GitHub.
 
+
 ## Contributing
 
 We welcome contributions, Read our [Contribution Guidelines](https://github.com/henomis/lingoose/blob/main/CONTRIBUTING.md) to learn more about contributing to **LinGoose**
+
+## Blog posts and articles
+- [Anthropic's Claude Integration with Go and Lingoose](https://simonevellei.com/blog/posts/anthropic-claude-integration-with-go-and-lingoose/)
+- [Empowering Go: unveiling the synergy of AI and Q&A pipelines](https://simonevellei.com/blog/posts/empowering-go-unveiling-the-synergy-of-ai-and-qa-pipelines/)
+- [Leveraging Go and Redis for Efficient Retrieval Augmented Generation](https://simonevellei.com/blog/posts/leveraging-go-and-redis-for-efficient-retrieval-augmented-generation/)
 
 ## Connect with the author
 

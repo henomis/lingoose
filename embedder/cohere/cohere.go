@@ -8,7 +8,9 @@ import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
+
 	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
 )
 
 type EmbedderModel = model.EmbedModel
@@ -38,12 +40,14 @@ var EmbedderModelsSize = map[EmbedderModel]int{
 type Embedder struct {
 	model  EmbedderModel
 	client *coherego.Client
+	name   string
 }
 
 func New() *Embedder {
 	return &Embedder{
 		client: coherego.New(os.Getenv("COHERE_API_KEY")),
 		model:  defaultEmbedderModel,
+		name:   "cohere",
 	}
 }
 
@@ -61,6 +65,35 @@ func (e *Embedder) WithModel(model EmbedderModel) *Embedder {
 
 // Embed returns the embeddings for the given texts
 func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		e.name,
+		string(e.model),
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	embeddings, err := e.embed(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return embeddings, nil
+}
+
+func (e *Embedder) embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 	resp := &response.Embed{}
 	err := e.client.Embed(
 		ctx,

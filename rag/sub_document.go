@@ -62,21 +62,39 @@ func (r *SubDocumentRAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) 
 }
 
 func (r *SubDocumentRAG) AddSources(ctx context.Context, sources ...string) error {
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-subdocument-add-sources",
+		types.M{
+			"chunkSize":      r.chunkSize,
+			"childChunkSize": r.childChunkSize,
+			"chunkOverlap":   r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	for _, source := range sources {
-		documents, err := r.addSource(ctx, source)
-		if err != nil {
-			return err
+		documents, errAddSource := r.addSource(ctx, source)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		subDocuments, err := r.generateSubDocuments(ctx, documents)
-		if err != nil {
-			return err
+		subDocuments, errAddSource := r.generateSubDocuments(ctx, documents)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		err = r.index.LoadFromDocuments(ctx, subDocuments)
-		if err != nil {
-			return err
+		errAddSource = r.index.LoadFromDocuments(ctx, subDocuments)
+		if errAddSource != nil {
+			return errAddSource
 		}
+	}
+
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
 	}
 
 	return nil

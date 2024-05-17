@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
 )
 
 const (
@@ -16,6 +17,7 @@ type HuggingFaceEmbedder struct {
 	token      string
 	model      string
 	httpClient *http.Client
+	name       string
 }
 
 func New() *HuggingFaceEmbedder {
@@ -23,6 +25,7 @@ func New() *HuggingFaceEmbedder {
 		token:      os.Getenv("HUGGING_FACE_HUB_TOKEN"),
 		model:      hfDefaultEmbedderModel,
 		httpClient: http.DefaultClient,
+		name:       "huggingface",
 	}
 }
 
@@ -46,5 +49,30 @@ func (h *HuggingFaceEmbedder) WithHTTPClient(httpClient *http.Client) *HuggingFa
 
 // Embed returns the embeddings for the given texts
 func (h *HuggingFaceEmbedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return h.featureExtraction(ctx, texts)
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		h.name,
+		h.model,
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	embeddings, err := h.featureExtraction(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return embeddings, nil
 }

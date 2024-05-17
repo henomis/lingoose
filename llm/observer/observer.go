@@ -1,66 +1,61 @@
 package observer
 
 import (
+	"context"
 	"fmt"
 
-	obs "github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/thread"
 	"github.com/henomis/lingoose/types"
 )
 
 type LLMObserver interface {
-	Span(*obs.Span) (*obs.Span, error)
-	SpanEnd(*obs.Span) (*obs.Span, error)
-	Generation(*obs.Generation) (*obs.Generation, error)
-	GenerationEnd(*obs.Generation) (*obs.Generation, error)
+	Generation(*observer.Generation) (*observer.Generation, error)
+	GenerationEnd(*observer.Generation) (*observer.Generation, error)
 }
 
 func StartObserveGeneration(
-	o LLMObserver,
+	ctx context.Context,
 	name string,
 	modelName string,
 	ModelParameters types.M,
-	traceID string,
 	t *thread.Thread,
-) (*obs.Span, *obs.Generation, error) {
-	span, err := o.Span(
-		&obs.Span{
-			TraceID: traceID,
-			Name:    name,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
+) (*observer.Generation, error) {
+	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		//nolint:nilnil
+		return nil, nil
 	}
 
 	generation, err := o.Generation(
-		&obs.Generation{
-			TraceID:         traceID,
-			ParentID:        span.ID,
-			Name:            fmt.Sprintf("%s-%s", name, modelName),
+		&observer.Generation{
+			TraceID:         observer.ContextValueTraceID(ctx),
+			ParentID:        observer.ContextValueParentID(ctx),
+			Name:            fmt.Sprintf("llm-%s", name),
 			Model:           modelName,
 			ModelParameters: ModelParameters,
 			Input:           t.Messages,
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return span, generation, nil
+	return generation, nil
 }
 
 func StopObserveGeneration(
-	o LLMObserver,
-	span *obs.Span,
-	generation *obs.Generation,
+	ctx context.Context,
+	generation *observer.Generation,
 	t *thread.Thread,
 ) error {
-	_, err := o.SpanEnd(span)
-	if err != nil {
-		return err
+	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
 	}
 
 	generation.Output = t.LastMessage()
-	_, err = o.GenerationEnd(generation)
+	_, err := o.GenerationEnd(generation)
 	return err
 }

@@ -9,8 +9,10 @@ import (
 	"github.com/henomis/lingoose/index"
 	"github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/loader"
+	obs "github.com/henomis/lingoose/observer"
 	"github.com/henomis/lingoose/textsplitter"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/types"
 )
 
 const (
@@ -25,6 +27,11 @@ type LLM interface {
 
 type Loader interface {
 	LoadFromSource(context.Context, string) ([]document.Document, error)
+}
+
+type observer interface {
+	Span(s *obs.Span) (*obs.Span, error)
+	SpanEnd(s *obs.Span) (*obs.Span, error)
 }
 
 type RAG struct {
@@ -76,26 +83,91 @@ func (r *RAG) WithLoader(sourceRegexp *regexp.Regexp, loader Loader) *RAG {
 }
 
 func (r *RAG) AddSources(ctx context.Context, sources ...string) error {
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-add-source",
+		types.M{
+			"chunkSize":    r.chunkSize,
+			"chunkOverlap": r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	for _, source := range sources {
-		documents, err := r.addSource(ctx, source)
-		if err != nil {
-			return err
+		documents, errAddSource := r.addSource(ctx, source)
+		if errAddSource != nil {
+			return errAddSource
 		}
 
-		err = r.index.LoadFromDocuments(ctx, documents)
-		if err != nil {
-			return err
+		errAddSource = r.index.LoadFromDocuments(ctx, documents)
+		if errAddSource != nil {
+			return errAddSource
 		}
+	}
+
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (r *RAG) AddDocuments(ctx context.Context, documents ...document.Document) error {
-	return r.index.LoadFromDocuments(ctx, documents)
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-add-document",
+		types.M{
+			"chunkSize":    r.chunkSize,
+			"chunkOverlap": r.chunkOverlap,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = r.index.LoadFromDocuments(ctx, documents)
+	if err != nil {
+		return err
+	}
+
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *RAG) Retrieve(ctx context.Context, query string) ([]string, error) {
+	ctx, span, err := r.startObserveSpan(
+		ctx,
+		"rag-retrieve",
+		types.M{
+			"query": query,
+			"topK":  r.topK,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	texts, err := r.retrieve(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.stopObserveSpan(ctx, span)
+	if err != nil {
+		return nil, err
+	}
+
+	return texts, nil
+}
+
+func (r *RAG) retrieve(ctx context.Context, query string) ([]string, error) {
 	results, err := r.index.Query(ctx, query, option.WithTopK(int(r.topK)))
 	var resultsAsString []string
 	for _, result := range results {
@@ -126,4 +198,41 @@ func (r *RAG) addSource(ctx context.Context, source string) ([]document.Document
 		int(r.chunkSize),
 		int(r.chunkOverlap),
 	).SplitDocuments(documents), nil
+}
+
+func (r *RAG) startObserveSpan(ctx context.Context, name string, input any) (context.Context, *obs.Span, error) {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return ctx, nil, nil
+	}
+
+	span, err := o.Span(
+		&obs.Span{
+			TraceID:  obs.ContextValueTraceID(ctx),
+			ParentID: obs.ContextValueParentID(ctx),
+			Name:     name,
+			Input:    input,
+		},
+	)
+	if err != nil {
+		return ctx, nil, err
+	}
+
+	if span != nil {
+		ctx = obs.ContextWithParentID(ctx, span.ID)
+	}
+
+	return ctx, span, nil
+}
+
+func (r *RAG) stopObserveSpan(ctx context.Context, span *obs.Span) error {
+	o, ok := obs.ContextValueObserverInstance(ctx).(observer)
+	if o == nil || !ok {
+		// No observer instance in context
+		return nil
+	}
+
+	_, err := o.SpanEnd(span)
+	return err
 }

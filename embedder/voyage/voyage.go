@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/restclientgo"
+
+	"github.com/henomis/lingoose/embedder"
+	embobserver "github.com/henomis/lingoose/embedder/observer"
 )
 
 const (
@@ -17,6 +19,7 @@ const (
 type Embedder struct {
 	model      string
 	restClient *restclientgo.RestClient
+	name       string
 }
 
 func New() *Embedder {
@@ -29,6 +32,7 @@ func New() *Embedder {
 				return req
 			}),
 		model: defaultModel,
+		name:  "voyage",
 	}
 }
 
@@ -39,7 +43,32 @@ func (e *Embedder) WithModel(model string) *Embedder {
 
 // Embed returns the embeddings for the given texts
 func (e *Embedder) Embed(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
-	return e.embed(ctx, texts)
+	observerEmbedding, err := embobserver.StartObserveEmbedding(
+		ctx,
+		e.name,
+		e.model,
+		nil,
+		texts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	embeddings, err := e.embed(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = embobserver.StopObserveEmbedding(
+		ctx,
+		observerEmbedding,
+		embeddings,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return embeddings, nil
 }
 
 // Embed returns the embeddings for the given texts
