@@ -38,6 +38,7 @@ type OpenAI struct {
 	usageCallback    UsageCallback
 	functions        map[string]Function
 	streamCallbackFn StreamCallback
+	responseFormat   *ResponseFormat
 	toolChoice       *string
 	cache            *cache.Cache
 	Name             string
@@ -96,6 +97,11 @@ func (o *OpenAI) WithStream(enable bool, callbackFn StreamCallback) *OpenAI {
 
 func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 	o.cache = cache
+	return o
+}
+
+func (o *OpenAI) WithResponseFormat(responseFormat ResponseFormat) *OpenAI {
+	o.responseFormat = &responseFormat
 	return o
 }
 
@@ -347,14 +353,22 @@ func (o *OpenAI) generate(
 }
 
 func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatCompletionRequest {
+	var responseFormat *openai.ChatCompletionResponseFormat
+	if o.responseFormat != nil {
+		responseFormat = &openai.ChatCompletionResponseFormat{
+			Type: *o.responseFormat,
+		}
+	}
+
 	return openai.ChatCompletionRequest{
-		Model:       string(o.model),
-		Messages:    threadToChatCompletionMessages(t),
-		MaxTokens:   o.maxTokens,
-		Temperature: o.temperature,
-		N:           DefaultOpenAINumResults,
-		TopP:        DefaultOpenAITopP,
-		Stop:        o.stop,
+		Model:          string(o.model),
+		Messages:       threadToChatCompletionMessages(t),
+		MaxTokens:      o.maxTokens,
+		Temperature:    o.temperature,
+		N:              DefaultOpenAINumResults,
+		TopP:           DefaultOpenAITopP,
+		Stop:           o.stop,
+		ResponseFormat: responseFormat,
 	}
 }
 
