@@ -63,9 +63,6 @@ func (t *Tool) fn(i Input) Output {
 		}
 	}
 
-	s := out.String()
-	_ = s
-
 	// Return the output as a string.
 	return Output{Result: out.String()}
 }
