@@ -15,6 +15,7 @@ require (
 	github.com/henomis/restclientgo v1.2.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/sashabaranov/go-openai v1.24.0
+	golang.org/x/net v0.25.0
 )
 
 require (
