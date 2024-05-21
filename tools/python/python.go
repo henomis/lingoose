@@ -3,7 +3,6 @@ package python
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
 )
 
@@ -49,8 +48,6 @@ func (t *Tool) Fn() any {
 func (t *Tool) fn(i Input) Output {
 	// Create a command to run the Python interpreter with the script.
 	cmd := exec.Command(t.pythonPath, "-c", i.PythonCode)
-
-	os.WriteFile("/tmp/pippo.py", []byte(i.PythonCode), 0644)
 
 	// Create a buffer to capture the output.
 	var out bytes.Buffer
