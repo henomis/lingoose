@@ -44,7 +44,5 @@ func (t *Tool) fn(i Input) Output {
 		return Output{Error: fmt.Sprintf("error creating image: %v", err)}
 	}
 
-	fmt.Println("Image created with url:", imageURL)
-
 	return Output{ImageURL: imageURL.(string)}
 }
