@@ -15,7 +15,7 @@ type Tool struct {
 }
 
 type Input struct {
-	Query string `json:"python_code" jsonschema:"description=the query to search for"`
+	Query string `json:"query" jsonschema:"description=the query to search for"`
 }
 
 type Output struct {
@@ -57,7 +57,7 @@ func (t *Tool) Name() string {
 }
 
 func (t *Tool) Description() string {
-	return "A tool that searches DuckDuckGo for a query."
+	return "A tool that searches on duckduckgo internet search engine for a query."
 }
 
 func (t *Tool) Fn() any {
