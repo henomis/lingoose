@@ -58,7 +58,8 @@ func (t *Tool) fn(i Input) Output {
 		query += "Name: " + tool.Name() + "\nDescription: " + tool.Description() + "\n\n"
 	}
 
-	query += "\nPlease select the right tool that can better answer the query '" + i.Query + "'. Give me only the name of the tool, nothing else."
+	query += "\nPlease select the right tool that can better answer the query '" + i.Query +
+		"'. Give me only the name of the tool, nothing else."
 
 	th := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
