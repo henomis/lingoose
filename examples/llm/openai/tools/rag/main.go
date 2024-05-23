@@ -42,13 +42,13 @@ func main() {
 
 	topics := []string{
 		"how many covid vaccine doses US has donated to other countries",
-		"apple stock price",
+		"who's the lingoose github project author",
 	}
 
 	for _, topic := range topics {
 		t := thread.New().AddMessage(
 			thread.NewUserMessage().AddContent(
-				thread.NewTextContent("I would like to know something about " + topic + "."),
+				thread.NewTextContent("Please tell me " + topic + "."),
 			),
 		)
 

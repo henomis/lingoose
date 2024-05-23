@@ -19,7 +19,7 @@ func main() {
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
-			thread.NewTextContent("calculate reverse string of 'ailatiditalia', don't try to guess, let's use appropriate tools"),
+			thread.NewTextContent("calculate reverse string of 'ailatiditalia', don't try to guess, let's use appropriate tool"),
 		),
 	)
 

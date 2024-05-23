@@ -57,7 +57,7 @@ func (t *Tool) Name() string {
 }
 
 func (t *Tool) Description() string {
-	return "A tool that searches on duckduckgo internet search engine for a query."
+	return "A tool that uses the DuckDuckGo internet search engine for a query."
 }
 
 func (t *Tool) Fn() any {

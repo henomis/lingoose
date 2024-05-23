@@ -44,7 +44,7 @@ func (t *Tool) Name() string {
 }
 
 func (t *Tool) Description() string {
-	return "A tool that select the right tool to answer to an user query."
+	return "A tool that select the right tool to answer to user queries."
 }
 
 func (t *Tool) Fn() any {
