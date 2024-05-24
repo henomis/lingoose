@@ -12,7 +12,7 @@ type request struct {
 	GoogleDomain string
 	CountryCode  string
 	LanguageCode string
-	ApiKey       string
+	APIKey       string
 }
 
 type response struct {
@@ -58,7 +58,7 @@ type result struct {
 func (r *request) Path() (string, error) {
 	urlValues := restclientgo.NewURLValues()
 	urlValues.Add("q", &r.Query)
-	urlValues.Add("api_key", &r.ApiKey)
+	urlValues.Add("api_key", &r.APIKey)
 
 	if r.GoogleDomain != "" {
 		urlValues.Add("google_domain", &r.GoogleDomain)

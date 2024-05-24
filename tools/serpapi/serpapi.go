@@ -54,7 +54,7 @@ func (t *Tool) WithLanguageCode(languageCode string) *Tool {
 	return t
 }
 
-func (t *Tool) WithApiKey(apiKey string) *Tool {
+func (t *Tool) WithAPIKey(apiKey string) *Tool {
 	t.apiKey = apiKey
 	return t
 }
@@ -77,7 +77,7 @@ func (t *Tool) fn(i Input) Output {
 		GoogleDomain: t.googleDomain,
 		CountryCode:  t.countryCode,
 		LanguageCode: t.languageCode,
-		ApiKey:       t.apiKey,
+		APIKey:       t.apiKey,
 	}
 	res := &response{}
 
