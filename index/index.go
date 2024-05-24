@@ -126,6 +126,9 @@ func (i *Index) Query(ctx context.Context, query string, opts ...option.Option) 
 	if err != nil {
 		return nil, err
 	}
+	if len(embeddings) == 0 {
+		return nil, fmt.Errorf("%w: %w", ErrInternal, errors.New("no embeddings found")
+	}
 	return i.Search(ctx, embeddings[0], opts...)
 }
 
