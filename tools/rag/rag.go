@@ -28,7 +28,7 @@ type Output struct {
 	Result string `json:"result,omitempty"`
 }
 
-type FnPrototype func(Input) Output
+type FnPrototype = func(Input) Output
 
 func (t *Tool) Name() string {
 	return "rag"

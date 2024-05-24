@@ -11,8 +11,8 @@ import (
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/rag"
 	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/tools/duckduckgo"
 	ragtool "github.com/henomis/lingoose/tools/rag"
+	"github.com/henomis/lingoose/tools/serpapi"
 )
 
 func main() {
@@ -37,12 +37,12 @@ func main() {
 	}
 	llm := openai.New().WithModel(openai.GPT4o).WithToolChoice(newStr("auto")).WithTools(
 		ragtool.New(rag, "US covid vaccines"),
-		duckduckgo.New().WithMaxResults(5),
+		serpapi.New(),
 	)
 
 	topics := []string{
 		"how many covid vaccine doses US has donated to other countries",
-		"who's the lingoose github project author",
+		"who's the author of LinGoose github project",
 	}
 
 	for _, topic := range topics {
