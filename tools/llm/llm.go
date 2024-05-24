@@ -2,8 +2,13 @@ package llm
 
 import (
 	"context"
+	"time"
 
 	"github.com/henomis/lingoose/thread"
+)
+
+const (
+	defaultTimeoutInMinutes = 6
 )
 
 type LLM interface {
@@ -45,13 +50,16 @@ func (t *Tool) Fn() any {
 
 //nolint:gosec
 func (t *Tool) fn(i Input) Output {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutInMinutes*time.Minute)
+	defer cancel()
+
 	th := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
 			thread.NewTextContent(i.Query),
 		),
 	)
 
-	err := t.llm.Generate(context.Background(), th)
+	err := t.llm.Generate(ctx, th)
 	if err != nil {
 		return Output{Error: err.Error()}
 	}

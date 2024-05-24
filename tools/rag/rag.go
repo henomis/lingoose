@@ -3,8 +3,13 @@ package rag
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/henomis/lingoose/rag"
+)
+
+const (
+	defaultTimeoutInMinutes = 6
 )
 
 type Tool struct {
@@ -44,7 +49,10 @@ func (t *Tool) Fn() any {
 
 //nolint:gosec
 func (t *Tool) fn(i Input) Output {
-	results, err := t.rag.Retrieve(context.Background(), i.Query)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutInMinutes*time.Minute)
+	defer cancel()
+
+	results, err := t.rag.Retrieve(ctx, i.Query)
 	if err != nil {
 		return Output{Error: err.Error()}
 	}

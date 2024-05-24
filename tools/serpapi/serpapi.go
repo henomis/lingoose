@@ -4,8 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/henomis/restclientgo"
+)
+
+const (
+	defaultTimeoutInSeconds = 60
 )
 
 type Tool struct {
@@ -72,6 +77,9 @@ func (t *Tool) Fn() any {
 }
 
 func (t *Tool) fn(i Input) Output {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutInSeconds*time.Second)
+	defer cancel()
+
 	req := &request{
 		Query:        i.Query,
 		GoogleDomain: t.googleDomain,
@@ -81,7 +89,7 @@ func (t *Tool) fn(i Input) Output {
 	}
 	res := &response{}
 
-	err := t.restClient.Get(context.Background(), req, res)
+	err := t.restClient.Get(ctx, req, res)
 	if err != nil {
 		return Output{Error: fmt.Sprintf("failed to search serpapi: %v", err)}
 	}

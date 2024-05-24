@@ -3,8 +3,13 @@ package dalle
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/henomis/lingoose/transformer"
+)
+
+const (
+	defaultTimeoutInSeconds = 60
 )
 
 type Tool struct {
@@ -38,8 +43,11 @@ func (t *Tool) Fn() any {
 }
 
 func (t *Tool) fn(i Input) Output {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeoutInSeconds*time.Second)
+	defer cancel()
+
 	d := transformer.NewDallE().WithImageSize(transformer.DallEImageSize512x512)
-	imageURL, err := d.Transform(context.Background(), i.Description)
+	imageURL, err := d.Transform(ctx, i.Description)
 	if err != nil {
 		return Output{Error: fmt.Sprintf("error creating image: %v", err)}
 	}
