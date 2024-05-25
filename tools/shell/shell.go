@@ -7,17 +7,24 @@ import (
 )
 
 type Tool struct {
-	shell string
+	shell         string
+	askForConfirm bool
 }
 
 func New() *Tool {
 	return &Tool{
-		shell: "bash",
+		shell:         "bash",
+		askForConfirm: true,
 	}
 }
 
 func (t *Tool) WithShell(shell string) *Tool {
 	t.shell = shell
+	return t
+}
+
+func (t *Tool) WithAskForConfirm(askForConfirm bool) *Tool {
+	t.askForConfirm = askForConfirm
 	return t
 }
 
@@ -46,6 +53,22 @@ func (t *Tool) Fn() any {
 
 //nolint:gosec
 func (t *Tool) fn(i Input) Output {
+	// Ask for confirmation if the flag is set.
+	if t.askForConfirm {
+		fmt.Println("Are you sure you want to run the following script?")
+		fmt.Println("-------------------------------------------------")
+		fmt.Println(i.BashScript)
+		fmt.Println("-------------------------------------------------")
+		fmt.Print("Type 'yes' to confirm > ")
+		var confirm string
+		fmt.Scanln(&confirm)
+		if confirm != "yes" {
+			return Output{
+				Error: "script execution aborted",
+			}
+		}
+	}
+
 	// Create a command to run the Bash interpreter with the script.
 	cmd := exec.Command(t.shell, "-c", i.BashScript)
 
