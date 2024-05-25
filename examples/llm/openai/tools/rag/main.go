@@ -13,6 +13,7 @@ import (
 	"github.com/henomis/lingoose/thread"
 	ragtool "github.com/henomis/lingoose/tools/rag"
 	"github.com/henomis/lingoose/tools/serpapi"
+	"github.com/henomis/lingoose/tools/shell"
 )
 
 func main() {
@@ -38,17 +39,19 @@ func main() {
 	llm := openai.New().WithModel(openai.GPT4o).WithToolChoice(newStr("auto")).WithTools(
 		ragtool.New(rag, "US covid vaccines"),
 		serpapi.New(),
+		shell.New(),
 	)
 
 	topics := []string{
-		"how many covid vaccine doses US has donated to other countries",
-		"who's the author of LinGoose github project",
+		"how many covid vaccine doses US has donated to other countries.",
+		"who's the author of LinGoose github project.",
+		"which process is consuming the most memory.",
 	}
 
 	for _, topic := range topics {
 		t := thread.New().AddMessage(
 			thread.NewUserMessage().AddContent(
-				thread.NewTextContent("Please tell me " + topic + "."),
+				thread.NewTextContent("Please tell me " + topic),
 			),
 		)
 
