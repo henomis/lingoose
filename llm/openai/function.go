@@ -85,7 +85,7 @@ type Tool interface {
 	Fn() any
 }
 
-func (o OpenAI) WithTools(tools ...Tool) OpenAI {
+func (o *OpenAI) WithTools(tools ...Tool) *OpenAI {
 	for _, tool := range tools {
 		function, err := bindFunction(tool.Fn(), tool.Name(), tool.Description())
 		if err != nil {
