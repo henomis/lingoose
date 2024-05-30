@@ -22,11 +22,16 @@ type observer interface {
 	SpanEnd(s *obs.Span) (*obs.Span, error)
 }
 
+const (
+	DefaultMaxIterations = 3
+)
+
 type Assistant struct {
-	llm        LLM
-	rag        RAG
-	thread     *thread.Thread
-	parameters Parameters
+	llm           LLM
+	rag           RAG
+	thread        *thread.Thread
+	parameters    Parameters
+	maxIterations uint
 }
 
 type LLM interface {
@@ -48,6 +53,7 @@ func New(llm LLM) *Assistant {
 			CompanyName:        defaultCompanyName,
 			CompanyDescription: defaultCompanyDescription,
 		},
+		maxIterations: DefaultMaxIterations,
 	}
 
 	return assistant
@@ -123,7 +129,7 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 
 	a.thread.AddMessage(thread.NewSystemMessage().AddContent(
 		thread.NewTextContent(
-			systemRAGPrompt,
+			systemPrompt,
 		).Format(
 			types.M{
 				"assistantName":      a.parameters.AssistantName,
@@ -143,6 +149,42 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 			},
 		),
 	))
+
+	return nil
+}
+
+func (a *Assistant) WithMaxIterations(maxIterations uint) *Assistant {
+	a.maxIterations = maxIterations
+	return a
+}
+
+func (a *Assistant) Execute(ctx context.Context) error {
+	if a.thread == nil {
+		return nil
+	}
+
+	ctx, spanAssistant, err := a.startObserveSpan(ctx, "assistant")
+	if err != nil {
+		return err
+	}
+
+	a.injectSystemMessage()
+
+	for i := 0; i < int(a.maxIterations); i++ {
+		err = a.llm.Generate(ctx, a.thread)
+		if err != nil {
+			return err
+		}
+
+		if a.thread.LastMessage().Role != thread.RoleTool {
+			break
+		}
+	}
+
+	err = a.stopObserveSpan(ctx, spanAssistant)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -182,4 +224,28 @@ func (a *Assistant) stopObserveSpan(ctx context.Context, span *obs.Span) error {
 
 	_, err := o.SpanEnd(span)
 	return err
+}
+
+func (a *Assistant) injectSystemMessage() {
+	for _, message := range a.thread.Messages {
+		if message.Role == thread.RoleSystem {
+			return
+		}
+	}
+
+	systemMessage := thread.NewSystemMessage().AddContent(
+		thread.NewTextContent(
+			systemPrompt,
+		).Format(
+			types.M{
+				"assistantName":      a.parameters.AssistantName,
+				"assistantIdentity":  a.parameters.AssistantIdentity,
+				"assistantScope":     a.parameters.AssistantScope,
+				"companyName":        a.parameters.CompanyName,
+				"companyDescription": a.parameters.CompanyDescription,
+			},
+		),
+	)
+
+	a.thread.Messages = append([]*thread.Message{systemMessage}, a.thread.Messages...)
 }
