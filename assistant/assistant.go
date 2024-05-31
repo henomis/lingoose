@@ -2,6 +2,7 @@ package assistant
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	obs "github.com/henomis/lingoose/observer"
@@ -89,11 +90,21 @@ func (a *Assistant) Run(ctx context.Context) error {
 		if errGenerate != nil {
 			return errGenerate
 		}
+	} else {
+		a.injectSystemMessage()
 	}
 
-	err = a.llm.Generate(ctx, a.thread)
-	if err != nil {
-		return err
+	for i := 0; i < int(a.maxIterations); i++ {
+		err = a.llm.Generate(ctx, a.thread)
+		if err != nil {
+			return err
+		}
+
+		if a.thread.LastMessage().Role != thread.RoleTool {
+			break
+		}
+
+		fmt.Println(a.Thread())
 	}
 
 	err = a.stopObserveSpan(ctx, spanAssistant)
@@ -156,37 +167,6 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 func (a *Assistant) WithMaxIterations(maxIterations uint) *Assistant {
 	a.maxIterations = maxIterations
 	return a
-}
-
-func (a *Assistant) Execute(ctx context.Context) error {
-	if a.thread == nil {
-		return nil
-	}
-
-	ctx, spanAssistant, err := a.startObserveSpan(ctx, "assistant")
-	if err != nil {
-		return err
-	}
-
-	a.injectSystemMessage()
-
-	for i := 0; i < int(a.maxIterations); i++ {
-		err = a.llm.Generate(ctx, a.thread)
-		if err != nil {
-			return err
-		}
-
-		if a.thread.LastMessage().Role != thread.RoleTool {
-			break
-		}
-	}
-
-	err = a.stopObserveSpan(ctx, spanAssistant)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *Assistant) startObserveSpan(ctx context.Context, name string) (context.Context, *obs.Span, error) {
