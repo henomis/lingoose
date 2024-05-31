@@ -11,9 +11,9 @@ import (
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/rag"
 	"github.com/henomis/lingoose/thread"
-	ragtool "github.com/henomis/lingoose/tools/rag"
-	"github.com/henomis/lingoose/tools/serpapi"
-	"github.com/henomis/lingoose/tools/shell"
+	ragtool "github.com/henomis/lingoose/tool/rag"
+	"github.com/henomis/lingoose/tool/serpapi"
+	"github.com/henomis/lingoose/tool/shell"
 )
 
 func main() {

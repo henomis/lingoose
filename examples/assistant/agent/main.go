@@ -8,8 +8,8 @@ import (
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/thread"
 
-	pythontool "github.com/henomis/lingoose/tools/python"
-	serpapitool "github.com/henomis/lingoose/tools/serpapi"
+	pythontool "github.com/henomis/lingoose/tool/python"
+	serpapitool "github.com/henomis/lingoose/tool/serpapi"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/tools/python"
+	"github.com/henomis/lingoose/tool/python"
 )
 
 func main() {

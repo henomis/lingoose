@@ -7,7 +7,7 @@ import (
 
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/tools/dalle"
+	"github.com/henomis/lingoose/tool/dalle"
 	"github.com/henomis/lingoose/transformer"
 )
 
