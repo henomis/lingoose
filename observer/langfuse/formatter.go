@@ -55,12 +55,10 @@ func threadMessagesToLangfuseMSlice(messages []*thread.Message) []model.M {
 }
 
 func threadOutputMessagesToLangfuseOutput(messages []*thread.Message) any {
-
 	if len(messages) == 1 &&
 		messages[0].Role == thread.RoleAssistant &&
 		len(messages[0].Contents) == 1 &&
 		messages[0].Contents[0].Type == thread.ContentTypeText {
-
 		return threadMessageToLangfuseM(messages[0])
 	}
 
@@ -70,7 +68,6 @@ func threadOutputMessagesToLangfuseOutput(messages []*thread.Message) any {
 	for _, message := range messages {
 		if message.Role == thread.RoleAssistant &&
 			message.Contents[0].Type == thread.ContentTypeToolCall {
-
 			toolCalls = threadMessageToLangfuseM(message)
 		} else if message.Role == thread.RoleTool &&
 			message.Contents[0].Type == thread.ContentTypeToolResponse {
@@ -88,7 +85,6 @@ func threadMessageToLangfuseM(message *thread.Message) model.M {
 
 	role := message.Role
 	if message.Role == thread.RoleTool {
-
 		data := message.Contents[0].AsToolResponseData()
 		m := model.M{
 			"type":    message.Contents[0].Type,
