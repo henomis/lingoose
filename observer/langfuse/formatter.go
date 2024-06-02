@@ -54,22 +54,81 @@ func threadMessagesToLangfuseMSlice(messages []*thread.Message) []model.M {
 	return mSlice
 }
 
+func threadOutputMessagesToLangfuseOutput(messages []*thread.Message) any {
+
+	if len(messages) == 1 &&
+		messages[0].Role == thread.RoleAssistant &&
+		len(messages[0].Contents) == 1 &&
+		messages[0].Contents[0].Type == thread.ContentTypeText {
+
+		return threadMessageToLangfuseM(messages[0])
+	}
+
+	toolCalls := model.M{}
+	toolMessages := []*thread.Message{}
+
+	for _, message := range messages {
+		if message.Role == thread.RoleAssistant &&
+			message.Contents[0].Type == thread.ContentTypeToolCall {
+
+			toolCalls = threadMessageToLangfuseM(message)
+		} else if message.Role == thread.RoleTool &&
+			message.Contents[0].Type == thread.ContentTypeToolResponse {
+			toolMessages = append(toolMessages, message)
+		}
+	}
+
+	return append([]model.M{toolCalls}, threadMessagesToLangfuseMSlice(toolMessages)...)
+}
+
 func threadMessageToLangfuseM(message *thread.Message) model.M {
 	if message == nil {
 		return nil
 	}
 
-	messageContent := ""
 	role := message.Role
+	if message.Role == thread.RoleTool {
+
+		data := message.Contents[0].AsToolResponseData()
+		m := model.M{
+			"type":    message.Contents[0].Type,
+			"id":      data.ID,
+			"name":    data.Name,
+			"results": data.Result,
+		}
+
+		return model.M{
+			"role":    role,
+			"content": m,
+		}
+	}
+
+	messageContent := ""
+	m := make([]model.M, 0)
 	for _, content := range message.Contents {
 		if content.Type == thread.ContentTypeText {
 			messageContent += content.AsString()
+		} else if content.Type == thread.ContentTypeToolCall {
+			for _, data := range content.AsToolCallData() {
+				m = append(m, model.M{
+					"type":      content.Type,
+					"id":        data.ID,
+					"name":      data.Name,
+					"arguments": data.Arguments,
+				})
+			}
 		}
 	}
-	return model.M{
+	output := model.M{
 		"role":    role,
 		"content": messageContent,
 	}
+
+	if len(m) > 0 {
+		output["content"] = m
+	}
+
+	return output
 }
 
 func observerGenerationToLangfuseGeneration(g *observer.Generation) *model.Generation {
@@ -81,7 +140,7 @@ func observerGenerationToLangfuseGeneration(g *observer.Generation) *model.Gener
 		Model:               g.Model,
 		ModelParameters:     g.ModelParameters,
 		Input:               threadMessagesToLangfuseMSlice(g.Input),
-		Output:              threadMessageToLangfuseM(g.Output),
+		Output:              threadOutputMessagesToLangfuseOutput(g.Output),
 		Metadata:            g.Metadata,
 	}
 }
