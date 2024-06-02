@@ -95,17 +95,7 @@ func (a *Assistant) Run(ctx context.Context) error {
 	}
 
 	for i := 0; i < int(a.maxIterations); i++ {
-		ctx, spanIteration, err := a.startObserveSpan(ctx, fmt.Sprintf("iteration-%d", i+1))
-		if err != nil {
-			return err
-		}
-
-		err = a.llm.Generate(ctx, a.thread)
-		if err != nil {
-			return err
-		}
-
-		err = a.stopObserveSpan(ctx, spanIteration)
+		err = a.runIteration(ctx, i)
 		if err != nil {
 			return err
 		}
@@ -116,6 +106,25 @@ func (a *Assistant) Run(ctx context.Context) error {
 	}
 
 	err = a.stopObserveSpan(ctx, spanAssistant)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Assistant) runIteration(ctx context.Context, iteration int) error {
+	ctx, spanIteration, err := a.startObserveSpan(ctx, fmt.Sprintf("iteration-%d", iteration+1))
+	if err != nil {
+		return err
+	}
+
+	err = a.llm.Generate(ctx, a.thread)
+	if err != nil {
+		return err
+	}
+
+	err = a.stopObserveSpan(ctx, spanIteration)
 	if err != nil {
 		return err
 	}

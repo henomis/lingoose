@@ -36,6 +36,7 @@ func (t *Tool) Name() string {
 	return "python"
 }
 
+//nolint:lll
 func (t *Tool) Description() string {
 	return "A tool that runs Python code using the Python interpreter. Use this tool to solve calculations, manipulate data, or perform any other Python-related tasks. The code should print the final result to stdout."
 }
