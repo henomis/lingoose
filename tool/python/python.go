@@ -37,7 +37,7 @@ func (t *Tool) Name() string {
 }
 
 func (t *Tool) Description() string {
-	return "A tool that runs Python code using the Python interpreter. The code should print the final result to stdout."
+	return "A tool that runs Python code using the Python interpreter. Use this tool to solve calculations, manipulate data, or perform any other Python-related tasks. The code should print the final result to stdout."
 }
 
 func (t *Tool) Fn() any {
@@ -60,6 +60,12 @@ func (t *Tool) fn(i Input) Output {
 	if err != nil {
 		return Output{
 			Error: fmt.Sprintf("failed to run script: %v, stderr: %v", err, stderr.String()),
+		}
+	}
+
+	if out.String() == "" {
+		return Output{
+			Error: "no output from script, script must print the final result to stdout",
 		}
 	}
 

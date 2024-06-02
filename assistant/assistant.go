@@ -2,6 +2,7 @@ package assistant
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	obs "github.com/henomis/lingoose/observer"
@@ -94,7 +95,17 @@ func (a *Assistant) Run(ctx context.Context) error {
 	}
 
 	for i := 0; i < int(a.maxIterations); i++ {
+		ctx, spanIteration, err := a.startObserveSpan(ctx, fmt.Sprintf("iteration-%d", i+1))
+		if err != nil {
+			return err
+		}
+
 		err = a.llm.Generate(ctx, a.thread)
+		if err != nil {
+			return err
+		}
+
+		err = a.stopObserveSpan(ctx, spanIteration)
 		if err != nil {
 			return err
 		}

@@ -17,45 +17,41 @@ import (
 func main() {
 	ctx := context.Background()
 
-	o := langfuse.New(ctx)
-	trace, err := o.Trace(&observer.Trace{Name: "state of the union"})
+	langfuseObserver := langfuse.New(ctx)
+	trace, err := langfuseObserver.Trace(&observer.Trace{Name: "Average Temperature calculator"})
 	if err != nil {
 		panic(err)
 	}
 
-	ctx = observer.ContextWithObserverInstance(ctx, o)
+	ctx = observer.ContextWithObserverInstance(ctx, langfuseObserver)
 	ctx = observer.ContextWithTraceID(ctx, trace.ID)
 
 	auto := "auto"
-	a := assistant.New(
+	myAssistant := assistant.New(
 		openai.New().WithModel(openai.GPT4o).WithToolChoice(&auto).WithTools(
 			pythontool.New(),
 			serpapitool.New(),
 		),
 	).WithParameters(
 		assistant.Parameters{
-			AssistantName:      "AI Assistant",
-			AssistantIdentity:  "an helpful assistant",
-			AssistantScope:     "with their questions.",
-			CompanyName:        "",
-			CompanyDescription: "",
+			AssistantName:     "AI Assistant",
+			AssistantIdentity: "a helpful assistant",
+			AssistantScope:    "answering questions",
 		},
 	).WithThread(
 		thread.New().AddMessages(
 			thread.NewUserMessage().AddContent(
-				thread.NewTextContent("calculate the average temperature in celsius degrees of New York, Rome, and Tokyo."),
+				thread.NewTextContent("Search the current temperature of New York, Rome, and Tokyo, then calculate the average temperature in Celsius."),
 			),
 		),
 	).WithMaxIterations(10)
 
-	err = a.Run(ctx)
+	err = myAssistant.Run(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("----")
-	fmt.Println(a.Thread())
-	fmt.Println("----")
+	fmt.Println(myAssistant.Thread())
 
-	o.Flush(ctx)
+	langfuseObserver.Flush(ctx)
 }
