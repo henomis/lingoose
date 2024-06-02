@@ -150,7 +150,7 @@ func (o *Ollama) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = o.stopObserveGeneration(ctx, generation, t)
+	err = o.stopObserveGeneration(ctx, generation, []*thread.Message{t.LastMessage()})
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOllamaChat, err)
 	}
@@ -248,11 +248,11 @@ func (o *Ollama) startObserveGeneration(ctx context.Context, t *thread.Thread) (
 func (o *Ollama) stopObserveGeneration(
 	ctx context.Context,
 	generation *observer.Generation,
-	t *thread.Thread,
+	messages []*thread.Message,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		ctx,
 		generation,
-		t,
+		messages,
 	)
 }

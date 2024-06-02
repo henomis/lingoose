@@ -2,7 +2,6 @@ package assistant
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	obs "github.com/henomis/lingoose/observer"
@@ -103,8 +102,6 @@ func (a *Assistant) Run(ctx context.Context) error {
 		if a.thread.LastMessage().Role != thread.RoleTool {
 			break
 		}
-
-		fmt.Println(a.Thread())
 	}
 
 	err = a.stopObserveSpan(ctx, spanAssistant)

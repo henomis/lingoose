@@ -6,6 +6,8 @@ import (
 
 	"github.com/henomis/lingoose/assistant"
 	"github.com/henomis/lingoose/llm/openai"
+	"github.com/henomis/lingoose/observer"
+	"github.com/henomis/lingoose/observer/langfuse"
 	"github.com/henomis/lingoose/thread"
 
 	pythontool "github.com/henomis/lingoose/tool/python"
@@ -13,6 +15,16 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
+	o := langfuse.New(ctx)
+	trace, err := o.Trace(&observer.Trace{Name: "state of the union"})
+	if err != nil {
+		panic(err)
+	}
+
+	ctx = observer.ContextWithObserverInstance(ctx, o)
+	ctx = observer.ContextWithTraceID(ctx, trace.ID)
 
 	auto := "auto"
 	a := assistant.New(
@@ -36,7 +48,7 @@ func main() {
 		),
 	).WithMaxIterations(10)
 
-	err := a.Run(context.Background())
+	err = a.Run(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -44,4 +56,6 @@ func main() {
 	fmt.Println("----")
 	fmt.Println(a.Thread())
 	fmt.Println("----")
+
+	o.Flush(ctx)
 }
