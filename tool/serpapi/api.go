@@ -24,7 +24,10 @@ type response struct {
 }
 
 type apiResponse struct {
-	OrganicResults []OrganicResults `json:"organic_results"`
+	AnswerBox      map[string]interface{} `json:"answer_box,omitempty"`
+	SportsResults  map[string]interface{} `json:"sports_results,omitempty"`
+	KnowledgeGraph map[string]interface{} `json:"knowledge_graph,omitempty"`
+	OrganicResults []OrganicResults       `json:"organic_results"`
 }
 
 type Top struct {
@@ -89,6 +92,48 @@ func (r *response) Decode(body io.Reader) error {
 	err := json.NewDecoder(body).Decode(&r.apiResponse)
 	if err != nil {
 		return err
+	}
+
+	if r.apiResponse.AnswerBox != nil {
+		answerBox, errMarshall := json.Marshal(r.apiResponse.AnswerBox)
+		if errMarshall != nil {
+			return errMarshall
+		}
+
+		r.Results = append(r.Results, result{
+			Title: "Answer Box",
+			Info:  string(answerBox),
+		})
+
+		return nil
+	}
+
+	if r.apiResponse.SportsResults != nil {
+		sportsResults, errMarshall := json.Marshal(r.apiResponse.SportsResults)
+		if errMarshall != nil {
+			return errMarshall
+		}
+
+		r.Results = append(r.Results, result{
+			Title: "Sports Results",
+			Info:  string(sportsResults),
+		})
+
+		return nil
+	}
+
+	if r.apiResponse.KnowledgeGraph != nil {
+		knowledgeGraph, errMarshall := json.Marshal(r.apiResponse.KnowledgeGraph)
+		if errMarshall != nil {
+			return errMarshall
+		}
+
+		r.Results = append(r.Results, result{
+			Title: "Knowledge Graph",
+			Info:  string(knowledgeGraph),
+		})
+
+		return nil
 	}
 
 	for _, res := range r.apiResponse.OrganicResults {
