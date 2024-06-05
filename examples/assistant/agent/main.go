@@ -10,6 +10,7 @@ import (
 	"github.com/henomis/lingoose/observer/langfuse"
 	"github.com/henomis/lingoose/thread"
 
+	humantool "github.com/henomis/lingoose/tool/human"
 	pythontool "github.com/henomis/lingoose/tool/python"
 	serpapitool "github.com/henomis/lingoose/tool/serpapi"
 )
@@ -18,7 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	langfuseObserver := langfuse.New(ctx)
-	trace, err := langfuseObserver.Trace(&observer.Trace{Name: "Average Temperature calculator"})
+	trace, err := langfuseObserver.Trace(&observer.Trace{Name: "Italian guests calculator"})
 	if err != nil {
 		panic(err)
 	}
@@ -31,6 +32,7 @@ func main() {
 		openai.New().WithModel(openai.GPT4o).WithToolChoice(&auto).WithTools(
 			pythontool.New(),
 			serpapitool.New(),
+			humantool.New(),
 		),
 	).WithParameters(
 		assistant.Parameters{
@@ -41,7 +43,7 @@ func main() {
 	).WithThread(
 		thread.New().AddMessages(
 			thread.NewUserMessage().AddContent(
-				thread.NewTextContent("Search the current temperature of New York, Rome, and Tokyo, then calculate the average temperature in Celsius."),
+				thread.NewTextContent("search the top 3 italian dishes and then their costs, then ask the user's budget in euros and calculate how many guests can be invited for each dish"),
 			),
 		),
 	).WithMaxIterations(10)

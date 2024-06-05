@@ -94,48 +94,6 @@ func (r *response) Decode(body io.Reader) error {
 		return err
 	}
 
-	if r.apiResponse.AnswerBox != nil {
-		answerBox, errMarshall := json.Marshal(r.apiResponse.AnswerBox)
-		if errMarshall != nil {
-			return errMarshall
-		}
-
-		r.Results = append(r.Results, result{
-			Title: "Answer Box",
-			Info:  string(answerBox),
-		})
-
-		return nil
-	}
-
-	if r.apiResponse.SportsResults != nil {
-		sportsResults, errMarshall := json.Marshal(r.apiResponse.SportsResults)
-		if errMarshall != nil {
-			return errMarshall
-		}
-
-		r.Results = append(r.Results, result{
-			Title: "Sports Results",
-			Info:  string(sportsResults),
-		})
-
-		return nil
-	}
-
-	if r.apiResponse.KnowledgeGraph != nil {
-		knowledgeGraph, errMarshall := json.Marshal(r.apiResponse.KnowledgeGraph)
-		if errMarshall != nil {
-			return errMarshall
-		}
-
-		r.Results = append(r.Results, result{
-			Title: "Knowledge Graph",
-			Info:  string(knowledgeGraph),
-		})
-
-		return nil
-	}
-
 	for _, res := range r.apiResponse.OrganicResults {
 		r.Results = append(r.Results, result{
 			Title: res.Title,

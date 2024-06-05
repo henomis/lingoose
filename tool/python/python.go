@@ -22,7 +22,7 @@ func (t *Tool) WithPythonPath(pythonPath string) *Tool {
 }
 
 type Input struct {
-	PythonCode string `json:"python_code" jsonschema:"description=python code that prints the final result to stdout."`
+	PythonCode string `json:"python_code" jsonschema:"description=python code that uses print() to print the final result to stdout."`
 }
 
 type Output struct {
@@ -38,7 +38,7 @@ func (t *Tool) Name() string {
 
 //nolint:lll
 func (t *Tool) Description() string {
-	return "A tool that runs Python code using the Python interpreter. Use this tool to solve calculations, manipulate data, or perform any other Python-related tasks. The code should print the final result to stdout."
+	return "Use this tool to solve calculations, manipulate data, or perform any other Python-related tasks. The code should use print() to print the final result to stdout."
 }
 
 func (t *Tool) Fn() any {
