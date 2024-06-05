@@ -1,5 +1,5 @@
 ---
-title: "Observer"
+title: "Observe and Analyze LLM Applications"
 description:
 linkTitle: "Observer"
 menu: { main: { parent: 'reference', weight: -92 } }

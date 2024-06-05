@@ -202,6 +202,8 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
 
+	nMessageBeforeGeneration := len(t.Messages)
+
 	if o.streamCallbackFn != nil {
 		err = o.stream(ctx, t, chatCompletionRequest)
 	} else {
@@ -211,7 +213,7 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = o.stopObserveGeneration(ctx, generation, t)
+	err = o.stopObserveGeneration(ctx, generation, t.Messages[nMessageBeforeGeneration:])
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrOpenAIChat, err)
 	}
@@ -454,11 +456,11 @@ func (o *OpenAI) startObserveGeneration(ctx context.Context, t *thread.Thread) (
 func (o *OpenAI) stopObserveGeneration(
 	ctx context.Context,
 	generation *observer.Generation,
-	t *thread.Thread,
+	messages []*thread.Message,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		ctx,
 		generation,
-		t,
+		messages,
 	)
 }

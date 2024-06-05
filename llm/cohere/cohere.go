@@ -233,7 +233,7 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = c.stopObserveGeneration(ctx, generation, t)
+	err = c.stopObserveGeneration(ctx, generation, []*thread.Message{t.LastMessage()})
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
@@ -309,11 +309,11 @@ func (c *Cohere) startObserveGeneration(ctx context.Context, t *thread.Thread) (
 func (c *Cohere) stopObserveGeneration(
 	ctx context.Context,
 	generation *observer.Generation,
-	t *thread.Thread,
+	messages []*thread.Message,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		ctx,
 		generation,
-		t,
+		messages,
 	)
 }

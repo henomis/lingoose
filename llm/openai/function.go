@@ -79,6 +79,25 @@ func (o *OpenAI) BindFunction(
 	return nil
 }
 
+type Tool interface {
+	Description() string
+	Name() string
+	Fn() any
+}
+
+func (o *OpenAI) WithTools(tools ...Tool) *OpenAI {
+	for _, tool := range tools {
+		function, err := bindFunction(tool.Fn(), tool.Name(), tool.Description())
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		o.functions[tool.Name()] = *function
+	}
+
+	return o
+}
+
 func (o *Legacy) getFunctions() []openai.FunctionDefinition {
 	var functions []openai.FunctionDefinition
 

@@ -84,12 +84,14 @@ func main() {
 		panic(err)
 	}
 
-	generation.Output = &thread.Message{
-		Role: thread.RoleAssistant,
-		Contents: []*thread.Content{
-			{
-				Type: thread.ContentTypeText,
-				Data: "The Q3 OKRs contain goals for multiple teams...",
+	generation.Output = []*thread.Message{
+		{
+			Role: thread.RoleAssistant,
+			Contents: []*thread.Content{
+				{
+					Type: thread.ContentTypeText,
+					Data: "The Q3 OKRs contain goals for multiple teams...",
+				},
 			},
 		},
 	}

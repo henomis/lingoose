@@ -47,7 +47,7 @@ func StartObserveGeneration(
 func StopObserveGeneration(
 	ctx context.Context,
 	generation *observer.Generation,
-	t *thread.Thread,
+	messages []*thread.Message,
 ) error {
 	o, ok := observer.ContextValueObserverInstance(ctx).(LLMObserver)
 	if o == nil || !ok {
@@ -55,7 +55,7 @@ func StopObserveGeneration(
 		return nil
 	}
 
-	generation.Output = t.LastMessage()
+	generation.Output = messages
 	_, err := o.GenerationEnd(generation)
 	return err
 }

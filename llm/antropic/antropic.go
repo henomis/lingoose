@@ -171,7 +171,7 @@ func (o *Antropic) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = o.stopObserveGeneration(ctx, generation, t)
+	err = o.stopObserveGeneration(ctx, generation, []*thread.Message{t.LastMessage()})
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
@@ -281,11 +281,11 @@ func (o *Antropic) startObserveGeneration(ctx context.Context, t *thread.Thread)
 func (o *Antropic) stopObserveGeneration(
 	ctx context.Context,
 	generation *observer.Generation,
-	t *thread.Thread,
+	messagges []*thread.Message,
 ) error {
 	return llmobserver.StopObserveGeneration(
 		ctx,
 		generation,
-		t,
+		messagges,
 	)
 }

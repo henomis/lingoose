@@ -2,7 +2,7 @@
 title: "LinGoose Linglets"
 description:
 linkTitle: "Linglets"
-menu: { main: { parent: 'reference', weight: -89 } }
+menu: { main: { parent: 'reference', weight: -88 } }
 ---
 
 Linglets are pre-built LinGoose Assistants with a specific purpose. They are designed to be used as a starting point for building your own AI app. You can use them as a reference to understand how to build your own assistant.

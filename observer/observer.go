@@ -38,7 +38,7 @@ type Generation struct {
 	Model           string
 	ModelParameters types.M
 	Input           []*thread.Message
-	Output          *thread.Message
+	Output          []*thread.Message
 	Metadata        types.M
 }
 

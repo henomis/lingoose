@@ -32,3 +32,36 @@ fmt.Println(myAssistant.Thread())
 ```
 
 We can define the LinGoose `Assistant` as a `Thread` runner with an optional `RAG` component that will help to produce the response. 
+
+## Assistant as Agent
+
+The `Assistant` can be used as an agent in a conversation. It can be used to automate tasks, answer questions, and provide information. 
+
+```go
+auto := "auto"
+myAgent := assistant.New(
+    openai.New().WithModel(openai.GPT4o).WithToolChoice(&auto).WithTools(
+        pythontool.New(),
+        serpapitool.New(),
+    ),
+).WithParameters(
+    assistant.Parameters{
+        AssistantName:      "AI Assistant",
+        AssistantIdentity:  "an helpful assistant",
+        AssistantScope:     "with their questions.",
+        CompanyName:        "",
+        CompanyDescription: "",
+    },
+).WithThread(
+    thread.New().AddMessages(
+        thread.NewUserMessage().AddContent(
+            thread.NewTextContent("calculate the average temperature in celsius degrees of New York, Rome, and Tokyo."),
+        ),
+    ),
+).WithMaxIterations(10)
+
+err := myAgent.Run(context.Background())
+if err != nil {
+    panic(err)
+}
+```

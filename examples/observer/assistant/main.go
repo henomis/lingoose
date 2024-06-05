@@ -71,4 +71,6 @@ func main() {
 	fmt.Println("----")
 	fmt.Println(a.Thread())
 	fmt.Println("----")
+
+	o.Flush(ctx)
 }
