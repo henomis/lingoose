@@ -19,10 +19,13 @@ func (c *Cohere) buildChatCompletionRequest(t *thread.Thread) *request.Chat {
 	message, history, toolResults := threadToChatMessages(t)
 
 	return &request.Chat{
-		Model:       c.model,
-		ChatHistory: history,
-		Message:     message,
-		ToolResults: toolResults,
+		Model:         c.model,
+		ChatHistory:   history,
+		Message:       message,
+		ToolResults:   toolResults,
+		Temperature:   &c.temperature,
+		MaxTokens:     &c.maxTokens,
+		StopSequences: c.stop,
 	}
 }
 
