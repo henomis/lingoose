@@ -24,7 +24,7 @@ type observer interface {
 }
 
 const (
-	DefaultMaxIterations = 3
+	DefaultMaxIterations = 1
 )
 
 type Assistant struct {

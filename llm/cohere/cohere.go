@@ -2,11 +2,13 @@ package cohere
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	coherego "github.com/henomis/cohere-go"
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
@@ -31,6 +33,8 @@ const (
 	ModelCommandNightly      Model = model.ModelCommandNightly
 	ModelCommandLight        Model = model.ModelCommandLight
 	ModelCommandLightNightly Model = model.ModelCommandLightNightly
+	ModelCommandR            Model = model.ModelCommandR
+	ModelCommandRPlus        Model = model.ModelCommandRPlus
 )
 
 const (
@@ -51,8 +55,7 @@ type Cohere struct {
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
 	name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
+	functions        map[string]Function
 }
 
 func (c *Cohere) WithCache(cache *cache.Cache) *Cohere {
@@ -72,6 +75,7 @@ func New() *Cohere {
 		temperature: DefaultTemperature,
 		maxTokens:   DefaultMaxTokens,
 		name:        "cohere",
+		functions:   make(map[string]Function),
 	}
 }
 
@@ -113,12 +117,6 @@ func (c *Cohere) WithStop(stop []string) *Cohere {
 
 func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 	c.streamCallbackFn = callbackFn
-	return c
-}
-
-func (c *Cohere) WithObserver(observer llmobserver.LLMObserver, traceID string) *Cohere {
-	c.observer = observer
-	c.observerTraceID = traceID
 	return c
 }
 
@@ -219,6 +217,10 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := c.buildChatCompletionRequest(t)
 
+	if len(c.functions) > 0 {
+		chatRequest.Tools = c.getChatCompletionRequestTools()
+	}
+
 	generation, err := c.startObserveGeneration(ctx, t)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
@@ -260,9 +262,19 @@ func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *re
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
 
-	t.AddMessage(thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(response.Text),
-	))
+	var messages []*thread.Message
+	if len(response.ToolCalls) > 0 {
+		messages = append(messages, toolCallsToToolCallMessage(response.ToolCalls))
+		messages = append(messages, c.callTools(response.ToolCalls)...)
+	} else {
+		messages = []*thread.Message{
+			thread.NewAssistantMessage().AddContent(
+				thread.NewTextContent(response.Text),
+			),
+		}
+	}
+
+	t.Messages = append(t.Messages, messages...)
 
 	return nil
 }
@@ -316,4 +328,154 @@ func (c *Cohere) stopObserveGeneration(
 		generation,
 		messages,
 	)
+}
+
+func (o *Cohere) getChatCompletionRequestTools() []model.Tool {
+	tools := []model.Tool{}
+
+	for _, function := range o.functions {
+		tool := model.Tool{
+			Name:                 function.Name,
+			Description:          function.Description,
+			ParameterDefinitions: make(map[string]model.ToolParameterDefinition),
+		}
+
+		functionProperties, ok := function.Parameters["properties"]
+		if !ok {
+			continue
+		}
+
+		functionPropertiesAsMap, isMap := functionProperties.(map[string]interface{})
+		if !isMap {
+			continue
+		}
+
+		for k, v := range functionPropertiesAsMap {
+			valueAsMap, isValueMap := v.(map[string]interface{})
+			if !isValueMap {
+				continue
+			}
+
+			description := ""
+			descriptionValue, isDescriptionValue := valueAsMap["description"]
+			if isDescriptionValue {
+				descriptionAsString, isDescriptionString := descriptionValue.(string)
+				if isDescriptionString {
+					description = descriptionAsString
+				}
+			}
+
+			argType := ""
+			argTypeValue, isArgTypeValue := valueAsMap["type"]
+			if isArgTypeValue {
+				argTypeAsString, isArgTypeString := argTypeValue.(string)
+				if isArgTypeString {
+					argType = argTypeAsString
+				}
+			}
+
+			required := false
+			requiredValue, isRequiredValue := valueAsMap["required"]
+			if isRequiredValue {
+				requiredAsBool, isRequiredBool := requiredValue.(bool)
+				if isRequiredBool {
+					required = requiredAsBool
+				}
+			}
+
+			if description == "" || argType == "" {
+				continue
+			}
+
+			tool.ParameterDefinitions[k] = model.ToolParameterDefinition{
+				Description: description,
+				Type:        argType,
+				Required:    required,
+			}
+		}
+
+		tools = append(tools, tool)
+	}
+
+	return tools
+}
+
+func toolCallsToToolCallMessage(toolCalls []model.ToolCall) *thread.Message {
+	if len(toolCalls) == 0 {
+		return nil
+	}
+
+	var toolCallData []thread.ToolCallData
+	for i, toolCall := range toolCalls {
+		parametersAsString, err := json.Marshal(toolCall.Parameters)
+		if err != nil {
+			continue
+		}
+
+		if toolCalls[i].ID == "" {
+			toolCalls[i].ID = uuid.New().String()
+		}
+
+		toolCallData = append(toolCallData, thread.ToolCallData{
+			ID:        toolCalls[i].ID,
+			Name:      toolCall.Name,
+			Arguments: string(parametersAsString),
+		})
+	}
+
+	return thread.NewAssistantMessage().AddContent(
+		thread.NewToolCallContent(
+			toolCallData,
+		),
+	)
+}
+
+func toolCallResultToThreadMessage(toolCall model.ToolCall, result string) *thread.Message {
+	return thread.NewToolMessage().AddContent(
+		thread.NewToolResponseContent(
+			thread.ToolResponseData{
+				ID:     toolCall.ID,
+				Name:   toolCall.Name,
+				Result: result,
+			},
+		),
+	)
+}
+
+func (o *Cohere) callTools(toolCalls []model.ToolCall) []*thread.Message {
+	if len(o.functions) == 0 || len(toolCalls) == 0 {
+		return nil
+	}
+
+	var messages []*thread.Message
+	for _, toolCall := range toolCalls {
+		result, err := o.callTool(toolCall)
+		if err != nil {
+			result = fmt.Sprintf("error: %s", err)
+		}
+
+		messages = append(messages, toolCallResultToThreadMessage(toolCall, result))
+	}
+
+	return messages
+}
+
+func (o *Cohere) callTool(toolCall model.ToolCall) (string, error) {
+	fn, ok := o.functions[toolCall.Name]
+	if !ok {
+		return "", fmt.Errorf("unknown function %s", toolCall.Name)
+	}
+
+	parameters, err := json.Marshal(toolCall.Parameters)
+	if err != nil {
+		return "", err
+	}
+
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, string(parameters))
+	//resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, "{}")
+	if err != nil {
+		return "", err
+	}
+
+	return resultAsJSON, nil
 }

@@ -7,8 +7,8 @@ github.com/gomodule/redigo v1.8.9 h1:Sl3u+2BI/kk+VEatbj0scLdrFhjPmbxOc1myhDP41ws
 github.com/gomodule/redigo v1.8.9/go.mod h1:7ArFNvsTjH8GMMzB4uy1snslv2BwmginuMs06a1uzZE=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/henomis/cohere-go v1.1.2 h1:rzEA1JRm26RnaQValoVeVQ1y1nTofuhr/z/fPyhUW/4=
-github.com/henomis/cohere-go v1.1.2/go.mod h1:z+UIgBbNCnLH5M47FYqg4h3CDWxjUv2VDfEwdTb95MU=
+github.com/henomis/cohere-go v1.2.0-beta.6 h1:zhehuI2mMS7u8Pcy6dpHgnTcO6lIfKLZmuCTO9996fs=
+github.com/henomis/cohere-go v1.2.0-beta.6/go.mod h1:z+UIgBbNCnLH5M47FYqg4h3CDWxjUv2VDfEwdTb95MU=
 github.com/henomis/langfuse-go v0.0.3 h1:Z5Mqlnj1fsok7eAT7jt+N4tegjbhY5HnZQ7wu1iVKss=
 github.com/henomis/langfuse-go v0.0.3/go.mod h1:gSRuO3nvjAvk/mgmb7b+9BcoN9s64GvXeaSN7PfVEKQ=
 github.com/henomis/milvus-go v0.0.4 h1:ArddXRJx/EGdQ75gB7TyEzD4Z4BqXzW16p8jRcjJOhs=
