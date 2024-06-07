@@ -226,6 +226,8 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
 
+	nMessageBeforeGeneration := len(t.Messages)
+
 	if c.streamCallbackFn != nil {
 		err = c.stream(ctx, t, chatRequest)
 	} else {
@@ -235,7 +237,7 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = c.stopObserveGeneration(ctx, generation, []*thread.Message{t.LastMessage()})
+	err = c.stopObserveGeneration(ctx, generation, t.Messages[nMessageBeforeGeneration:])
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}

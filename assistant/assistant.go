@@ -24,15 +24,15 @@ type observer interface {
 }
 
 const (
-	DefaultMaxIterations = 1
+	DefaultToolsMaxIterations = 1
 )
 
 type Assistant struct {
-	llm           LLM
-	rag           RAG
-	thread        *thread.Thread
-	parameters    Parameters
-	maxIterations uint
+	llm                LLM
+	rag                RAG
+	thread             *thread.Thread
+	parameters         Parameters
+	toolsMaxIterations uint
 }
 
 type LLM interface {
@@ -54,7 +54,7 @@ func New(llm LLM) *Assistant {
 			CompanyName:        defaultCompanyName,
 			CompanyDescription: defaultCompanyDescription,
 		},
-		maxIterations: DefaultMaxIterations,
+		toolsMaxIterations: DefaultToolsMaxIterations,
 	}
 
 	return assistant
@@ -94,7 +94,7 @@ func (a *Assistant) Run(ctx context.Context) error {
 		a.injectSystemMessage()
 	}
 
-	for i := 0; i < int(a.maxIterations); i++ {
+	for i := 0; i < int(a.toolsMaxIterations); i++ {
 		err = a.runIteration(ctx, i)
 		if err != nil {
 			return err
@@ -181,8 +181,8 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 	return nil
 }
 
-func (a *Assistant) WithMaxIterations(maxIterations uint) *Assistant {
-	a.maxIterations = maxIterations
+func (a *Assistant) WithToolsMaxIterations(maxIterations uint) *Assistant {
+	a.toolsMaxIterations = maxIterations
 	return a
 }
 
