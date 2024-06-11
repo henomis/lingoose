@@ -57,3 +57,10 @@ const (
 
 type UsageCallback func(types.Meta)
 type StreamCallback func(string)
+
+type ResponseFormat = openai.ChatCompletionResponseFormatType
+
+const (
+	ResponseFormatJSONObject ResponseFormat = openai.ChatCompletionResponseFormatTypeJSONObject
+	ResponseFormatText       ResponseFormat = openai.ChatCompletionResponseFormatTypeText
+)
