@@ -20,6 +20,7 @@ type Embedder struct {
 	model      string
 	restClient *restclientgo.RestClient
 	name       string
+	inputType  string
 }
 
 func New() *Embedder {
@@ -38,6 +39,11 @@ func New() *Embedder {
 
 func (e *Embedder) WithModel(model string) *Embedder {
 	e.model = model
+	return e
+}
+
+func (e *Embedder) WithInputType(inputType string) *Embedder {
+	e.inputType = inputType
 	return e
 }
 
@@ -77,8 +83,9 @@ func (e *Embedder) embed(ctx context.Context, text []string) ([]embedder.Embeddi
 	err := e.restClient.Post(
 		ctx,
 		&request{
-			Input: text,
-			Model: e.model,
+			Input:     text,
+			Model:     e.model,
+			InputType: e.inputType,
 		},
 		resp,
 	)

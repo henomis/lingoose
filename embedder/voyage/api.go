@@ -10,8 +10,9 @@ import (
 )
 
 type request struct {
-	Model string   `json:"model"`
-	Input []string `json:"input"`
+	Model     string   `json:"model"`
+	Input     []string `json:"input"`
+	InputType string   `json:"input_type,omitempty"`
 }
 
 func (r *request) Path() (string, error) {
