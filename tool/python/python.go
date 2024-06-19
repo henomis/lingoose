@@ -22,6 +22,7 @@ func (t *Tool) WithPythonPath(pythonPath string) *Tool {
 }
 
 type Input struct {
+	// nolint:lll
 	PythonCode string `json:"python_code" jsonschema:"description=python code that uses print() to print the final result to stdout."`
 }
 

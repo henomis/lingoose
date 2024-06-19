@@ -43,10 +43,10 @@ func main() {
 	).WithThread(
 		thread.New().AddMessages(
 			thread.NewUserMessage().AddContent(
-				thread.NewTextContent("search the top 3 italian dishes and then their costs, then ask the user's budget in euros and calculate how many guests can be invited for each dish"),
+				thread.NewTextContent("search the top 3 italian meals and then their costs, then ask the user's budget in euros and calculate how many guests can be invited for each meal"),
 			),
 		),
-	).WithMaxIterations(10)
+	).WithToolsMaxIterations(10)
 
 	err = myAssistant.Run(ctx)
 	if err != nil {

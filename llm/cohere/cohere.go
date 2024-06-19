@@ -2,6 +2,7 @@ package cohere
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -31,6 +32,8 @@ const (
 	ModelCommandNightly      Model = model.ModelCommandNightly
 	ModelCommandLight        Model = model.ModelCommandLight
 	ModelCommandLightNightly Model = model.ModelCommandLightNightly
+	ModelCommandR            Model = model.ModelCommandR
+	ModelCommandRPlus        Model = model.ModelCommandRPlus
 )
 
 const (
@@ -51,8 +54,7 @@ type Cohere struct {
 	cache            *cache.Cache
 	streamCallbackFn StreamCallbackFn
 	name             string
-	observer         llmobserver.LLMObserver
-	observerTraceID  string
+	functions        map[string]Function
 }
 
 func (c *Cohere) WithCache(cache *cache.Cache) *Cohere {
@@ -72,6 +74,7 @@ func New() *Cohere {
 		temperature: DefaultTemperature,
 		maxTokens:   DefaultMaxTokens,
 		name:        "cohere",
+		functions:   make(map[string]Function),
 	}
 }
 
@@ -116,13 +119,8 @@ func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 	return c
 }
 
-func (c *Cohere) WithObserver(observer llmobserver.LLMObserver, traceID string) *Cohere {
-	c.observer = observer
-	c.observerTraceID = traceID
-	return c
-}
-
 // Completion returns the completion for the given prompt
+// nolint:staticcheck
 func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) {
 	resp := &response.Generate{}
 	err := c.client.Generate(
@@ -219,10 +217,16 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 
 	chatRequest := c.buildChatCompletionRequest(t)
 
+	if len(c.functions) > 0 {
+		chatRequest.Tools = c.buildChatCompletionRequestTools()
+	}
+
 	generation, err := c.startObserveGeneration(ctx, t)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
+
+	nMessageBeforeGeneration := len(t.Messages)
 
 	if c.streamCallbackFn != nil {
 		err = c.stream(ctx, t, chatRequest)
@@ -233,7 +237,7 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 		return err
 	}
 
-	err = c.stopObserveGeneration(ctx, generation, []*thread.Message{t.LastMessage()})
+	err = c.stopObserveGeneration(ctx, generation, t.Messages[nMessageBeforeGeneration:])
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
 	}
@@ -251,6 +255,9 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *request.Chat) error {
 	var response response.Chat
 
+	b, _ := json.MarshalIndent(chatRequest, "", "  ")
+	fmt.Println(string(b))
+
 	err := c.client.Chat(
 		ctx,
 		chatRequest,
@@ -258,11 +265,26 @@ func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *re
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
+	} else if !response.IsSuccess() {
+		if response.RawBody == nil {
+			return fmt.Errorf("%w: %d", ErrCohereChat, response.Code)
+		}
+		return fmt.Errorf("%w: %s", ErrCohereChat, *response.RawBody)
 	}
 
-	t.AddMessage(thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(response.Text),
-	))
+	var messages []*thread.Message
+	if len(response.ToolCalls) > 0 {
+		messages = append(messages, toolCallsToToolCallMessage(response.ToolCalls))
+		messages = append(messages, c.callTools(response.ToolCalls)...)
+	} else {
+		messages = []*thread.Message{
+			thread.NewAssistantMessage().AddContent(
+				thread.NewTextContent(response.Text),
+			),
+		}
+	}
+
+	t.Messages = append(t.Messages, messages...)
 
 	return nil
 }
@@ -316,4 +338,55 @@ func (c *Cohere) stopObserveGeneration(
 		generation,
 		messages,
 	)
+}
+
+func (c *Cohere) buildChatCompletionRequestTools() []model.Tool {
+	tools := []model.Tool{}
+
+	for _, function := range c.functions {
+		tool := buildChatCompletionRequestTool(function)
+		if tool != nil {
+			tools = append(tools, *tool)
+		}
+	}
+
+	return tools
+}
+
+func (c *Cohere) callTools(toolCalls []model.ToolCall) []*thread.Message {
+	if len(c.functions) == 0 || len(toolCalls) == 0 {
+		return nil
+	}
+
+	var messages []*thread.Message
+	for _, toolCall := range toolCalls {
+		result, err := c.callTool(toolCall)
+		if err != nil {
+			result = fmt.Sprintf("error: %s", err)
+		}
+
+		messages = append(messages, toolCallResultToThreadMessage(toolCall, result))
+	}
+
+	return messages
+}
+
+func (c *Cohere) callTool(toolCall model.ToolCall) (string, error) {
+	fn, ok := c.functions[toolCall.Name]
+	if !ok {
+		return "", fmt.Errorf("unknown function %s", toolCall.Name)
+	}
+
+	parameters, err := json.Marshal(toolCall.Parameters)
+	if err != nil {
+		return "", err
+	}
+
+	resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, string(parameters))
+	//resultAsJSON, err := callFnWithArgumentAsJSON(fn.Fn, "{}")
+	if err != nil {
+		return "", err
+	}
+
+	return resultAsJSON, nil
 }
