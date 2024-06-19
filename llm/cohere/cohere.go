@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	coherego "github.com/henomis/cohere-go"
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
@@ -121,6 +120,7 @@ func (c *Cohere) WithStream(callbackFn StreamCallbackFn) *Cohere {
 }
 
 // Completion returns the completion for the given prompt
+// nolint:staticcheck
 func (c *Cohere) Completion(ctx context.Context, prompt string) (string, error) {
 	resp := &response.Generate{}
 	err := c.client.Generate(
@@ -218,7 +218,7 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 	chatRequest := c.buildChatCompletionRequest(t)
 
 	if len(c.functions) > 0 {
-		chatRequest.Tools = c.getChatCompletionRequestTools()
+		chatRequest.Tools = c.buildChatCompletionRequestTools()
 	}
 
 	generation, err := c.startObserveGeneration(ctx, t)
@@ -255,6 +255,9 @@ func (c *Cohere) Generate(ctx context.Context, t *thread.Thread) error {
 func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *request.Chat) error {
 	var response response.Chat
 
+	b, _ := json.MarshalIndent(chatRequest, "", "  ")
+	fmt.Println(string(b))
+
 	err := c.client.Chat(
 		ctx,
 		chatRequest,
@@ -262,6 +265,11 @@ func (c *Cohere) generate(ctx context.Context, t *thread.Thread, chatRequest *re
 	)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrCohereChat, err)
+	} else if !response.IsSuccess() {
+		if response.RawBody == nil {
+			return fmt.Errorf("%w: %d", ErrCohereChat, response.Code)
+		}
+		return fmt.Errorf("%w: %s", ErrCohereChat, *response.RawBody)
 	}
 
 	var messages []*thread.Message
@@ -332,126 +340,27 @@ func (c *Cohere) stopObserveGeneration(
 	)
 }
 
-func (o *Cohere) getChatCompletionRequestTools() []model.Tool {
+func (c *Cohere) buildChatCompletionRequestTools() []model.Tool {
 	tools := []model.Tool{}
 
-	for _, function := range o.functions {
-		tool := model.Tool{
-			Name:                 function.Name,
-			Description:          function.Description,
-			ParameterDefinitions: make(map[string]model.ToolParameterDefinition),
+	for _, function := range c.functions {
+		tool := buildChatCompletionRequestTool(function)
+		if tool != nil {
+			tools = append(tools, *tool)
 		}
-
-		functionProperties, ok := function.Parameters["properties"]
-		if !ok {
-			continue
-		}
-
-		functionPropertiesAsMap, isMap := functionProperties.(map[string]interface{})
-		if !isMap {
-			continue
-		}
-
-		for k, v := range functionPropertiesAsMap {
-			valueAsMap, isValueMap := v.(map[string]interface{})
-			if !isValueMap {
-				continue
-			}
-
-			description := ""
-			descriptionValue, isDescriptionValue := valueAsMap["description"]
-			if isDescriptionValue {
-				descriptionAsString, isDescriptionString := descriptionValue.(string)
-				if isDescriptionString {
-					description = descriptionAsString
-				}
-			}
-
-			argType := ""
-			argTypeValue, isArgTypeValue := valueAsMap["type"]
-			if isArgTypeValue {
-				argTypeAsString, isArgTypeString := argTypeValue.(string)
-				if isArgTypeString {
-					argType = argTypeAsString
-				}
-			}
-
-			required := false
-			requiredValue, isRequiredValue := valueAsMap["required"]
-			if isRequiredValue {
-				requiredAsBool, isRequiredBool := requiredValue.(bool)
-				if isRequiredBool {
-					required = requiredAsBool
-				}
-			}
-
-			if description == "" || argType == "" {
-				continue
-			}
-
-			tool.ParameterDefinitions[k] = model.ToolParameterDefinition{
-				Description: description,
-				Type:        argType,
-				Required:    required,
-			}
-		}
-
-		tools = append(tools, tool)
 	}
 
 	return tools
 }
 
-func toolCallsToToolCallMessage(toolCalls []model.ToolCall) *thread.Message {
-	if len(toolCalls) == 0 {
-		return nil
-	}
-
-	var toolCallData []thread.ToolCallData
-	for i, toolCall := range toolCalls {
-		parametersAsString, err := json.Marshal(toolCall.Parameters)
-		if err != nil {
-			continue
-		}
-
-		if toolCalls[i].ID == "" {
-			toolCalls[i].ID = uuid.New().String()
-		}
-
-		toolCallData = append(toolCallData, thread.ToolCallData{
-			ID:        toolCalls[i].ID,
-			Name:      toolCall.Name,
-			Arguments: string(parametersAsString),
-		})
-	}
-
-	return thread.NewAssistantMessage().AddContent(
-		thread.NewToolCallContent(
-			toolCallData,
-		),
-	)
-}
-
-func toolCallResultToThreadMessage(toolCall model.ToolCall, result string) *thread.Message {
-	return thread.NewToolMessage().AddContent(
-		thread.NewToolResponseContent(
-			thread.ToolResponseData{
-				ID:     toolCall.ID,
-				Name:   toolCall.Name,
-				Result: result,
-			},
-		),
-	)
-}
-
-func (o *Cohere) callTools(toolCalls []model.ToolCall) []*thread.Message {
-	if len(o.functions) == 0 || len(toolCalls) == 0 {
+func (c *Cohere) callTools(toolCalls []model.ToolCall) []*thread.Message {
+	if len(c.functions) == 0 || len(toolCalls) == 0 {
 		return nil
 	}
 
 	var messages []*thread.Message
 	for _, toolCall := range toolCalls {
-		result, err := o.callTool(toolCall)
+		result, err := c.callTool(toolCall)
 		if err != nil {
 			result = fmt.Sprintf("error: %s", err)
 		}
@@ -462,8 +371,8 @@ func (o *Cohere) callTools(toolCalls []model.ToolCall) []*thread.Message {
 	return messages
 }
 
-func (o *Cohere) callTool(toolCall model.ToolCall) (string, error) {
-	fn, ok := o.functions[toolCall.Name]
+func (c *Cohere) callTool(toolCall model.ToolCall) (string, error) {
+	fn, ok := c.functions[toolCall.Name]
 	if !ok {
 		return "", fmt.Errorf("unknown function %s", toolCall.Name)
 	}

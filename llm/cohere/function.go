@@ -46,7 +46,7 @@ func bindFunction(
 	}, nil
 }
 
-func (o *Cohere) BindFunction(
+func (c *Cohere) BindFunction(
 	fn interface{},
 	name string,
 	description string,
@@ -57,7 +57,7 @@ func (o *Cohere) BindFunction(
 		return err
 	}
 
-	o.functions[name] = *function
+	c.functions[name] = *function
 
 	return nil
 }
@@ -68,17 +68,17 @@ type Tool interface {
 	Fn() any
 }
 
-func (o *Cohere) WithTools(tools ...Tool) *Cohere {
+func (c *Cohere) WithTools(tools ...Tool) *Cohere {
 	for _, tool := range tools {
 		function, err := bindFunction(tool.Fn(), tool.Name(), tool.Description())
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		o.functions[tool.Name()] = *function
+		c.functions[tool.Name()] = *function
 	}
 
-	return o
+	return c
 }
 
 func extractFunctionParameter(f interface{}) (map[string]interface{}, error) {
