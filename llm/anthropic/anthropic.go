@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"net/http"
 	"os"
 	"strings"
@@ -50,8 +51,10 @@ const (
 	Claude3Sonnet         Model = "claude-3-sonnet-20240229"
 	Claude3Haiku20240307  Model = "claude-3-haiku-20240307"
 	Claude3Haiku          Model = "claude-3-haiku-20240307"
+	Claude3Dot5Sonnet     Model = "claude-3-5-sonnet-20240620"
 )
 
+type UsageCallback func(types.Meta)
 type StreamCallbackFn func(string)
 
 type Anthropic struct {
@@ -59,6 +62,7 @@ type Anthropic struct {
 	temperature      float64
 	restClient       *restclientgo.RestClient
 	streamCallbackFn StreamCallbackFn
+	usageCallback    UsageCallback
 	cache            *cache.Cache
 	apiVersion       string
 	apiKey           string
@@ -75,7 +79,7 @@ func New() *Anthropic {
 			func(req *http.Request) *http.Request {
 				req.Header.Set("x-api-key", apiKey)
 				req.Header.Set("anthropic-version", defaultAPIVersion)
-				req.Header.Set("anthropic-beta", defaultBetaVersion)
+				//req.Header.Set("anthropic-beta", defaultBetaVersion)
 				return req
 			},
 		),
@@ -99,6 +103,11 @@ func (o *Anthropic) WithStream(callbackFn StreamCallbackFn) *Anthropic {
 
 func (o *Anthropic) WithCache(cache *cache.Cache) *Anthropic {
 	o.cache = cache
+	return o
+}
+
+func (o *Anthropic) WithUsageCallback(callback UsageCallback) *Anthropic {
+	o.usageCallback = callback
 	return o
 }
 
@@ -237,10 +246,23 @@ func (o *Anthropic) generate(ctx context.Context, t *thread.Thread, chatRequest 
 	return nil
 }
 
+func (o *Anthropic) setUsageMetadata(usage usage) {
+	callbackMetadata := make(types.Meta)
+
+	err := mapstructure.Decode(usage, &callbackMetadata)
+	if err != nil {
+		return
+	}
+
+	o.usageCallback(callbackMetadata)
+}
+
 func (o *Anthropic) stream(ctx context.Context, t *thread.Thread, chatRequest *request) error {
 	var resp response
 	var assistantMessage string
+	var currentToolCall *content
 
+	var messages []*thread.Message
 	resp.SetAcceptContentType(eventStreamContentType)
 	resp.SetStreamCallback(
 		func(data []byte) error {
@@ -248,18 +270,57 @@ func (o *Anthropic) stream(ctx context.Context, t *thread.Thread, chatRequest *r
 			if !strings.HasPrefix(dataAsString, "data: ") {
 				return nil
 			}
-
 			dataAsString = strings.Replace(dataAsString, "data: ", "", -1)
 
 			var e event
 			_ = json.Unmarshal([]byte(dataAsString), &e)
 
-			if e.Type == "content_block_delta" {
-				if e.Delta != nil {
-					assistantMessage += e.Delta.Text
-					o.streamCallbackFn(e.Delta.Text)
+			switch e.Type {
+			case eventTypeMessageStart:
+				o.setUsageMetadata(*e.Message.Usage)
+			case eventTypeContentBlockStart:
+				if e.ContentBlock.Type == messageTypeToolUse {
+					currentToolCall = e.ContentBlock
 				}
-			} else if e.Type == "message_stop" {
+			case eventTypeContentBlockDelta:
+				if e.Delta != nil {
+					if e.Delta.PartialJson != nil {
+						if string(currentToolCall.Input) == "{}" {
+							currentToolCall.Input = currentToolCall.Input[:0]
+						}
+						partialArgs := strings.TrimSuffix(strings.TrimPrefix(string(e.Delta.PartialJson), `"`), `"`)
+						currentToolCall.Input = append(currentToolCall.Input, []byte(partialArgs)...)
+					}
+					if e.Delta.Text != "" {
+						assistantMessage += e.Delta.Text
+						o.streamCallbackFn(e.Delta.Text)
+					}
+				}
+			case eventTypeContentBlockStop:
+				if currentToolCall != nil {
+					var unquotedArgs string
+					currentToolCall.Input = []byte(`"` + string(currentToolCall.Input) + `"`)
+					err := json.Unmarshal(currentToolCall.Input, &unquotedArgs)
+					if err == nil {
+						currentToolCall.Input = []byte(unquotedArgs)
+					}
+					messages = append(messages, thread.NewAssistantMessage().AddContent(toolCallsToToolCallContent(*currentToolCall)))
+					toolResponse, err := o.callTool(*currentToolCall)
+					if err != nil {
+						return err
+					}
+					messages = append(messages, thread.NewUserMessage().AddContent(toolResponse))
+					currentToolCall = nil
+				}
+				if assistantMessage != "" {
+					messages = append(messages, thread.NewAssistantMessage().AddContent(thread.NewTextContent(assistantMessage)))
+					assistantMessage = ""
+				}
+			case eventTypeMessageDelta:
+				if e.Usage != nil {
+					o.setUsageMetadata(*e.Usage)
+				}
+			case eventTypeMessageStop:
 				o.streamCallbackFn(EOS)
 			}
 
@@ -282,10 +343,7 @@ func (o *Anthropic) stream(ctx context.Context, t *thread.Thread, chatRequest *r
 		return fmt.Errorf("%w: %s", ErrAnthropicChat, resp.RawBody)
 	}
 
-	t.AddMessage(thread.NewAssistantMessage().AddContent(
-		thread.NewTextContent(assistantMessage),
-	))
-
+	t.AddMessages(messages...)
 	return nil
 }
 

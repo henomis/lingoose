@@ -132,29 +132,49 @@ func (r *response) StreamCallback() restclientgo.StreamCallback {
 	return r.streamCallbackFn
 }
 
-type message struct {
-	Role    string    `json:"role"`
-	Content []content `json:"content"`
-}
-
 type contentType string
+type eventType string
 
 const (
-	messageTypeText       contentType = "text"
-	messageTypeImage      contentType = "image"
-	messageTypeToolUse    contentType = "tool_use"
-	messageTypeToolResult contentType = "tool_result"
+	messageTypeText            contentType = "text"
+	messageTypeImage           contentType = "image"
+	messageTypeToolUse         contentType = "tool_use"
+	messageTypeToolResult      contentType = "tool_result"
+	eventTypeMessageStart      eventType   = "message_start"
+	eventTypeMessageDelta      eventType   = "message_delta"
+	eventTypeMessageStop       eventType   = "message_stop"
+	eventTypePing              eventType   = "ping"
+	eventTypeContentBlockStart eventType   = "content_block_start"
+	eventTypeContentBlockDelta eventType   = "content_block_delta"
+	eventTypeContentBlockStop  eventType   = "content_block_stop"
 )
 
+type message struct {
+	Id           string    `json:"id,omitempty"`
+	Type         string    `json:"type,omitempty"`
+	Role         string    `json:"role"`
+	Model        string    `json:"model,omitempty"`
+	Content      []content `json:"content"`
+	StopReason   *string   `json:"stop_reason,omitempty"`
+	StopSequence *string   `json:"stop_sequence,omitempty"`
+	Usage        *usage    `json:"usage,omitempty"`
+}
+
 type event struct {
-	Type  string `json:"type"`
-	Index *int   `json:"index,omitempty"`
-	Delta *delta `json:"delta,omitempty"`
+	Type         eventType `json:"type"`
+	Index        *int      `json:"index,omitempty"`
+	Message      *message  `json:"message,omitempty"`
+	Delta        *delta    `json:"delta,omitempty"`
+	ContentBlock *content  `json:"content_block,omitempty"`
+	Usage        *usage    `json:"usage,omitempty"`
 }
 
 type delta struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
+	Type         string          `json:"type"`
+	Text         string          `json:"text,omitempty"`
+	PartialJson  json.RawMessage `json:"partial_json,omitempty"`
+	StopReason   *string         `json:"stop_reason"`
+	StopSequence *string         `json:"stop_sequence"`
 }
 
 func getImageDataAsBase64(imageURL string) (string, string, error) {

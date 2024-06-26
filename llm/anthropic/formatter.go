@@ -8,7 +8,6 @@ import (
 
 func (o *Anthropic) buildChatCompletionRequest(t *thread.Thread) *request {
 	messages, systemPrompt := threadToChatMessages(t)
-
 	return &request{
 		Model:       string(o.model),
 		Messages:    messages,
