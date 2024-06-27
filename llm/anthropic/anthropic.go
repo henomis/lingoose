@@ -65,6 +65,7 @@ type Anthropic struct {
 	usageCallback    UsageCallback
 	cache            *cache.Cache
 	apiVersion       string
+	toolChoice       *string
 	apiKey           string
 	maxTokens        int
 	name             string
@@ -113,6 +114,11 @@ func (o *Anthropic) WithUsageCallback(callback UsageCallback) *Anthropic {
 
 func (o *Anthropic) WithTemperature(temperature float64) *Anthropic {
 	o.temperature = temperature
+	return o
+}
+
+func (o *Anthropic) WithToolChoice(toolChoice *string) *Anthropic {
+	o.toolChoice = toolChoice
 	return o
 }
 

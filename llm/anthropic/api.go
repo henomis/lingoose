@@ -13,23 +13,29 @@ import (
 )
 
 type request struct {
-	Model         string    `json:"model"`
-	Messages      []message `json:"messages"`
-	Tools         []tool    `json:"tools,omitempty"`
-	System        string    `json:"system"`
-	MaxTokens     int       `json:"max_tokens"`
-	Metadata      metadata  `json:"metadata"`
-	StopSequences []string  `json:"stop_sequences"`
-	Stream        bool      `json:"stream"`
-	Temperature   float64   `json:"temperature"`
-	TopP          float64   `json:"top_p"`
-	TopK          int       `json:"top_k"`
+	Model         string      `json:"model"`
+	Messages      []message   `json:"messages"`
+	Tools         []tool      `json:"tools,omitempty"`
+	ToolChoice    *toolChoice `json:"tool_choice,omitempty"`
+	System        string      `json:"system"`
+	MaxTokens     int         `json:"max_tokens"`
+	Metadata      metadata    `json:"metadata"`
+	StopSequences []string    `json:"stop_sequences"`
+	Stream        bool        `json:"stream"`
+	Temperature   float64     `json:"temperature"`
+	TopP          float64     `json:"top_p"`
+	TopK          int         `json:"top_k"`
 }
 
 type tool struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	InputSchema any    `json:"input_schema"`
+}
+
+type toolChoice struct {
+	Type string `json:"type"`
+	Name string `json:"name,omitempty"`
 }
 
 type metadata struct {

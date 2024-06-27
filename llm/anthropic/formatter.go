@@ -12,6 +12,7 @@ func (o *Anthropic) buildChatCompletionRequest(t *thread.Thread) *request {
 		Model:       string(o.model),
 		Messages:    messages,
 		Tools:       o.getToolsRequest(),
+		ToolChoice:  o.getChatCompletionRequestToolChoice(),
 		System:      systemPrompt,
 		MaxTokens:   o.maxTokens,
 		Temperature: o.temperature,
@@ -28,6 +29,22 @@ func (o *Anthropic) getToolsRequest() []tool {
 		})
 	}
 	return tools
+}
+
+func (o *Anthropic) getChatCompletionRequestToolChoice() *toolChoice {
+	if o.toolChoice == nil {
+		return nil
+	}
+
+	switch *o.toolChoice {
+	case "auto", "any":
+		return &toolChoice{Type: *o.toolChoice}
+	default:
+		return &toolChoice{
+			Type: "tool",
+			Name: *o.toolChoice,
+		}
+	}
 }
 
 //nolint:gocognit
