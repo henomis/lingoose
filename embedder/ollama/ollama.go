@@ -17,11 +17,11 @@ const (
 	defaultEndpoint = "http://localhost:11434/api"
 )
 
-type ErrorOllamaEmbed struct {
+type OllamaEmbedError struct {
 	Err error
 }
 
-func (e *ErrorOllamaEmbed) Error() string {
+func (e *OllamaEmbedError) Error() string {
 	return fmt.Sprintf("Error embedding text: %v", e.Err)
 }
 
@@ -100,7 +100,7 @@ func (e *Embedder) embed(ctx context.Context, text string) (embedder.Embedding, 
 	}
 
 	if resp.HTTPStatusCode >= http.StatusBadRequest {
-		return nil, &ErrorOllamaEmbed{
+		return nil, &OllamaEmbedError{
 			Err: errors.New(string(resp.RawBody)),
 		}
 	}
