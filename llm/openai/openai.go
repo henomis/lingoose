@@ -190,10 +190,10 @@ func (o *OpenAI) Generate(ctx context.Context, t *thread.Thread) error {
 		}
 	}
 
-	chatCompletionRequest := o.buildChatCompletionRequest(t)
+	chatCompletionRequest := o.BuildChatCompletionRequest(t)
 
 	if len(o.functions) > 0 {
-		chatCompletionRequest.Tools = o.getChatCompletionRequestTools()
+		chatCompletionRequest.Tools = o.GetChatCompletionRequestTools()
 		chatCompletionRequest.ToolChoice = o.getChatCompletionRequestToolChoice()
 	}
 
@@ -395,7 +395,7 @@ func (o *OpenAI) generate(
 	return nil
 }
 
-func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatCompletionRequest {
+func (o *OpenAI) BuildChatCompletionRequest(t *thread.Thread) openai.ChatCompletionRequest {
 	var responseFormat *openai.ChatCompletionResponseFormat
 	if o.responseFormat != nil {
 		responseFormat = &openai.ChatCompletionResponseFormat{
@@ -415,7 +415,7 @@ func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatComplet
 	}
 }
 
-func (o *OpenAI) getChatCompletionRequestTools() []openai.Tool {
+func (o *OpenAI) GetChatCompletionRequestTools() []openai.Tool {
 	tools := []openai.Tool{}
 
 	for _, function := range o.functions {
