@@ -290,6 +290,7 @@ func (o *OpenAI) stream(
 			messages = o.handleEndOfStream(messages, content, &currentToolCall, allToolCalls)
 			break
 		}
+		fmt.Printf("%+v\n", response)
 
 		if len(response.Choices) == 0 {
 			if response.Usage != nil {
