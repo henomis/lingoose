@@ -286,20 +286,15 @@ func (o *OpenAI) stream(
 	var currentToolCall openai.ToolCall
 	for {
 		response, errRecv := stream.Recv()
-		if errRecv != nil {
-			fmt.Printf("Received error of stream.Recv(): %s\n", errRecv.Error())
-		}
 		if errors.Is(errRecv, io.EOF) {
 			messages = o.handleEndOfStream(messages, content, &currentToolCall, allToolCalls)
 			break
 		}
-
 		fmt.Printf("%+v\n", response)
 
 		if len(response.Choices) == 0 {
 			if response.Usage != nil {
 				if o.usageCallback != nil {
-					fmt.Printf("Calling usage callback with %+v\n", *response.Usage)
 					o.setUsageMetadata(*response.Usage)
 				}
 			} else {
@@ -309,7 +304,6 @@ func (o *OpenAI) stream(
 		}
 
 		if isStreamToolCallResponse(&response) {
-			fmt.Println("Calling tool stuff")
 			updatedToolCall, isNewTool := handleStreamToolCallResponse(&response, &currentToolCall)
 			if isNewTool {
 				if currentToolCall.ID != "" {
@@ -321,7 +315,6 @@ func (o *OpenAI) stream(
 			content += response.Choices[0].Delta.Content
 		}
 
-		fmt.Printf("Calling stream callback function with content %s\n", response.Choices[0].Delta.Content)
 		o.streamCallbackFn(response.Choices[0].Delta.Content)
 	}
 
