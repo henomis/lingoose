@@ -35,6 +35,7 @@ type OpenAI struct {
 	temperature      float32
 	maxTokens        int
 	stop             []string
+	topP             float32
 	usageCallback    UsageCallback
 	functions        map[string]Function
 	streamCallbackFn StreamCallback
@@ -71,6 +72,12 @@ func (o *OpenAI) WithUsageCallback(callback UsageCallback) *OpenAI {
 // WithStop sets the stop sequences to use for the OpenAI instance.
 func (o *OpenAI) WithStop(stop []string) *OpenAI {
 	o.stop = stop
+	return o
+}
+
+// WithTopP sets the TopP to use for the OpenAI instance.
+func (o *OpenAI) WithTopP(tp float32) *OpenAI {
+	o.topP = tp
 	return o
 }
 
@@ -131,6 +138,7 @@ func New() *OpenAI {
 		maxTokens:    DefaultOpenAIMaxTokens,
 		functions:    make(map[string]Function),
 		Name:         "openai",
+		topP:         DefaultOpenAITopP,
 	}
 }
 
@@ -409,7 +417,7 @@ func (o *OpenAI) BuildChatCompletionRequest(t *thread.Thread) openai.ChatComplet
 		MaxTokens:      o.maxTokens,
 		Temperature:    o.temperature,
 		N:              DefaultOpenAINumResults,
-		TopP:           DefaultOpenAITopP,
+		TopP:           o.topP,
 		Stop:           o.stop,
 		ResponseFormat: responseFormat,
 	}
