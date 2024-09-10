@@ -84,15 +84,15 @@ func (l *LlamaCppEmbedder) embed(ctx context.Context, text string) (embedder.Emb
 }
 
 func parseEmbeddings(str string) (embedder.Embedding, error) {
-	var output output
-	err := json.Unmarshal([]byte(str), &output)
+	var out output
+	err := json.Unmarshal([]byte(str), &out)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(output.Data) != 1 {
+	if len(out.Data) != 1 {
 		return nil, errors.New("no embeddings found")
 	}
 
-	return output.Data[0].Embedding, nil
+	return out.Data[0].Embedding, nil
 }
