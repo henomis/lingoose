@@ -38,6 +38,7 @@ var threadRoleToAnthropicRole = map[thread.Role]string{
 const (
 	defaultAPIVersion  = "2023-06-01"
 	defaultBetaVersion = "tools-2024-04-04"
+	VertexAPIVersion   = "vertex-2023-10-16"
 	defaultMaxTokens   = 1024
 	EOS                = "\x00"
 )
@@ -45,13 +46,14 @@ const (
 type Model string
 
 const (
-	Claude3Opus20240229   Model = "claude-3-opus-20240229"
-	Claude3Opus           Model = "claude-3-opus-20240229"
-	Claude3Sonnet20240229 Model = "claude-3-sonnet-20240229"
-	Claude3Sonnet         Model = "claude-3-sonnet-20240229"
-	Claude3Haiku20240307  Model = "claude-3-haiku-20240307"
-	Claude3Haiku          Model = "claude-3-haiku-20240307"
-	Claude3Dot5Sonnet     Model = "claude-3-5-sonnet-20240620"
+	Claude3Opus20240229     Model = "claude-3-opus-20240229"
+	Claude3Opus             Model = "claude-3-opus-20240229"
+	Claude3Sonnet20240229   Model = "claude-3-sonnet-20240229"
+	Claude3Sonnet           Model = "claude-3-sonnet-20240229"
+	Claude3Haiku20240307    Model = "claude-3-haiku-20240307"
+	Claude3Haiku            Model = "claude-3-haiku-20240307"
+	Claude3Dot5Sonnet       Model = "claude-3-5-sonnet-20240620"
+	Claude3Dot5SonnetVertex Model = "claude-3-5-sonnet@20240620"
 )
 
 type UsageCallback func(types.Meta)
@@ -90,6 +92,20 @@ func New() *Anthropic {
 		maxTokens:  defaultMaxTokens,
 		functions:  make(map[string]Function),
 	}
+}
+
+func (o *Anthropic) WithEndpoint(endpoint string, token string, apiVersion string) *Anthropic {
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	o.restClient = restclientgo.New(endpoint).WithRequestModifier(
+		func(req *http.Request) *http.Request {
+			req.Header.Set("x-api-key", apiKey)
+			//req.Header.Set("anthropic-version", defaultAPIVersion)
+			req.Header.Set("Authorization", "Bearer "+token)
+			return req
+		},
+	)
+	o.apiVersion = apiVersion
+	return o
 }
 
 func (o *Anthropic) WithModel(model Model) *Anthropic {

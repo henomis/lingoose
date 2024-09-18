@@ -8,7 +8,7 @@ import (
 
 func (o *Anthropic) buildChatCompletionRequest(t *thread.Thread) *request {
 	messages, systemPrompt := threadToChatMessages(t)
-	return &request{
+	req := &request{
 		Model:       string(o.model),
 		Messages:    messages,
 		Tools:       o.getToolsRequest(),
@@ -17,6 +17,11 @@ func (o *Anthropic) buildChatCompletionRequest(t *thread.Thread) *request {
 		MaxTokens:   o.maxTokens,
 		Temperature: o.temperature,
 	}
+	if o.apiVersion != defaultAPIVersion {
+		req.AnthropicVersion = o.apiVersion
+		req.Model = ""
+	}
+	return req
 }
 
 func (o *Anthropic) getToolsRequest() []tool {

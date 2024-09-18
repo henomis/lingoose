@@ -13,18 +13,19 @@ import (
 )
 
 type request struct {
-	Model         string      `json:"model"`
-	Messages      []message   `json:"messages"`
-	Tools         []tool      `json:"tools,omitempty"`
-	ToolChoice    *toolChoice `json:"tool_choice,omitempty"`
-	System        string      `json:"system"`
-	MaxTokens     int         `json:"max_tokens"`
-	Metadata      metadata    `json:"metadata"`
-	StopSequences []string    `json:"stop_sequences"`
-	Stream        bool        `json:"stream"`
-	Temperature   float64     `json:"temperature"`
-	TopP          float64     `json:"top_p"`
-	TopK          int         `json:"top_k"`
+	Model            string      `json:"model,omitempty"`
+	Messages         []message   `json:"messages"`
+	Tools            []tool      `json:"tools,omitempty"`
+	ToolChoice       *toolChoice `json:"tool_choice,omitempty"`
+	System           string      `json:"system"`
+	MaxTokens        int         `json:"max_tokens"`
+	Metadata         *metadata   `json:"metadata,omitempty"`
+	StopSequences    []string    `json:"stop_sequences"`
+	Stream           bool        `json:"stream"`
+	Temperature      float64     `json:"temperature"`
+	TopP             float64     `json:"top_p"`
+	TopK             int         `json:"top_k"`
+	AnthropicVersion string      `json:"anthropic_version,omitempty"`
 }
 
 type tool struct {
@@ -43,6 +44,9 @@ type metadata struct {
 }
 
 func (r *request) Path() (string, error) {
+	if r.AnthropicVersion != "" {
+		return "", nil
+	}
 	return "/messages", nil
 }
 
