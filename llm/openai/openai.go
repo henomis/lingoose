@@ -412,14 +412,14 @@ func (o *OpenAI) BuildChatCompletionRequest(t *thread.Thread) openai.ChatComplet
 	}
 
 	return openai.ChatCompletionRequest{
-		Model:          string(o.model),
-		Messages:       threadToChatCompletionMessages(t),
-		MaxTokens:      o.maxTokens,
-		Temperature:    o.temperature,
-		N:              DefaultOpenAINumResults,
-		TopP:           o.topP,
-		Stop:           o.stop,
-		ResponseFormat: responseFormat,
+		Model:                string(o.model),
+		Messages:             threadToChatCompletionMessages(t),
+		MaxCompletionsTokens: o.maxTokens,
+		Temperature:          o.temperature,
+		N:                    DefaultOpenAINumResults,
+		TopP:                 o.topP,
+		Stop:                 o.stop,
+		ResponseFormat:       responseFormat,
 	}
 }
 
