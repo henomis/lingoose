@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
 	"strings"
@@ -241,7 +242,9 @@ func (o *Anthropic) generate(ctx context.Context, t *thread.Thread, chatRequest 
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
-
+	if resp.RawBody != nil && len(resp.RawBody) > 0 {
+		log.Warn().Msgf("Raw anthropic output: %s\n", string(resp.RawBody))
+	}
 	m := thread.NewAssistantMessage()
 	mr := thread.NewUserMessage()
 
