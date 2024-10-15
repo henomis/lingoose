@@ -28,6 +28,7 @@ const (
 
 var (
 	ErrAnthropicChat = fmt.Errorf("anthropic chat error")
+	ErrUnauthorized  = fmt.Errorf("unauthorized error")
 )
 
 var threadRoleToAnthropicRole = map[thread.Role]string{
@@ -244,6 +245,9 @@ func (o *Anthropic) generate(ctx context.Context, t *thread.Thread, chatRequest 
 	}
 	if resp.RawBody != nil && len(resp.RawBody) > 0 {
 		log.Warn().Msgf("Raw anthropic output: %s\n", string(resp.RawBody))
+	}
+	if resp.HTTPStatusCode == http.StatusUnauthorized {
+		return ErrUnauthorized
 	}
 	m := thread.NewAssistantMessage()
 	mr := thread.NewUserMessage()
