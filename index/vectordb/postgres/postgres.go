@@ -157,8 +157,8 @@ func (d *DB) similaritySearch(
 		"SELECT id, embedding, metadata, %s AS score FROM %s %s ORDER BY %s LIMIT %d",
 		queryVector,
 		d.table,
-		queryVector,
 		opts.Filter,
+		queryVector,
 		opts.TopK,
 	)
 
