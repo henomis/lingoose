@@ -1,4 +1,4 @@
-package antropic
+package anthropic
 
 import (
 	"github.com/henomis/lingoose/thread"

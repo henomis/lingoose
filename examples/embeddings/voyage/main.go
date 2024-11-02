@@ -8,7 +8,7 @@ import (
 	"github.com/henomis/lingoose/index"
 	indexoption "github.com/henomis/lingoose/index/option"
 	"github.com/henomis/lingoose/index/vectordb/jsondb"
-	"github.com/henomis/lingoose/llm/antropic"
+	"github.com/henomis/lingoose/llm/anthropic"
 	"github.com/henomis/lingoose/loader"
 	"github.com/henomis/lingoose/textsplitter"
 	"github.com/henomis/lingoose/thread"
@@ -58,7 +58,7 @@ func main() {
 		documentContext += similarity.Content() + "\n\n"
 	}
 
-	antropicllm := antropic.New().WithModel("claude-3-opus-20240229")
+	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229")
 	t := thread.New()
 	t.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent("Based on the following context answer to the" +
@@ -70,7 +70,7 @@ func main() {
 		),
 	))
 
-	err = antropicllm.Generate(context.Background(), t)
+	err = anthropicllm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
