@@ -34,6 +34,7 @@ func (r *request) ContentType() string {
 type response struct {
 	HTTPStatusCode    int       `json:"-"`
 	acceptContentType string    `json:"-"`
+	RawBody           []byte    `json:"-"`
 	Embedding         []float64 `json:"embedding"`
 	CreatedAt         string    `json:"created_at"`
 }
@@ -46,7 +47,13 @@ func (r *response) Decode(body io.Reader) error {
 	return json.NewDecoder(body).Decode(r)
 }
 
-func (r *response) SetBody(_ io.Reader) error {
+func (r *response) SetBody(body io.Reader) error {
+	rawBody, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+
+	r.RawBody = rawBody
 	return nil
 }
 

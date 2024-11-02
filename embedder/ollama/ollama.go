@@ -2,6 +2,9 @@ package ollamaembedder
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/henomis/restclientgo"
 
@@ -13,6 +16,14 @@ const (
 	defaultModel    = "llama2"
 	defaultEndpoint = "http://localhost:11434/api"
 )
+
+type OllamaEmbedError struct {
+	Err error
+}
+
+func (e *OllamaEmbedError) Error() string {
+	return fmt.Sprintf("Error embedding text: %v", e.Err)
+}
 
 type Embedder struct {
 	model      string
@@ -86,6 +97,12 @@ func (e *Embedder) embed(ctx context.Context, text string) (embedder.Embedding, 
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.HTTPStatusCode >= http.StatusBadRequest {
+		return nil, &OllamaEmbedError{
+			Err: errors.New(string(resp.RawBody)),
+		}
 	}
 
 	return resp.Embedding, nil

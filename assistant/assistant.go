@@ -2,6 +2,7 @@ package assistant
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	obs "github.com/henomis/lingoose/observer"
@@ -22,11 +23,16 @@ type observer interface {
 	SpanEnd(s *obs.Span) (*obs.Span, error)
 }
 
+const (
+	DefaultMaxIterations = 3
+)
+
 type Assistant struct {
-	llm        LLM
-	rag        RAG
-	thread     *thread.Thread
-	parameters Parameters
+	llm           LLM
+	rag           RAG
+	thread        *thread.Thread
+	parameters    Parameters
+	maxIterations uint
 }
 
 type LLM interface {
@@ -48,6 +54,7 @@ func New(llm LLM) *Assistant {
 			CompanyName:        defaultCompanyName,
 			CompanyDescription: defaultCompanyDescription,
 		},
+		maxIterations: DefaultMaxIterations,
 	}
 
 	return assistant
@@ -83,6 +90,33 @@ func (a *Assistant) Run(ctx context.Context) error {
 		if errGenerate != nil {
 			return errGenerate
 		}
+	} else {
+		a.injectSystemMessage()
+	}
+
+	for i := 0; i < int(a.maxIterations); i++ {
+		err = a.runIteration(ctx, i)
+		if err != nil {
+			return err
+		}
+
+		if a.thread.LastMessage().Role != thread.RoleTool {
+			break
+		}
+	}
+
+	err = a.stopObserveSpan(ctx, spanAssistant)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Assistant) runIteration(ctx context.Context, iteration int) error {
+	ctx, spanIteration, err := a.startObserveSpan(ctx, fmt.Sprintf("iteration-%d", iteration+1))
+	if err != nil {
+		return err
 	}
 
 	err = a.llm.Generate(ctx, a.thread)
@@ -90,7 +124,7 @@ func (a *Assistant) Run(ctx context.Context) error {
 		return err
 	}
 
-	err = a.stopObserveSpan(ctx, spanAssistant)
+	err = a.stopObserveSpan(ctx, spanIteration)
 	if err != nil {
 		return err
 	}
@@ -123,7 +157,7 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 
 	a.thread.AddMessage(thread.NewSystemMessage().AddContent(
 		thread.NewTextContent(
-			systemRAGPrompt,
+			systemPrompt,
 		).Format(
 			types.M{
 				"assistantName":      a.parameters.AssistantName,
@@ -145,6 +179,11 @@ func (a *Assistant) generateRAGMessage(ctx context.Context) error {
 	))
 
 	return nil
+}
+
+func (a *Assistant) WithMaxIterations(maxIterations uint) *Assistant {
+	a.maxIterations = maxIterations
+	return a
 }
 
 func (a *Assistant) startObserveSpan(ctx context.Context, name string) (context.Context, *obs.Span, error) {
@@ -182,4 +221,28 @@ func (a *Assistant) stopObserveSpan(ctx context.Context, span *obs.Span) error {
 
 	_, err := o.SpanEnd(span)
 	return err
+}
+
+func (a *Assistant) injectSystemMessage() {
+	for _, message := range a.thread.Messages {
+		if message.Role == thread.RoleSystem {
+			return
+		}
+	}
+
+	systemMessage := thread.NewSystemMessage().AddContent(
+		thread.NewTextContent(
+			systemPrompt,
+		).Format(
+			types.M{
+				"assistantName":      a.parameters.AssistantName,
+				"assistantIdentity":  a.parameters.AssistantIdentity,
+				"assistantScope":     a.parameters.AssistantScope,
+				"companyName":        a.parameters.CompanyName,
+				"companyDescription": a.parameters.CompanyDescription,
+			},
+		),
+	)
+
+	a.thread.Messages = append([]*thread.Message{systemMessage}, a.thread.Messages...)
 }

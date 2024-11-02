@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/henomis/lingoose/llm/openai"
 	"github.com/henomis/lingoose/thread"
+	"github.com/henomis/lingoose/tool/dalle"
 	"github.com/henomis/lingoose/transformer"
 )
 
@@ -32,15 +33,7 @@ func newStr(str string) *string {
 
 func main() {
 	openaillm := openai.New().WithModel(openai.GPT4o)
-	openaillm.WithToolChoice(newStr("auto"))
-	err := openaillm.BindFunction(
-		crateImage,
-		"createImage",
-		"use this function to create an image from a description",
-	)
-	if err != nil {
-		panic(err)
-	}
+	openaillm.WithToolChoice(newStr("auto")).WithTools(dalle.New())
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(
@@ -48,15 +41,22 @@ func main() {
 		),
 	)
 
-	err = openaillm.Generate(context.Background(), t)
+	err := openaillm.Generate(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
 
 	if t.LastMessage().Role == thread.RoleTool {
+		var output dalle.Output
+
+		err = json.Unmarshal([]byte(t.LastMessage().Contents[0].AsToolResponseData().Result), &output)
+		if err != nil {
+			panic(err)
+		}
+
 		t.AddMessage(thread.NewUserMessage().AddContent(
 			thread.NewImageContentFromURL(
-				strings.ReplaceAll(t.LastMessage().Contents[0].AsToolResponseData().Result, `"`, ""),
+				output.ImageURL,
 			),
 		).AddContent(
 			thread.NewTextContent("can you describe the image?"),
