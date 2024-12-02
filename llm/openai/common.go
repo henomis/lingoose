@@ -23,6 +23,10 @@ const (
 type Model string
 
 const (
+	O1Mini                Model = openai.O1Mini
+	O1Mini20240912        Model = openai.O1Mini20240912
+	O1Preview             Model = openai.O1Preview
+	O1Preview20240912     Model = openai.O1Preview20240912
 	GPT432K0613           Model = openai.GPT432K0613
 	GPT432K0314           Model = openai.GPT432K0314
 	GPT432K               Model = openai.GPT432K
@@ -30,6 +34,11 @@ const (
 	GPT40314              Model = openai.GPT40314
 	GPT4o                 Model = openai.GPT4o
 	GPT4o20240513         Model = openai.GPT4o20240513
+	GPT4o20240806         Model = openai.GPT4o20240806
+	GPT4o20241120         Model = openai.GPT4o20241120
+	GPT4oLatest           Model = openai.GPT4oLatest
+	GPT4oMini             Model = openai.GPT4oMini
+	GPT4oMini20240718     Model = openai.GPT4oMini20240718
 	GPT4Turbo             Model = openai.GPT4Turbo
 	GPT4Turbo20240409     Model = openai.GPT4Turbo20240409
 	GPT4Turbo0125         Model = openai.GPT4Turbo0125
@@ -45,14 +54,33 @@ const (
 	GPT3Dot5Turbo16K0613  Model = openai.GPT3Dot5Turbo16K0613
 	GPT3Dot5Turbo         Model = openai.GPT3Dot5Turbo
 	GPT3Dot5TurboInstruct Model = openai.GPT3Dot5TurboInstruct
-	GPT3Davinci           Model = openai.GPT3Davinci
-	GPT3Davinci002        Model = openai.GPT3Davinci002
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextDavinci003 Model = openai.GPT3TextDavinci003
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextDavinci002 Model = openai.GPT3TextDavinci002
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextCurie001 Model = openai.GPT3TextCurie001
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextBabbage001 Model = openai.GPT3TextBabbage001
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextAda001 Model = openai.GPT3TextAda001
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3TextDavinci001 Model = openai.GPT3TextDavinci001
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3DavinciInstructBeta Model = openai.GPT3DavinciInstructBeta
+	// Deprecated: Model is shutdown. Use davinci-002 instead.
+	GPT3Davinci    Model = openai.GPT3Davinci
+	GPT3Davinci002 Model = openai.GPT3Davinci002
+	// Deprecated: Model is shutdown. Use gpt-3.5-turbo-instruct instead.
+	GPT3CurieInstructBeta Model = openai.GPT3CurieInstructBeta
 	GPT3Curie             Model = openai.GPT3Curie
 	GPT3Curie002          Model = openai.GPT3Curie002
-	GPT3Ada               Model = openai.GPT3Ada
-	GPT3Ada002            Model = openai.GPT3Ada002
-	GPT3Babbage           Model = openai.GPT3Babbage
-	GPT3Babbage002        Model = openai.GPT3Babbage002
+	// Deprecated: Model is shutdown. Use babbage-002 instead.
+	GPT3Ada    Model = openai.GPT3Ada
+	GPT3Ada002 Model = openai.GPT3Ada002
+	// Deprecated: Model is shutdown. Use babbage-002 instead.
+	GPT3Babbage    Model = openai.GPT3Babbage
+	GPT3Babbage002 Model = openai.GPT3Babbage002
 )
 
 type UsageCallback func(types.Meta)
