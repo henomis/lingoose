@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	voyageembedder "github.com/henomis/lingoose/embedder/voyage"
 	"github.com/henomis/lingoose/index"
@@ -58,7 +59,7 @@ func main() {
 		documentContext += similarity.Content() + "\n\n"
 	}
 
-	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229")
+	anthropicllm := anthropic.NewAnthropic(os.Getenv("ANTHROPIC_API_KEY")).WithModel(anthropic.ModelClaude_3_Opus_20240229)
 	t := thread.New()
 	t.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent("Based on the following context answer to the" +
@@ -70,7 +71,7 @@ func main() {
 		),
 	))
 
-	err = anthropicllm.Generate(context.Background(), t)
+	err = anthropicllm.Chat(context.Background(), t)
 	if err != nil {
 		panic(err)
 	}
