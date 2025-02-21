@@ -1,4 +1,4 @@
-module github.com/henomis/lingoose
+module github.com/rsest/lingoose
 
 go 1.21.1
 
