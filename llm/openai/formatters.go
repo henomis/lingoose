@@ -1,7 +1,7 @@
 package openai
 
 import (
-	"github.com/henomis/lingoose/thread"
+	"github.com/rsest/lingoose/thread"
 	"github.com/sashabaranov/go-openai"
 )
 

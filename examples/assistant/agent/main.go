@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/assistant"
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/observer"
-	"github.com/henomis/lingoose/observer/langfuse"
-	"github.com/henomis/lingoose/thread"
+	"github.com/rsest/lingoose/assistant"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/observer"
+	"github.com/rsest/lingoose/observer/langfuse"
+	"github.com/rsest/lingoose/thread"
 
-	humantool "github.com/henomis/lingoose/tool/human"
-	pythontool "github.com/henomis/lingoose/tool/python"
-	serpapitool "github.com/henomis/lingoose/tool/serpapi"
+	humantool "github.com/rsest/lingoose/tool/human"
+	pythontool "github.com/rsest/lingoose/tool/python"
+	serpapitool "github.com/rsest/lingoose/tool/serpapi"
 )
 
 func main() {

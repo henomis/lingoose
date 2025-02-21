@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/henomis/lingoose/assistant"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/assistant"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 type CallbackFn func(t *thread.Thread)

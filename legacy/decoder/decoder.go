@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/types"
 )
 
 var (

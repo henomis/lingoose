@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/document"
+	"github.com/rsest/lingoose/document"
 
 	"os"
 	"path/filepath"

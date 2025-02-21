@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/loader"
+	"github.com/rsest/lingoose/loader"
 )
 
 func main() {

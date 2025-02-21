@@ -5,7 +5,7 @@ import (
 	"time"
 
 	langfusego "github.com/henomis/langfuse-go"
-	"github.com/henomis/lingoose/observer"
+	"github.com/rsest/lingoose/observer"
 )
 
 type Langfuse struct {

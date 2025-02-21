@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/henomis/lingoose/llm/huggingface"
+	"github.com/rsest/lingoose/llm/huggingface"
 )
 
 func main() {

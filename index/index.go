@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/henomis/lingoose/document"
-	"github.com/henomis/lingoose/embedder"
-	"github.com/henomis/lingoose/index/option"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/document"
+	"github.com/rsest/lingoose/embedder"
+	"github.com/rsest/lingoose/index/option"
+	"github.com/rsest/lingoose/types"
 )
 
 var (

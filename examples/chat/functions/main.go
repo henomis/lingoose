@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/henomis/lingoose/legacy/chat"
-	"github.com/henomis/lingoose/legacy/prompt"
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/legacy/chat"
+	"github.com/rsest/lingoose/legacy/prompt"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/types"
 )
 
 func main() {

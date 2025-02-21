@@ -7,12 +7,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/index/option"
-	"github.com/henomis/lingoose/types"
 	milvusgo "github.com/henomis/milvus-go"
 	milvusgorequest "github.com/henomis/milvus-go/request"
 	milvusgoresponse "github.com/henomis/milvus-go/response"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/index/option"
+	"github.com/rsest/lingoose/types"
 )
 
 var _ index.VectorDB = &DB{}

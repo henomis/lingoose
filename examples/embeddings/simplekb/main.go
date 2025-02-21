@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 
-	openaiembedder "github.com/henomis/lingoose/embedder/openai"
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/index/option"
-	"github.com/henomis/lingoose/index/vectordb/jsondb"
-	qapipeline "github.com/henomis/lingoose/legacy/pipeline/qa"
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/loader"
-	"github.com/henomis/lingoose/textsplitter"
+	openaiembedder "github.com/rsest/lingoose/embedder/openai"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/index/option"
+	"github.com/rsest/lingoose/index/vectordb/jsondb"
+	qapipeline "github.com/rsest/lingoose/legacy/pipeline/qa"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/loader"
+	"github.com/rsest/lingoose/textsplitter"
 )
 
 func main() {

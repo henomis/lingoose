@@ -3,9 +3,9 @@ package observer
 import (
 	"context"
 
-	"github.com/henomis/lingoose/embedder"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/embedder"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 type ContextKey string

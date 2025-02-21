@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/henomis/lingoose/legacy/prompt"
-	llmmock "github.com/henomis/lingoose/llm/mock"
+	"github.com/rsest/lingoose/legacy/prompt"
+	llmmock "github.com/rsest/lingoose/llm/mock"
 )
 
 func main() {

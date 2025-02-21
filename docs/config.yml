@@ -23,7 +23,7 @@ menu:
       weight: 6
     - name: pkg.go.dev →
       parent: reference
-      url: https://pkg.go.dev/github.com/henomis/lingoose
+      url: https://pkg.go.dev/github.com/rsest/lingoose
 
 security:
   funcs:

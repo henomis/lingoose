@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/embedder"
-	"github.com/henomis/lingoose/observer"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/embedder"
+	"github.com/rsest/lingoose/observer"
+	"github.com/rsest/lingoose/types"
 )
 
 type EmbeddingObserver interface {

@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/henomis/lingoose/document"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/document"
+	"github.com/rsest/lingoose/types"
 )
 
 const pubMedBioCURLFormat = "https://ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/%s/unicode"

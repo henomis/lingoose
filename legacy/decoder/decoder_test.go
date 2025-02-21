@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/types"
 )
 
 func TestJSONDecoder_Decode(t *testing.T) {

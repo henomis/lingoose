@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/tool/python"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/tool/python"
 )
 
 func main() {

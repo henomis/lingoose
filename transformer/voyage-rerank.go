@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/henomis/lingoose/document"
-	"github.com/henomis/lingoose/types"
 	"github.com/henomis/restclientgo"
+	"github.com/rsest/lingoose/document"
+	"github.com/rsest/lingoose/types"
 )
 
 const (

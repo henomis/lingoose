@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/index/option"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/index/option"
 
 	"github.com/RediSearch/redisearch-go/v2/redisearch"
 )

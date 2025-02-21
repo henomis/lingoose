@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/legacy/prompt"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/legacy/prompt"
+	"github.com/rsest/lingoose/types"
 )
 
 type Inputs struct {

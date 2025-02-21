@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/henomis/lingoose/embedder"
 	"github.com/henomis/restclientgo"
+	"github.com/rsest/lingoose/embedder"
 )
 
 type request struct {

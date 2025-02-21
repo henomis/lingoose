@@ -9,8 +9,8 @@ import (
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
 
-	"github.com/henomis/lingoose/embedder"
-	embobserver "github.com/henomis/lingoose/embedder/observer"
+	"github.com/rsest/lingoose/embedder"
+	embobserver "github.com/rsest/lingoose/embedder/observer"
 )
 
 type EmbedderModel = model.EmbedModel

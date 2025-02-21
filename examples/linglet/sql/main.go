@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	lingletsql "github.com/henomis/lingoose/linglet/sql"
-	"github.com/henomis/lingoose/llm/openai"
+	lingletsql "github.com/rsest/lingoose/linglet/sql"
+	"github.com/rsest/lingoose/llm/openai"
 	// enable sqlite3 driver
 	// _ "github.com/mattn/go-sqlite3"
 )

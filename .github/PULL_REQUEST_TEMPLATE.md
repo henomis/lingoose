@@ -26,8 +26,8 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 
 ## Checklist:
 
-- [ ] I have read the [Contributing documentation](https://github.com/henomis/lingoose/blob/main/CONTRIBUTING.md).
-- [ ] I have read the [Code of conduct documentation](https://github.com/henomis/lingoose/blob/main/CODE_OF_CONDUCT.md).
+- [ ] I have read the [Contributing documentation](https://github.com/rsest/lingoose/blob/main/CONTRIBUTING.md).
+- [ ] I have read the [Code of conduct documentation](https://github.com/rsest/lingoose/blob/main/CODE_OF_CONDUCT.md).
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation

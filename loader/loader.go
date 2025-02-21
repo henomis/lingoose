@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/henomis/lingoose/document"
+	"github.com/rsest/lingoose/document"
 )
 
 var (

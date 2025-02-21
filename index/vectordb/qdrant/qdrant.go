@@ -6,11 +6,11 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/index/option"
 	qdrantgo "github.com/henomis/qdrant-go"
 	qdrantrequest "github.com/henomis/qdrant-go/request"
 	qdrantresponse "github.com/henomis/qdrant-go/response"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/index/option"
 )
 
 var _ index.VectorDB = &DB{}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/legacy/prompt"
+	"github.com/rsest/lingoose/legacy/prompt"
 )
 
 func main() {

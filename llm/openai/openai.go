@@ -11,11 +11,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 	openai "github.com/sashabaranov/go-openai"
 
-	"github.com/henomis/lingoose/llm/cache"
-	llmobserver "github.com/henomis/lingoose/llm/observer"
-	"github.com/henomis/lingoose/observer"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/llm/cache"
+	llmobserver "github.com/rsest/lingoose/llm/observer"
+	"github.com/rsest/lingoose/observer"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	huggingfaceembedder "github.com/henomis/lingoose/embedder/huggingface"
+	huggingfaceembedder "github.com/rsest/lingoose/embedder/huggingface"
 )
 
 func main() {

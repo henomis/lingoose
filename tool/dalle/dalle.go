@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/henomis/lingoose/transformer"
+	"github.com/rsest/lingoose/transformer"
 )
 
 const (

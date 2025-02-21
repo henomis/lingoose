@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/henomis/lingoose/llm/cohere"
+	"github.com/rsest/lingoose/llm/cohere"
 )
 
 func main() {

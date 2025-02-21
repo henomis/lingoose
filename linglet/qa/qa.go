@@ -3,11 +3,11 @@ package qa
 import (
 	"context"
 
-	"github.com/henomis/lingoose/assistant"
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/rag"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/assistant"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/rag"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 const (

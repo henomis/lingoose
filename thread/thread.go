@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/types"
 )
 
 type Thread struct {

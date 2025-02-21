@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/tool/dalle"
-	"github.com/henomis/lingoose/transformer"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/tool/dalle"
+	"github.com/rsest/lingoose/transformer"
 )
 
 type Image struct {

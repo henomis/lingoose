@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/tool/duckduckgo"
+	"github.com/rsest/lingoose/tool/duckduckgo"
 )
 
 func main() {

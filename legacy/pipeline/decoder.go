@@ -1,6 +1,6 @@
 package pipeline
 
-import "github.com/henomis/lingoose/types"
+import "github.com/rsest/lingoose/types"
 
 type Decoder interface {
 	Decode(input string) (types.M, error)

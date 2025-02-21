@@ -3,7 +3,7 @@ package localai
 import (
 	"os"
 
-	"github.com/henomis/lingoose/llm/openai"
+	"github.com/rsest/lingoose/llm/openai"
 	goopenai "github.com/sashabaranov/go-openai"
 )
 

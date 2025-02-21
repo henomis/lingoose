@@ -12,12 +12,12 @@ import (
 	"github.com/henomis/cohere-go/request"
 	"github.com/henomis/cohere-go/response"
 
-	"github.com/henomis/lingoose/legacy/chat"
-	"github.com/henomis/lingoose/llm/cache"
-	llmobserver "github.com/henomis/lingoose/llm/observer"
-	"github.com/henomis/lingoose/observer"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/legacy/chat"
+	"github.com/rsest/lingoose/llm/cache"
+	llmobserver "github.com/rsest/lingoose/llm/observer"
+	"github.com/rsest/lingoose/observer"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 var (

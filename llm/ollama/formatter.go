@@ -1,7 +1,7 @@
 package ollama
 
 import (
-	"github.com/henomis/lingoose/thread"
+	"github.com/rsest/lingoose/thread"
 )
 
 func (o *Ollama) buildChatCompletionRequest(t *thread.Thread) *request {

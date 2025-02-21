@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/llm/openai"
-	"github.com/henomis/lingoose/loader"
+	"github.com/rsest/lingoose/llm/openai"
+	"github.com/rsest/lingoose/loader"
 )
 
 func main() {

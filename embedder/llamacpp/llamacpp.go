@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/henomis/lingoose/embedder"
+	"github.com/rsest/lingoose/embedder"
 )
 
 type LlamaCppEmbedder struct {

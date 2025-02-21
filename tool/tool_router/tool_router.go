@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/henomis/lingoose/thread"
+	"github.com/rsest/lingoose/thread"
 )
 
 const (

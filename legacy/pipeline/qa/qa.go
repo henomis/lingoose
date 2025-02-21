@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/henomis/lingoose/document"
-	"github.com/henomis/lingoose/index"
-	indexoption "github.com/henomis/lingoose/index/option"
-	"github.com/henomis/lingoose/legacy/chat"
-	"github.com/henomis/lingoose/legacy/pipeline"
-	"github.com/henomis/lingoose/legacy/prompt"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/document"
+	"github.com/rsest/lingoose/index"
+	indexoption "github.com/rsest/lingoose/index/option"
+	"github.com/rsest/lingoose/legacy/chat"
+	"github.com/rsest/lingoose/legacy/pipeline"
+	"github.com/rsest/lingoose/legacy/prompt"
+	"github.com/rsest/lingoose/types"
 )
 
 const (

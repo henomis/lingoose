@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/types"
 )
 
 func TestSimpleMemory_Get(t *testing.T) {

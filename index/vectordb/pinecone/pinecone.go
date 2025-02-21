@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/henomis/lingoose/index"
-	"github.com/henomis/lingoose/index/option"
 	pineconego "github.com/henomis/pinecone-go/v2"
 	pineconegorequest "github.com/henomis/pinecone-go/v2/request"
 	pineconegoresponse "github.com/henomis/pinecone-go/v2/response"
+	"github.com/rsest/lingoose/index"
+	"github.com/rsest/lingoose/index/option"
 )
 
 var _ index.VectorDB = &DB{}

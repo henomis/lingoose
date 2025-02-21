@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"regexp"
 
-	"github.com/henomis/lingoose/document"
-	"github.com/henomis/lingoose/types"
+	"github.com/rsest/lingoose/document"
+	"github.com/rsest/lingoose/types"
 )
 
 type WhisperCppLoader struct {

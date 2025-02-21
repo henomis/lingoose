@@ -3,7 +3,7 @@ package cohere
 import (
 	"github.com/henomis/cohere-go/model"
 	"github.com/henomis/cohere-go/request"
-	"github.com/henomis/lingoose/thread"
+	"github.com/rsest/lingoose/thread"
 )
 
 var threadRoleToCohereRole = map[thread.Role]model.ChatMessageRole{

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/henomis/lingoose/tool/serpapi"
+	"github.com/rsest/lingoose/tool/serpapi"
 )
 
 func main() {

@@ -9,10 +9,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/henomis/lingoose/legacy/chat"
-	"github.com/henomis/lingoose/llm/cache"
-	"github.com/henomis/lingoose/types"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rsest/lingoose/legacy/chat"
+	"github.com/rsest/lingoose/llm/cache"
+	"github.com/rsest/lingoose/types"
 	"github.com/sashabaranov/go-openai"
 )
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	obs "github.com/henomis/lingoose/observer"
-	"github.com/henomis/lingoose/thread"
-	"github.com/henomis/lingoose/types"
+	obs "github.com/rsest/lingoose/observer"
+	"github.com/rsest/lingoose/thread"
+	"github.com/rsest/lingoose/types"
 )
 
 type Parameters struct {
