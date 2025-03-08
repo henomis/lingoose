@@ -53,8 +53,8 @@ func (s *SQL) psqlSchema() (*string, error) {
 		//nolint:lll
 		var tableName, columnName, dataType, columnDefault, isNullable, constraintType, constraintName, foreignTableName, foreignColumnName sql.NullString
 		//nolint:lll
-		if err := rows.Scan(&tableName, &columnName, &dataType, &columnDefault, &isNullable, &constraintType, &constraintName, &foreignTableName, &foreignColumnName); err != nil {
-			return nil, fmt.Errorf("scanning row: %w", err)
+		if rowsErr := rows.Scan(&tableName, &columnName, &dataType, &columnDefault, &isNullable, &constraintType, &constraintName, &foreignTableName, &foreignColumnName); rowsErr != nil {
+			return nil, fmt.Errorf("scanning row: %w", rowsErr)
 		}
 
 		//nolin:nestif
@@ -66,6 +66,7 @@ func (s *SQL) psqlSchema() (*string, error) {
 			currentTable = tableName.String
 		}
 
+		//nolint:nestif
 		if columnName.Valid {
 			schema += fmt.Sprintf("  Column: %s, Type: %s", columnName.String, dataType.String)
 
@@ -88,8 +89,8 @@ func (s *SQL) psqlSchema() (*string, error) {
 		}
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows error: %w", err)
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, fmt.Errorf("rows error: %w", rowsErr)
 	}
 
 	return &schema, nil
