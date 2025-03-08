@@ -55,6 +55,8 @@ func (s *SQL) schema() (*string, error) {
 	driverType := fmt.Sprintf("%T", s.db.Driver())
 	if strings.Contains(driverType, "sqlite") {
 		return s.sqliteSchema()
+	} else if strings.Contains(driverType, "pq.Driver") {
+		return s.psqlSchema()
 	}
 
 	return nil, fmt.Errorf("unsupported database driver %s", driverType)
@@ -64,6 +66,8 @@ func (s *SQL) systemPrompt() (*string, error) {
 	driverType := fmt.Sprintf("%T", s.db.Driver())
 	if strings.Contains(driverType, "sqlite") {
 		return &sqliteSystemPromptTemplate, nil
+	} else if strings.Contains(driverType, "pq.Driver") {
+		return &psqlSystemPromptTemplate, nil
 	}
 
 	return nil, fmt.Errorf("unsupported database driver %s", driverType)
