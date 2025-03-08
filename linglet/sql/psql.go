@@ -14,6 +14,8 @@ Pay attention to use only the column names you can see in the tables below. Be c
 Pay attention to use date('now') function to get the current date, if the question involves "today". Do not use markdown to format the query.`
 
 // psqlSchema retrieves the schema information for all tables in a PostgreSQL database.
+//
+//nolint:funlen,gocognit
 func (s *SQL) psqlSchema() (*string, error) {
 	rows, err := s.db.Query(`
 	SELECT
@@ -48,11 +50,14 @@ func (s *SQL) psqlSchema() (*string, error) {
 	currentTable := ""
 
 	for rows.Next() {
+		//nolint:lll
 		var tableName, columnName, dataType, columnDefault, isNullable, constraintType, constraintName, foreignTableName, foreignColumnName sql.NullString
+		//nolint:lll
 		if err := rows.Scan(&tableName, &columnName, &dataType, &columnDefault, &isNullable, &constraintType, &constraintName, &foreignTableName, &foreignColumnName); err != nil {
 			return nil, fmt.Errorf("scanning row: %w", err)
 		}
 
+		//nolin:nestif
 		if tableName.Valid && tableName.String != currentTable {
 			if currentTable != "" {
 				schema += "\n" // Add a newline before a new table
@@ -81,7 +86,6 @@ func (s *SQL) psqlSchema() (*string, error) {
 
 			schema += "\n"
 		}
-
 	}
 
 	if err := rows.Err(); err != nil {
