@@ -21,6 +21,9 @@ type Function struct {
 
 type FunctionParameterOption func(map[string]interface{}) error
 
+// SetFunctions is a setter the functions list
+func (o *OpenAI) SetFunctions(funcs map[string]Function) { o.functions = funcs }
+
 func bindFunction(
 	fn interface{},
 	name string,
