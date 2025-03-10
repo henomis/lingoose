@@ -5,20 +5,31 @@ import (
 
 	anthropicsdk "github.com/anthropics/anthropic-sdk-go"
 	"github.com/henomis/lingoose/types"
-	"github.com/sashabaranov/go-openai"
 )
 
 var (
+	// ErrAnthropicCompletion is returned when there's an error with the Anthropic completion API
 	ErrAnthropicCompletion = fmt.Errorf("anthropic completion error")
-	ErrAnthropicChat       = fmt.Errorf("anthropic chat error")
+
+	// ErrAnthropicChat is returned when there's an error with the Anthropic chat API
+	ErrAnthropicChat = fmt.Errorf("anthropic chat error")
 )
 
 const (
-	DefaultAnthropicMaxTokens   = 256
+	// DefaultAnthropicMaxTokens is the default value for max tokens in Anthropic requests
+	DefaultAnthropicMaxTokens = 256
+
+	// DefaultAnthropicTemperature is the default temperature value for Anthropic requests
 	DefaultAnthropicTemperature = 0.7
-	DefaultAnthropicNumResults  = 1
-	DefaultAnthropicTopP        = 1.0
-	DefaultMaxIterations        = 3
+
+	// DefaultAnthropicNumResults is the default number of results to return
+	DefaultAnthropicNumResults = 1
+
+	// DefaultAnthropicTopP is the default top_p value for Anthropic requests
+	DefaultAnthropicTopP = 1.0
+
+	// DefaultMaxIterations is the default maximum number of iterations for function calling
+	DefaultMaxIterations = 3
 )
 
 type Model string
@@ -40,9 +51,12 @@ const (
 type UsageCallback func(types.Meta)
 type StreamCallback func(string)
 
-type ResponseFormat = openai.ChatCompletionResponseFormatType
+type ResponseFormat string
 
 const (
-	ResponseFormatJSONObject ResponseFormat = openai.ChatCompletionResponseFormatTypeJSONObject
-	ResponseFormatText       ResponseFormat = openai.ChatCompletionResponseFormatTypeText
+	// ResponseFormatJSONObject tells the model to output a JSON object
+	ResponseFormatJSONObject ResponseFormat = "json_object"
+
+	// ResponseFormatText tells the model to output plain text (default)
+	ResponseFormatText ResponseFormat = "text"
 )

@@ -3,7 +3,10 @@ package anthropic
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
+	"strings"
 
 	anthropicsdk "github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
@@ -35,6 +38,7 @@ type Anthropic struct {
 	streamCallbackFn StreamCallback
 	toolChoice       *string
 	cache            *cache.Cache
+	responseFormat   *ResponseFormat
 	Name             string
 }
 
@@ -97,19 +101,99 @@ func (a *Anthropic) WithCache(cache *cache.Cache) *Anthropic {
 	return a
 }
 
-// NewAnthropic creates a new Anthropic instance with default settings.
+// WithResponseFormat sets the response format to use for the Anthropic instance.
+// Use ResponseFormatJSONObject to get responses in JSON format.
+// Use ResponseFormatText to get responses in plain text format (default).
+func (a *Anthropic) WithResponseFormat(responseFormat ResponseFormat) *Anthropic {
+	a.responseFormat = &responseFormat
+	return a
+}
+
+// getCache retrieves a cached response for the given thread if available.
+func (a *Anthropic) getCache(ctx context.Context, t *thread.Thread) (*cache.Result, error) {
+	messages := t.UserQuery()
+	cacheQuery := strings.Join(messages, "\n")
+	cacheResult, err := a.cache.Get(ctx, cacheQuery)
+	if err != nil {
+		return cacheResult, err
+	}
+
+	t.AddMessage(thread.NewAssistantMessage().AddContent(
+		thread.NewTextContent(strings.Join(cacheResult.Answer, "\n")),
+	))
+
+	return cacheResult, nil
+}
+
+// setCache stores the response in cache for future retrieval.
+func (a *Anthropic) setCache(ctx context.Context, t *thread.Thread, cacheResult *cache.Result) error {
+	lastMessage := t.LastMessage()
+
+	if lastMessage.Role != thread.RoleAssistant || len(lastMessage.Contents) == 0 {
+		return nil
+	}
+
+	contents := make([]string, 0)
+	for _, content := range lastMessage.Contents {
+		if content.Type == thread.ContentTypeText {
+			contents = append(contents, content.Data.(string))
+		} else {
+			contents = make([]string, 0)
+			break
+		}
+	}
+
+	err := a.cache.Set(ctx, cacheResult.Embedding, strings.Join(contents, "\n"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Add setUsageMetadata method for consistent usage reporting
+func (a *Anthropic) setUsageMetadata(usage types.Meta) {
+	if a.usageCallback == nil {
+		return
+	}
+
+	callbackMetadata := make(types.Meta)
+	for k, v := range usage {
+		callbackMetadata[k] = v
+	}
+
+	a.usageCallback(callbackMetadata)
+}
+
+// New creates a new Anthropic instance with API key from environment
+func New() *Anthropic {
+	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+
+	return &Anthropic{
+		client:      anthropicsdk.NewClient(option.WithAPIKey(anthropicKey)),
+		model:       ModelClaude3_5SonnetLatest,
+		temperature: DefaultAnthropicTemperature,
+		maxTokens:   DefaultAnthropicMaxTokens,
+		stop:        []string{},
+		functions:   make(map[string]Function),
+		Name:        "anthropic",
+	}
+}
+
+// NewAnthropic creates a new Anthropic instance with explicit API key.
 func NewAnthropic(apiKey string) *Anthropic {
 	client := anthropicsdk.NewClient(
-		option.WithAPIKey(apiKey), // defaults to os.LookupEnv("ANTHROPIC_API_KEY")
+		option.WithAPIKey(apiKey),
 	)
 
 	return &Anthropic{
 		client:      client,
-		model:       ModelClaude3_5SonnetLatest, // Example default model
-		temperature: 0.7,
-		maxTokens:   1024,
+		model:       ModelClaude3_5SonnetLatest,
+		temperature: DefaultAnthropicTemperature,
+		maxTokens:   DefaultAnthropicMaxTokens,
 		stop:        []string{},
 		functions:   make(map[string]Function),
+		Name:        "anthropic",
 	}
 }
 
@@ -118,6 +202,7 @@ func (a *Anthropic) stream(ctx context.Context, t *thread.Thread, request anthro
 	stream := a.client.Messages.NewStreaming(ctx, request)
 	var assistantMessage string
 	var toolUses []anthropicsdk.ContentBlock
+	var totalTokens int
 
 	for stream.Next() {
 		event := stream.Current()
@@ -128,6 +213,7 @@ func (a *Anthropic) stream(ctx context.Context, t *thread.Thread, request anthro
 				if a.streamCallbackFn != nil {
 					a.streamCallbackFn(e.Delta.Text)
 				}
+				totalTokens++
 			} else if e.Delta.Type == deltaTypeToolUse {
 				toolUses = append(toolUses, anthropicsdk.ContentBlock{
 					Type:  "tool_use",
@@ -137,6 +223,15 @@ func (a *Anthropic) stream(ctx context.Context, t *thread.Thread, request anthro
 		case anthropicsdk.MessageStopEvent:
 			if a.streamCallbackFn != nil {
 				a.streamCallbackFn(EOS)
+			}
+
+			// Process usage if callback is provided
+			if a.usageCallback != nil {
+				// Estimate token usage - Anthropic doesn't provide exact counts in streaming
+				usageData := types.Meta{
+					"output_tokens": totalTokens,
+				}
+				a.setUsageMetadata(usageData)
 			}
 		}
 	}
@@ -165,6 +260,15 @@ func (a *Anthropic) generate(ctx context.Context, t *thread.Thread, request anth
 	response, err := a.client.Messages.New(ctx, request)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+	}
+
+	// Process usage information if a callback is provided
+	if a.usageCallback != nil {
+		usageData := types.Meta{
+			"input_tokens":  response.Usage.InputTokens,
+			"output_tokens": response.Usage.OutputTokens,
+		}
+		a.setUsageMetadata(usageData)
 	}
 
 	var messages []*thread.Message
@@ -227,7 +331,7 @@ func (a *Anthropic) buildChatCompletionRequest(t *thread.Thread) anthropicsdk.Me
 		}
 	}
 
-	return anthropicsdk.MessageNewParams{
+	params := anthropicsdk.MessageNewParams{
 		Model:       anthropicsdk.F(anthropicsdk.Model(a.model)),
 		Messages:    anthropicsdk.F(messageParams),
 		MaxTokens:   anthropicsdk.F(int64(a.maxTokens)),
@@ -235,6 +339,15 @@ func (a *Anthropic) buildChatCompletionRequest(t *thread.Thread) anthropicsdk.Me
 		Tools:       anthropicsdk.F(a.getChatCompletionRequestTools()),
 		ToolChoice:  anthropicsdk.F(toolChoice),
 	}
+
+	// Add stop sequences if provided
+	if len(a.stop) > 0 {
+		stopSequences := make([]string, len(a.stop))
+		copy(stopSequences, a.stop)
+		params.StopSequences = anthropicsdk.F(stopSequences)
+	}
+
+	return params
 }
 
 // getChatCompletionRequestTools retrieves the tools to include in the request.
@@ -315,15 +428,43 @@ func (a *Anthropic) stopObserveGeneration(
 	)
 }
 
-// Chat implements the LLM interface
-func (a *Anthropic) Chat(ctx context.Context, t *thread.Thread) error {
+// Generate implements the LLM interface for generating responses.
+func (a *Anthropic) Generate(ctx context.Context, t *thread.Thread) error {
+	if t == nil {
+		return nil
+	}
+
+	var err error
+	var cacheResult *cache.Result
+	if a.cache != nil {
+		cacheResult, err = a.getCache(ctx, t)
+		if err == nil {
+			return nil
+		} else if !errors.Is(err, cache.ErrCacheMiss) {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
+	}
+
+	// If JSON format is requested, add a system message explicitly requesting JSON
+	if a.responseFormat != nil && *a.responseFormat == ResponseFormatJSONObject {
+		// Add a special system message requesting JSON format
+		t.AddMessage(thread.NewSystemMessage().AddContent(
+			thread.NewTextContent(`I need you to format your entire response as a valid JSON object. 
+Your response should consist entirely of properly formatted JSON.`),
+		))
+	}
+
 	generation, err := a.startObserveGeneration(ctx, t)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
+
+	// Store the message count before generation to track only new messages
+	nMessageBeforeGeneration := len(t.Messages)
 
 	request := a.buildChatCompletionRequest(t)
 
+	// Process the request
 	if a.streamCallbackFn != nil {
 		err = a.stream(ctx, t, request)
 	} else {
@@ -331,10 +472,28 @@ func (a *Anthropic) Chat(ctx context.Context, t *thread.Thread) error {
 	}
 
 	if err != nil {
-		return err
+		// Wrap all errors with ErrAnthropicChat for consistent error handling
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
 	}
 
-	return a.stopObserveGeneration(ctx, generation, t.Messages)
+	err = a.stopObserveGeneration(ctx, generation, t.Messages[nMessageBeforeGeneration:])
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+	}
+
+	if a.cache != nil {
+		err = a.setCache(ctx, t, cacheResult)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrAnthropicChat, err)
+		}
+	}
+
+	return nil
+}
+
+// Chat implements the LLM interface
+func (a *Anthropic) Chat(ctx context.Context, t *thread.Thread) error {
+	return a.Generate(ctx, t)
 }
 
 // WithFunctions implements the LLM interface
@@ -346,4 +505,9 @@ func (a *Anthropic) WithFunctions(functions map[string]Function) *Anthropic {
 // GetFunctions implements the LLM interface
 func (a *Anthropic) GetFunctions() map[string]Function {
 	return a.functions
+}
+
+// SetStop sets the stop sequences for the Anthropic instance.
+func (a *Anthropic) SetStop(stop []string) {
+	a.stop = stop
 }
