@@ -71,7 +71,7 @@ func (s *Summarize) Run(ctx context.Context) (*string, error) {
 
 		assistantErr := s.assistant.Run(ctx)
 		if assistantErr != nil {
-			return nil, err
+			return nil, assistantErr
 		}
 
 		if s.callbackFn != nil {
