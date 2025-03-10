@@ -19,10 +19,6 @@ import (
 const (
 	// EOS represents the end of stream marker
 	EOS = "\x00"
-	// deltaTypeText represents a text content delta in the stream
-	deltaTypeText = "text"
-	// deltaTypeToolUse represents a tool use content delta in the stream
-	deltaTypeToolUse = "tool_use"
 )
 
 // Anthropic represents the main client structure.
