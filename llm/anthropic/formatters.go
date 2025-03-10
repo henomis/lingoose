@@ -15,37 +15,75 @@ func threadToChatCompletionMessages(t *thread.Thread) []anthropicsdk.Message {
 			Role: anthropicsdk.MessageRole(message.Role),
 		}
 
-		if len(message.Contents) > 1 {
+		// Create content blocks for this message
+		var contentBlocks []anthropicsdk.ContentBlock
+
+		// Process all contents in the message
+		for _, content := range message.Contents {
+			switch content.Type {
+			case thread.ContentTypeText:
+				if textData, ok := content.Data.(string); ok {
+					contentBlocks = append(contentBlocks, anthropicsdk.ContentBlock{
+						Type: anthropicsdk.ContentBlockTypeText,
+						Text: textData,
+					})
+				}
+			case thread.ContentTypeImage:
+				// For image content, we need to handle it specially
+				// The URL can be stored directly as a string
+				if urlStr, ok := content.Data.(string); ok {
+					// Create a custom image block with the proper structure
+					imageContentBlock := anthropicsdk.ContentBlock{
+						Type: "image",
+					}
+
+					// Create a JSON-based source element for the image
+					sourceJSON := map[string]interface{}{
+						"type": "url",
+						"url":  urlStr,
+					}
+					sourceBytes, _ := json.Marshal(sourceJSON)
+
+					// Set it directly into the internal field that the SDK uses
+					err := json.Unmarshal(sourceBytes, &imageContentBlock.Input)
+					if err != nil {
+						panic(err)
+					}
+
+					contentBlocks = append(contentBlocks, imageContentBlock)
+				}
+			}
+		}
+
+		// Only set content if we have actual blocks
+		if len(contentBlocks) > 0 {
+			chatCompletionMessages[i].Content = contentBlocks
 			continue
 		}
 
-		switch message.Role {
-		case thread.RoleUser, thread.RoleSystem:
-			if data, isUserTextData := message.Contents[0].Data.(string); isUserTextData {
-				chatCompletionMessages[i].Content = []anthropicsdk.ContentBlock{{Text: data}}
-			} else {
-				continue
-			}
-		case thread.RoleAssistant:
-			if data, isAssistantTextData := message.Contents[0].Data.(string); isAssistantTextData {
-				chatCompletionMessages[i].Content = []anthropicsdk.ContentBlock{{Text: data}}
-			} else if toolCallDataSlice, isToolCallData := message.Contents[0].Data.([]thread.ToolCallData); isToolCallData {
-				var toolUses []anthropicsdk.ContentBlock
-				for _, toolCallData := range toolCallDataSlice {
-					toolUses = append(toolUses, anthropicsdk.ContentBlock{
-						Type:  "tool_use",
-						Input: json.RawMessage(toolCallData.Arguments),
-					})
+		// Special handling for tool responses and calls
+		if len(message.Contents) == 1 {
+			switch message.Role {
+			case thread.RoleAssistant:
+				if toolCallDataSlice, isToolCallData := message.Contents[0].Data.([]thread.ToolCallData); isToolCallData {
+					var toolUses []anthropicsdk.ContentBlock
+					for _, toolCallData := range toolCallDataSlice {
+						toolUses = append(toolUses, anthropicsdk.ContentBlock{
+							Type:  "tool_use",
+							Input: json.RawMessage(toolCallData.Arguments),
+						})
+					}
+					chatCompletionMessages[i].Content = toolUses
 				}
-				chatCompletionMessages[i].Content = toolUses
-			} else {
-				continue
-			}
-		case thread.RoleTool:
-			if data, isToolResponseData := message.Contents[0].Data.(thread.ToolResponseData); isToolResponseData {
-				chatCompletionMessages[i].Content = []anthropicsdk.ContentBlock{{Text: data.Result}}
-			} else {
-				continue
+			case thread.RoleTool:
+				if data, isToolResponseData := message.Contents[0].Data.(thread.ToolResponseData); isToolResponseData {
+					chatCompletionMessages[i].Content = []anthropicsdk.ContentBlock{
+						{
+							Type: anthropicsdk.ContentBlockTypeText,
+							Text: data.Result,
+						},
+					}
+				}
 			}
 		}
 	}

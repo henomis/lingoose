@@ -2,7 +2,6 @@ package anthropic
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -199,39 +198,30 @@ func NewAnthropic(apiKey string) *Anthropic {
 
 // stream handles streaming responses from the Anthropic API.
 func (a *Anthropic) stream(ctx context.Context, t *thread.Thread, request anthropicsdk.MessageNewParams) error {
+	// Add the stream parameter to the request
 	stream := a.client.Messages.NewStreaming(ctx, request)
-	var assistantMessage string
-	var toolUses []anthropicsdk.ContentBlock
-	var totalTokens int
+	var fullContent string
 
 	for stream.Next() {
 		event := stream.Current()
+
+		// Extract content delta text
 		switch e := event.AsUnion().(type) {
 		case anthropicsdk.ContentBlockDeltaEvent:
-			if e.Delta.Type == deltaTypeText {
-				assistantMessage += e.Delta.Text
-				if a.streamCallbackFn != nil {
-					a.streamCallbackFn(e.Delta.Text)
+			if e.Delta.Type == "text_delta" {
+				// Access the text via the union
+				if delta, ok := e.Delta.AsUnion().(anthropicsdk.TextDelta); ok {
+					if delta.Text != "" {
+						fullContent += delta.Text
+						if a.streamCallbackFn != nil {
+							a.streamCallbackFn(delta.Text)
+						}
+					}
 				}
-				totalTokens++
-			} else if e.Delta.Type == deltaTypeToolUse {
-				toolUses = append(toolUses, anthropicsdk.ContentBlock{
-					Type:  "tool_use",
-					Input: json.RawMessage(e.Delta.Text),
-				})
 			}
 		case anthropicsdk.MessageStopEvent:
 			if a.streamCallbackFn != nil {
 				a.streamCallbackFn(EOS)
-			}
-
-			// Process usage if callback is provided
-			if a.usageCallback != nil {
-				// Estimate token usage - Anthropic doesn't provide exact counts in streaming
-				usageData := types.Meta{
-					"output_tokens": totalTokens,
-				}
-				a.setUsageMetadata(usageData)
 			}
 		}
 	}
@@ -240,18 +230,13 @@ func (a *Anthropic) stream(ctx context.Context, t *thread.Thread, request anthro
 		return fmt.Errorf("%w: %s", ErrAnthropicChat, stream.Err())
 	}
 
-	var messages []*thread.Message
-	if len(assistantMessage) > 0 {
-		messages = append(messages, thread.NewAssistantMessage().AddContent(
-			thread.NewTextContent(assistantMessage),
+	// Add the complete message to the thread
+	if fullContent != "" {
+		t.AddMessage(thread.NewAssistantMessage().AddContent(
+			thread.NewTextContent(fullContent),
 		))
 	}
 
-	if len(toolUses) > 0 {
-		messages = append(messages, a.callTools(toolUses)...)
-	}
-
-	t.AddMessages(messages...)
 	return nil
 }
 
@@ -319,25 +304,32 @@ func (a *Anthropic) buildChatCompletionRequest(t *thread.Thread) anthropicsdk.Me
 		}
 	}
 
-	var toolChoice anthropicsdk.ToolChoiceUnionParam
-	if a.toolChoice == nil || *a.toolChoice == "auto" {
-		toolChoice = anthropicsdk.ToolChoiceAutoParam{
-			Type: anthropicsdk.F(anthropicsdk.ToolChoiceAutoTypeAuto),
-		}
-	} else {
-		toolChoice = anthropicsdk.ToolChoiceToolParam{
-			Type: anthropicsdk.F(anthropicsdk.ToolChoiceToolTypeTool),
-			Name: anthropicsdk.F(*a.toolChoice),
-		}
-	}
-
 	params := anthropicsdk.MessageNewParams{
 		Model:       anthropicsdk.F(anthropicsdk.Model(a.model)),
 		Messages:    anthropicsdk.F(messageParams),
 		MaxTokens:   anthropicsdk.F(int64(a.maxTokens)),
 		Temperature: anthropicsdk.F(a.temperature),
-		Tools:       anthropicsdk.F(a.getChatCompletionRequestTools()),
-		ToolChoice:  anthropicsdk.F(toolChoice),
+	}
+
+	// Only add tools and tool_choice if tools are available
+	tools := a.getChatCompletionRequestTools()
+	if len(tools) > 0 {
+		params.Tools = anthropicsdk.F(tools)
+
+		// Only set tool_choice if tools are provided
+		var toolChoice anthropicsdk.ToolChoiceUnionParam
+		if a.toolChoice == nil || *a.toolChoice == "auto" {
+			toolChoice = anthropicsdk.ToolChoiceAutoParam{
+				Type: anthropicsdk.F(anthropicsdk.ToolChoiceAutoTypeAuto),
+			}
+		} else {
+			toolChoice = anthropicsdk.ToolChoiceToolParam{
+				Type: anthropicsdk.F(anthropicsdk.ToolChoiceToolTypeTool),
+				Name: anthropicsdk.F(*a.toolChoice),
+			}
+		}
+
+		params.ToolChoice = anthropicsdk.F(toolChoice)
 	}
 
 	// Add stop sequences if provided
