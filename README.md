@@ -90,6 +90,7 @@ We welcome contributions, Read our [Contribution Guidelines](https://github.com/
 ### Join the community
 
 [![Discord](https://img.shields.io/badge/Discord-lingoose-blue?logo=discord&link=https%3A%2F%2Fdiscord.gg%2FmcKEQTKqGS)](https://discord.gg/mcKEQTKqGS)
+[![libs.tech recommends](https://libs.tech/project/628853983/badge.svg)](https://libs.tech/project/628853983/lingoose)
 
 
 ## License
