@@ -1,3 +1,14 @@
+> [!IMPORTANT]
+> **Hey there, LinGoose friend 🪿**
+>
+> First of all, thank you for being here. LinGoose has been a fun journey and I am proud of what it became.
+>
+> The honest news: LinGoose is no longer under active development. Life got busy, the AI world moved fast, and I found myself wanting to build something new rather than patch something old.
+>
+> That something new is [Phero](https://github.com/henomis/phero) 🐜, a Go framework built from the ground up for multi-agent AI systems. Same values, better foundation, a lot more ambition.
+>
+> LinGoose is not going anywhere. It will stay here, stable and available. But if you are starting something new, come join the ant colony.
+
 ![lingoose](docs/static/lingoose-small.png)
 
 
