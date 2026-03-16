@@ -30,18 +30,19 @@ var threadRoleToOpenAIRole = map[thread.Role]string{
 }
 
 type OpenAI struct {
-	openAIClient     *openai.Client
-	model            Model
-	temperature      float32
-	maxTokens        int
-	stop             []string
-	usageCallback    UsageCallback
-	functions        map[string]Function
-	streamCallbackFn StreamCallback
-	responseFormat   *ResponseFormat
-	toolChoice       *string
-	cache            *cache.Cache
-	Name             string
+	openAIClient             *openai.Client
+	model                    Model
+	temperature              float32
+	maxTokens                int
+	stop                     []string
+	usageCallback            UsageCallback
+	functions                map[string]Function
+	streamCallbackFn         StreamCallback
+	responseFormat           *ResponseFormat
+	responseFormatJSONSchema *ResponseFormatJSONSchema
+	toolChoice               *string
+	cache                    *cache.Cache
+	Name                     string
 }
 
 // WithModel sets the model to use for the OpenAI instance.
@@ -102,6 +103,11 @@ func (o *OpenAI) WithCache(cache *cache.Cache) *OpenAI {
 
 func (o *OpenAI) WithResponseFormat(responseFormat ResponseFormat) *OpenAI {
 	o.responseFormat = &responseFormat
+	return o
+}
+
+func (o *OpenAI) WithResponseFormatJSONSchema(jsonSchema *ResponseFormatJSONSchema) *OpenAI {
+	o.responseFormatJSONSchema = jsonSchema
 	return o
 }
 
@@ -358,7 +364,8 @@ func (o *OpenAI) buildChatCompletionRequest(t *thread.Thread) openai.ChatComplet
 	var responseFormat *openai.ChatCompletionResponseFormat
 	if o.responseFormat != nil {
 		responseFormat = &openai.ChatCompletionResponseFormat{
-			Type: *o.responseFormat,
+			Type:       *o.responseFormat,
+			JSONSchema: o.responseFormatJSONSchema,
 		}
 	}
 

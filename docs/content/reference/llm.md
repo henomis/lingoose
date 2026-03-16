@@ -118,6 +118,60 @@ fmt.Println(myThread)
 
 LinGoose allows you to bind a function describing its scope and input's schema. The function will be called by the OpenAI LLM automatically depending on the user's input. Here we force the tool choice to be "auto" to let OpenAI decide which tool to use. If, after an LLM generation, the last message is a tool call, you can enrich the thread with a new LLM generation based on the tool call result.
 
+## OpenAI structured outputs
+
+LinGoose supports structured outputs to ensure responses adhere to a JSON schema. You can define the response format type as `json_object` or `json_schema` to control output format. Here is examples of how to use structured outputs feature:
+
+### JSON mode (json_object)
+
+```go
+	openaillm := openai.New().WithModel(openai.GPT4o).WithResponseFormat(openai.ResponseFormatJSONObject).WithMaxTokens(1000)
+
+	t := thread.New().AddMessage(
+		thread.NewUserMessage().AddContent(
+			thread.NewTextContent("Give me a JSON object that describes a person"),
+		),
+	)
+
+	err := openaillm.Generate(context.Background(), t)
+```
+
+### Structured outputs (json_schema)
+
+```go
+    import "github.com/sashabaranov/go-openai/jsonschema"
+
+
+	type Result struct {
+		FirstName string
+		LastName  string
+		Age       int
+		Job       string
+	}
+	var result Result
+	schema, err := jsonschema.GenerateSchemaForType(result)
+	if err != nil {
+		panic(err)
+	}
+
+	openaillm := openai.New().
+		WithModel("gpt-4.1-nano").
+		WithResponseFormat(openai.ResponseFormatTypeJSONSchema).
+		WithResponseFormatJSONSchema(&openai.ResponseFormatJSONSchema{
+			Name:   "Person",
+			Schema: schema,
+			Strict: true,
+		}).
+		WithMaxTokens(1000)
+
+	t := thread.New().AddMessage(
+		thread.NewUserMessage().AddContent(
+			thread.NewTextContent("Give me a JSON object that describes a person"),
+		),
+	)
+
+	err = openaillm.Generate(context.Background(), t)
+```
 
 ## Private LLMs
 If you want to run your model or use a private LLM provider, you have many options.

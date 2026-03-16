@@ -61,6 +61,9 @@ type StreamCallback func(string)
 type ResponseFormat = openai.ChatCompletionResponseFormatType
 
 const (
-	ResponseFormatJSONObject ResponseFormat = openai.ChatCompletionResponseFormatTypeJSONObject
-	ResponseFormatText       ResponseFormat = openai.ChatCompletionResponseFormatTypeText
+	ResponseFormatTypeJSONSchema ResponseFormat = openai.ChatCompletionResponseFormatTypeJSONSchema
+	ResponseFormatJSONObject     ResponseFormat = openai.ChatCompletionResponseFormatTypeJSONObject
+	ResponseFormatText           ResponseFormat = openai.ChatCompletionResponseFormatTypeText
 )
+
+type ResponseFormatJSONSchema = openai.ChatCompletionResponseFormatJSONSchema
