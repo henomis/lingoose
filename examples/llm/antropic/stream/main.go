@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229").WithStream(
+	anthropicllm := anthropic.New().WithModel(anthropic.ModelClaude_3_Opus_20240229).WithStream(true,
 		func(response string) {
 			if response != anthropic.EOS {
 				fmt.Print(response)

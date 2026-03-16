@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229")
+	anthropicllm := anthropic.New().WithModel(anthropic.ModelClaude_3_Opus_20240229)
 
 	t := thread.New().AddMessage(
 		thread.NewUserMessage().AddContent(

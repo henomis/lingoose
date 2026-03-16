@@ -58,7 +58,7 @@ func main() {
 		documentContext += similarity.Content() + "\n\n"
 	}
 
-	anthropicllm := anthropic.New().WithModel("claude-3-opus-20240229")
+	anthropicllm := anthropic.New().WithModel(anthropic.ModelClaude_3_Opus_20240229)
 	t := thread.New()
 	t.AddMessage(thread.NewUserMessage().AddContent(
 		thread.NewTextContent("Based on the following context answer to the" +
